@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.js';
-import { helper, debugError } from './helper.js';
-import { ExecutionContext } from './ExecutionContext.js';
-import { Page } from './Page.js';
-import { CDPSession } from './Connection.js';
-import { KeyInput } from './USKeyboardLayout.js';
-import { FrameManager, Frame } from './FrameManager.js';
-import { getQueryHandlerAndSelector } from './QueryHandler.js';
-import { Protocol } from 'devtools-protocol';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper, debugError } from './helper.ts';
+import { ExecutionContext } from './ExecutionContext.ts';
+import { Page } from './Page.ts';
+import { CDPSession } from './Connection.ts';
+import { KeyInput } from './USKeyboardLayout.ts';
+import { FrameManager, Frame } from './FrameManager.ts';
+import { getQueryHandlerAndSelector } from './QueryHandler.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import {
   EvaluateFn,
   SerializableOrJSHandle,
@@ -30,8 +30,8 @@ import {
   EvaluateHandleFn,
   WrapElementHandle,
   UnwrapPromiseLike,
-} from './EvalTypes.js';
-import { isNode } from '../environment.js';
+} from './EvalTypes.ts';
+import { isNode } from '../environment.ts';
 /**
  * @public
  */
@@ -193,8 +193,10 @@ export class JSHandle {
    */
   async getProperty(propertyName: string): Promise<JSHandle | undefined> {
     const objectHandle = await this.evaluateHandle(
+      // @ts-expect-error TS2304
       (object: HTMLElement, propertyName: string) => {
         const result = { __proto__: null };
+        // @ts-expect-error TS7053
         result[propertyName] = object[propertyName];
         return result;
       },
@@ -203,6 +205,7 @@ export class JSHandle {
     const properties = await objectHandle.getProperties();
     const result = properties.get(propertyName) || null;
     await objectHandle.dispose();
+    // @ts-expect-error TS2322
     return result;
   }
 
@@ -225,12 +228,14 @@ export class JSHandle {
    */
   async getProperties(): Promise<Map<string, JSHandle>> {
     const response = await this._client.send('Runtime.getProperties', {
+      // @ts-expect-error TS2322
       objectId: this._remoteObject.objectId,
       ownProperties: true,
     });
     const result = new Map<string, JSHandle>();
     for (const property of response.result) {
       if (!property.enumerable) continue;
+      // @ts-expect-error TS2345
       result.set(property.name, createJSHandle(this._context, property.value));
     }
     return result;
@@ -327,6 +332,7 @@ export class JSHandle {
  * @public
  */
 export class ElementHandle<
+  // @ts-expect-error TS2304
   ElementType extends Element = Element
 > extends JSHandle {
   private _page: Page;
@@ -368,11 +374,13 @@ export class ElementHandle<
   private async _scrollIntoViewIfNeeded(): Promise<void> {
     const error = await this.evaluate<
       (
+        // @ts-expect-error TS2304
         element: Element,
         pageJavascriptEnabled: boolean
       ) => Promise<string | false>
     >(async (element, pageJavascriptEnabled) => {
       if (!element.isConnected) return 'Node is detached from document';
+      // @ts-expect-error TS2304
       if (element.nodeType !== Node.ELEMENT_NODE)
         return 'Node is not of type HTMLElement';
       // force-scroll if page's javascript is disabled.
@@ -380,7 +388,7 @@ export class ElementHandle<
         element.scrollIntoView({
           block: 'center',
           inline: 'center',
-          // @ts-expect-error Chrome still supports behavior: instant but
+          // @ts-ignore Chrome still supports behavior: instant but
           // it's not in the spec so TS shouts We don't want to make this
           // breaking change in Puppeteer yet so we'll ignore the line.
           behavior: 'instant',
@@ -388,6 +396,7 @@ export class ElementHandle<
         return false;
       }
       const visibleRatio = await new Promise((resolve) => {
+        // @ts-expect-error TS2304
         const observer = new IntersectionObserver((entries) => {
           resolve(entries[0].intersectionRatio);
           observer.disconnect();
@@ -398,7 +407,7 @@ export class ElementHandle<
         element.scrollIntoView({
           block: 'center',
           inline: 'center',
-          // @ts-expect-error Chrome still supports behavior: instant but
+          // @ts-ignore Chrome still supports behavior: instant but
           // it's not in the spec so TS shouts We don't want to make this
           // breaking change in Puppeteer yet so we'll ignore the line.
           behavior: 'instant',
@@ -522,6 +531,7 @@ export class ElementHandle<
       );
 
     return this.evaluate<
+      // @ts-expect-error TS2304
       (element: HTMLSelectElement, values: string[]) => string[]
     >((element, values) => {
       if (element.nodeName.toLowerCase() !== 'select')
@@ -530,13 +540,17 @@ export class ElementHandle<
       const options = Array.from(element.options);
       element.value = undefined;
       for (const option of options) {
+        // @ts-expect-error TS2571
         option.selected = values.includes(option.value);
+        // @ts-expect-error TS2571
         if (option.selected && !element.multiple) break;
       }
       element.dispatchEvent(new Event('input', { bubbles: true }));
       element.dispatchEvent(new Event('change', { bubbles: true }));
       return options
+        // @ts-expect-error TS2571
         .filter((option) => option.selected)
+        // @ts-expect-error TS2571
         .map((option) => option.value);
     }, values);
   }
@@ -550,6 +564,7 @@ export class ElementHandle<
    */
   async uploadFile(...filePaths: string[]): Promise<void> {
     const isMultiple = await this.evaluate<
+      // @ts-expect-error TS2304
       (element: HTMLInputElement) => boolean
     >((element) => element.multiple);
     assert(
@@ -564,16 +579,16 @@ export class ElementHandle<
     }
     // This import is only needed for `uploadFile`, so keep it scoped here to avoid paying
     // the cost unnecessarily.
-    const path = await import('path');
+    const path = await import('https://deno.land/std@0.93.0/node/path.ts');
     const fs = await helper.importFSModule();
     // Locate all files and confirm that they exist.
     const files = await Promise.all(
       filePaths.map(async (filePath) => {
         const resolvedPath: string = path.resolve(filePath);
         try {
-          await fs.promises.access(resolvedPath, fs.constants.R_OK);
+          await Deno.stat(resolvedPath);
         } catch (error) {
-          if (error.code === 'ENOENT')
+          if (error instanceof Deno.errors.NotFound)
             throw new Error(`${filePath} does not exist or is not readable`);
         }
 
@@ -588,7 +603,9 @@ export class ElementHandle<
     // not actually update the files in that case, so the solution is to eval the element
     // value to a new FileList directly.
     if (files.length === 0) {
+      // @ts-expect-error TS2304
       await this.evaluate<(element: HTMLInputElement) => void>((element) => {
+        // @ts-expect-error TS2304
         element.files = new DataTransfer().files;
 
         // Dispatch events for this case because it should behave akin to a user action.
@@ -619,6 +636,7 @@ export class ElementHandle<
    * Calls {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus | focus} on the element.
    */
   async focus(): Promise<void> {
+    // @ts-expect-error TS2304
     await this.evaluate<(element: HTMLElement) => void>((element) =>
       element.focus()
     );
@@ -717,6 +735,7 @@ export class ElementHandle<
    * {@link Page.screenshot} to take a screenshot of the element.
    * If the element is detached from DOM, the method throws an error.
    */
+  // @ts-expect-error TS2580
   async screenshot(options = {}): Promise<string | Buffer | void> {
     let needsViewportReset = false;
 
@@ -764,6 +783,7 @@ export class ElementHandle<
       )
     );
 
+    // @ts-expect-error TS2345
     if (needsViewportReset) await this._page.setViewport(viewport);
 
     return imageData;
@@ -773,12 +793,14 @@ export class ElementHandle<
    * Runs `element.querySelector` within the page. If no element matches the selector,
    * the return value resolves to `null`.
    */
+  // @ts-expect-error TS2304
   async $<T extends Element = Element>(
     selector: string
   ): Promise<ElementHandle<T> | null> {
     const { updatedSelector, queryHandler } = getQueryHandlerAndSelector(
       selector
     );
+    // @ts-expect-error TS2722
     return queryHandler.queryOne(this, updatedSelector);
   }
 
@@ -786,12 +808,14 @@ export class ElementHandle<
    * Runs `element.querySelectorAll` within the page. If no elements match the selector,
    * the return value resolves to `[]`.
    */
+  // @ts-expect-error TS2304
   async $$<T extends Element = Element>(
     selector: string
   ): Promise<Array<ElementHandle<T>>> {
     const { updatedSelector, queryHandler } = getQueryHandlerAndSelector(
       selector
     );
+    // @ts-expect-error TS2722
     return queryHandler.queryAll(this, updatedSelector);
   }
 
@@ -813,6 +837,7 @@ export class ElementHandle<
   async $eval<ReturnType>(
     selector: string,
     pageFunction: (
+      // @ts-expect-error TS2304
       element: Element,
       ...args: unknown[]
     ) => ReturnType | Promise<ReturnType>,
@@ -825,6 +850,7 @@ export class ElementHandle<
       );
     const result = await elementHandle.evaluate<
       (
+        // @ts-expect-error TS2304
         element: Element,
         ...args: SerializableOrJSHandle[]
       ) => ReturnType | Promise<ReturnType>
@@ -868,6 +894,7 @@ export class ElementHandle<
   async $$eval<ReturnType>(
     selector: string,
     pageFunction: (
+      // @ts-expect-error TS2304
       elements: Element[],
       ...args: unknown[]
     ) => ReturnType | Promise<ReturnType>,
@@ -876,9 +903,11 @@ export class ElementHandle<
     const { updatedSelector, queryHandler } = getQueryHandlerAndSelector(
       selector
     );
+    // @ts-expect-error TS2722
     const arrayHandle = await queryHandler.queryAllArray(this, updatedSelector);
     const result = await arrayHandle.evaluate<
       (
+        // @ts-expect-error TS2304
         elements: Element[],
         ...args: unknown[]
       ) => ReturnType | Promise<ReturnType>
@@ -897,12 +926,14 @@ export class ElementHandle<
    */
   async $x(expression: string): Promise<ElementHandle[]> {
     const arrayHandle = await this.evaluateHandle(
+      // @ts-expect-error TS2304
       (element: Document, expression: string) => {
         const document = element.ownerDocument || element;
         const iterator = document.evaluate(
           expression,
           element,
           null,
+          // @ts-expect-error TS2304
           XPathResult.ORDERED_NODE_ITERATOR_TYPE
         );
         const array = [];
@@ -926,15 +957,18 @@ export class ElementHandle<
    * Resolves to true if the element is visible in the current viewport.
    */
   async isIntersectingViewport(): Promise<boolean> {
+    // @ts-expect-error TS2304
     return await this.evaluate<(element: Element) => Promise<boolean>>(
       async (element) => {
         const visibleRatio = await new Promise((resolve) => {
+          // @ts-expect-error TS2304
           const observer = new IntersectionObserver((entries) => {
             resolve(entries[0].intersectionRatio);
             observer.disconnect();
           });
           observer.observe(element);
         });
+        // @ts-expect-error TS2571
         return visibleRatio > 0;
       }
     );

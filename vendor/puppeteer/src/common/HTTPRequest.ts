@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { CDPSession } from './Connection.js';
-import { Frame } from './FrameManager.js';
-import { HTTPResponse } from './HTTPResponse.js';
-import { assert } from './assert.js';
-import { helper, debugError } from './helper.js';
-import { Protocol } from 'devtools-protocol';
+import { encode as base64Encode } from 'https://deno.land/std@0.93.0/encoding/base64.ts';
+import { CDPSession } from './Connection.ts';
+import { Frame } from './FrameManager.ts';
+import { HTTPResponse } from './HTTPResponse.ts';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper, debugError } from './helper.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 
 /**
  * @public
@@ -45,7 +46,7 @@ export interface ResponseForRequest {
    */
   headers: Record<string, unknown>;
   contentType: string;
-  body: string | Buffer;
+  body: string | Uint8Array;
 }
 
 /**
@@ -143,6 +144,7 @@ export class HTTPRequest {
     this._interceptionId = interceptionId;
     this._allowInterception = allowInterception;
     this._url = event.request.url;
+    // @ts-expect-error TS2532
     this._resourceType = event.type.toLowerCase() as ResourceType;
     this._method = event.request.method;
     this._postData = event.request.postData;
@@ -264,6 +266,7 @@ export class HTTPRequest {
   failure(): { errorText: string } | null {
     if (!this._failureText) return null;
     return {
+      // @ts-expect-error TS2322
       errorText: this._failureText,
     };
   }
@@ -302,7 +305,7 @@ export class HTTPRequest {
     this._interceptionHandled = true;
 
     const postDataBinaryBase64 = postData
-      ? Buffer.from(postData).toString('base64')
+      ? base64Encode(postData)
       : undefined;
 
     await this._client
@@ -356,10 +359,10 @@ export class HTTPRequest {
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
 
-    const responseBody: Buffer | null =
+    const responseBody: Uint8Array | null =
       response.body && helper.isString(response.body)
-        ? Buffer.from(response.body)
-        : (response.body as Buffer) || null;
+        ? new TextEncoder().encode(response.body)
+        : (response.body as Uint8Array) || null;
 
     const responseHeaders: Record<string, string> = {};
     if (response.headers) {
@@ -372,15 +375,17 @@ export class HTTPRequest {
       responseHeaders['content-type'] = response.contentType;
     if (responseBody && !('content-length' in responseHeaders))
       responseHeaders['content-length'] = String(
-        Buffer.byteLength(responseBody)
+        responseBody.byteLength
       );
 
     await this._client
       .send('Fetch.fulfillRequest', {
         requestId: this._interceptionId,
         responseCode: response.status || 200,
+        // @ts-expect-error TS7053
         responsePhrase: STATUS_TEXTS[response.status || 200],
         responseHeaders: headersArray(responseHeaders),
+        // @ts-expect-error TS2554
         body: responseBody ? responseBody.toString('base64') : undefined,
       })
       .catch((error) => {

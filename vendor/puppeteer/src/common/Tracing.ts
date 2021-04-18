@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { assert } from './assert.js';
-import { helper } from './helper.js';
-import { CDPSession } from './Connection.js';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper } from './helper.ts';
+import { CDPSession } from './Connection.ts';
 
 /**
  * @public
@@ -87,6 +87,7 @@ export class Tracing {
 
     if (screenshots) categories.push('disabled-by-default-devtools.screenshot');
 
+    // @ts-expect-error TS2322
     this._path = path;
     this._recording = true;
     await this._client.send('Tracing.start', {
@@ -99,9 +100,12 @@ export class Tracing {
    * Stops a trace started with the `start` method.
    * @returns Promise which resolves to buffer with trace data.
    */
+  // @ts-expect-error TS2580
   async stop(): Promise<Buffer> {
+    // @ts-expect-error TS2580
     let fulfill: (value: Buffer) => void;
     let reject: (err: Error) => void;
+    // @ts-expect-error TS2580
     const contentPromise = new Promise<Buffer>((x, y) => {
       fulfill = x;
       reject = y;

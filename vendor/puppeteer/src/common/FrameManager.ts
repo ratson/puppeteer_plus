@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-import { debug } from '../common/Debug.js';
+import { debug } from '../common/Debug.ts';
 
-import { EventEmitter } from './EventEmitter.js';
-import { assert } from './assert.js';
-import { helper, debugError } from './helper.js';
-import { ExecutionContext, EVALUATION_SCRIPT_URL } from './ExecutionContext.js';
+import { EventEmitter } from './EventEmitter.ts';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper, debugError } from './helper.ts';
+import { ExecutionContext, EVALUATION_SCRIPT_URL } from './ExecutionContext.ts';
 import {
   LifecycleWatcher,
   PuppeteerLifeCycleEvent,
-} from './LifecycleWatcher.js';
-import { DOMWorld, WaitForSelectorOptions } from './DOMWorld.js';
-import { NetworkManager } from './NetworkManager.js';
-import { TimeoutSettings } from './TimeoutSettings.js';
-import { CDPSession } from './Connection.js';
-import { JSHandle, ElementHandle } from './JSHandle.js';
-import { MouseButton } from './Input.js';
-import { Page } from './Page.js';
-import { HTTPResponse } from './HTTPResponse.js';
-import { Protocol } from 'devtools-protocol';
+} from './LifecycleWatcher.ts';
+import { DOMWorld, WaitForSelectorOptions } from './DOMWorld.ts';
+import { NetworkManager } from './NetworkManager.ts';
+import { TimeoutSettings } from './TimeoutSettings.ts';
+import { CDPSession } from './Connection.ts';
+import { JSHandle, ElementHandle } from './JSHandle.ts';
+import { MouseButton } from './Input.ts';
+import { Page } from './Page.ts';
+import { HTTPResponse } from './HTTPResponse.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import {
   SerializableOrJSHandle,
   EvaluateHandleFn,
@@ -40,7 +40,7 @@ import {
   EvaluateFn,
   EvaluateFnReturnType,
   UnwrapPromiseLike,
-} from './EvalTypes.js';
+} from './EvalTypes.ts';
 
 const UTILITY_WORLD_NAME = '__puppeteer_utility_world__';
 
@@ -73,6 +73,7 @@ export class FrameManager extends EventEmitter {
   private _frames = new Map<string, Frame>();
   private _contextIdToContext = new Map<number, ExecutionContext>();
   private _isolatedWorlds = new Set<string>();
+  // @ts-expect-error TS2564
   private _mainFrame: Frame;
 
   constructor(
@@ -275,6 +276,7 @@ export class FrameManager extends EventEmitter {
     if (this._frames.has(frameId)) return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
+    // @ts-expect-error TS2345
     const frame = new Frame(this, parentFrame, frameId);
     this._frames.set(frame._id, frame);
     this.emit(FrameManagerEmittedEvents.FrameAttached, frame);
@@ -311,6 +313,7 @@ export class FrameManager extends EventEmitter {
     }
 
     // Update frame payload.
+    // @ts-expect-error TS2532
     frame._navigated(framePayload);
 
     this.emit(FrameManagerEmittedEvents.FrameNavigated, frame);
@@ -355,6 +358,7 @@ export class FrameManager extends EventEmitter {
   ): void {
     const auxData = contextPayload.auxData as { frameId?: string };
     const frameId = auxData ? auxData.frameId : null;
+    // @ts-expect-error TS2345
     const frame = this._frames.get(frameId) || null;
     let world = null;
     if (frame) {
@@ -370,6 +374,7 @@ export class FrameManager extends EventEmitter {
         world = frame._secondaryWorld;
       }
     }
+    // @ts-expect-error TS2345
     const context = new ExecutionContext(this._client, contextPayload, world);
     if (world) world._setContext(context);
     this._contextIdToContext.set(contextPayload.id, context);
@@ -379,11 +384,13 @@ export class FrameManager extends EventEmitter {
     const context = this._contextIdToContext.get(executionContextId);
     if (!context) return;
     this._contextIdToContext.delete(executionContextId);
+    // @ts-expect-error TS2345
     if (context._world) context._world._setContext(null);
   }
 
   private _onExecutionContextsCleared(): void {
     for (const context of this._contextIdToContext.values()) {
+      // @ts-expect-error TS2345
       if (context._world) context._world._setContext(null);
     }
     this._contextIdToContext.clear();
@@ -572,6 +579,7 @@ export class Frame {
     frameId: string
   ) {
     this._frameManager = frameManager;
+    // @ts-expect-error TS2322
     this._parentFrame = parentFrame;
     this._url = '';
     this._id = frameId;
@@ -722,6 +730,7 @@ export class Frame {
    * @returns A promise which resolves to an `ElementHandle` pointing at the
    * element, or `null` if it was not found.
    */
+  // @ts-expect-error TS2304
   async $<T extends Element = Element>(
     selector: string
   ): Promise<ElementHandle<T> | null> {
@@ -759,6 +768,7 @@ export class Frame {
   async $eval<ReturnType>(
     selector: string,
     pageFunction: (
+      // @ts-expect-error TS2304
       element: Element,
       ...args: unknown[]
     ) => ReturnType | Promise<ReturnType>,
@@ -789,6 +799,7 @@ export class Frame {
   async $$eval<ReturnType>(
     selector: string,
     pageFunction: (
+      // @ts-expect-error TS2304
       elements: Element[],
       ...args: unknown[]
     ) => ReturnType | Promise<ReturnType>,
@@ -803,6 +814,7 @@ export class Frame {
    * @param selector - a selector to search for
    * @returns An array of element handles pointing to the found frame elements.
    */
+  // @ts-expect-error TS2304
   async $$<T extends Element = Element>(
     selector: string
   ): Promise<Array<ElementHandle<T>>> {
@@ -858,6 +870,7 @@ export class Frame {
    * @returns the parent `Frame`, if any. Detached and main frames return `null`.
    */
   parentFrame(): Frame | null {
+    // @ts-expect-error TS2322
     return this._parentFrame;
   }
 
@@ -1290,6 +1303,7 @@ export class Frame {
     this._mainWorld._detach();
     this._secondaryWorld._detach();
     if (this._parentFrame) this._parentFrame._childFrames.delete(this);
+    // @ts-expect-error TS2322
     this._parentFrame = null;
   }
 }

@@ -2,12 +2,12 @@ import mitt, {
   Emitter,
   EventType,
   Handler,
-} from '../../vendor/mitt/src/index.js';
+} from '../../vendor/mitt/src/index.ts';
 
 /**
  * @public
  */
-export { EventType, Handler };
+export type { EventType, Handler };
 
 /**
  * @public
@@ -144,6 +144,7 @@ export class EventEmitter implements CommonEventEmitter {
   }
 
   private eventListenersCount(event: EventType): number {
+    // @ts-expect-error TS2532
     return this.eventsMap.has(event) ? this.eventsMap.get(event).length : 0;
   }
 }

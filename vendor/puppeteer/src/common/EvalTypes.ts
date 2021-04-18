@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { JSHandle, ElementHandle } from './JSHandle.js';
+import { JSHandle, ElementHandle } from './JSHandle.ts';
 
 /**
  * @public
@@ -72,6 +72,7 @@ export type SerializableOrJSHandle = Serializable | JSHandle;
  *  Wraps a DOM element into an ElementHandle instance
  * @public
  **/
+// @ts-expect-error TS2304
 export type WrapElementHandle<X> = X extends Element ? ElementHandle<X> : X;
 
 /**

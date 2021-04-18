@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { Page, PageEmittedEvents } from './Page.js';
-import { WebWorker } from './WebWorker.js';
-import { CDPSession } from './Connection.js';
-import { Browser, BrowserContext } from './Browser.js';
-import { Viewport } from './PuppeteerViewport.js';
-import { Protocol } from 'devtools-protocol';
+import { Page, PageEmittedEvents } from './Page.ts';
+import { WebWorker } from './WebWorker.ts';
+import { CDPSession } from './Connection.ts';
+import { Browser, BrowserContext } from './Browser.ts';
+import { Viewport } from './PuppeteerViewport.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 
 /**
  * @public
@@ -40,6 +40,7 @@ export class Target {
   /**
    * @internal
    */
+  // @ts-expect-error TS2564
   _initializedCallback: (x: boolean) => void;
   /**
    * @internal
@@ -48,6 +49,7 @@ export class Target {
   /**
    * @internal
    */
+  // @ts-expect-error TS2564
   _closedCallback: () => void;
   /**
    * @internal
@@ -73,10 +75,13 @@ export class Target {
     this._targetId = targetInfo.targetId;
     this._sessionFactory = sessionFactory;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
+    // @ts-expect-error TS2322
     this._defaultViewport = defaultViewport;
     /** @type {?Promise<!Puppeteer.Page>} */
+    // @ts-expect-error TS2322
     this._pagePromise = null;
     /** @type {?Promise<!WebWorker>} */
+    // @ts-expect-error TS2322
     this._workerPromise = null;
     this._initializedPromise = new Promise<boolean>(
       (fulfill) => (this._initializedCallback = fulfill)
@@ -96,6 +101,7 @@ export class Target {
     );
     this._isInitialized =
       this._targetInfo.type !== 'page' || this._targetInfo.url !== '';
+    // @ts-expect-error TS2565
     if (this._isInitialized) this._initializedCallback(true);
   }
 
@@ -121,10 +127,12 @@ export class Target {
           client,
           this,
           this._ignoreHTTPSErrors,
+          // @ts-expect-error TS2345
           this._defaultViewport
         )
       );
     }
+    // @ts-expect-error TS2322
     return this._pagePromise;
   }
 
@@ -201,6 +209,7 @@ export class Target {
   opener(): Target | null {
     const { openerId } = this._targetInfo;
     if (!openerId) return null;
+    // @ts-expect-error TS2322
     return this.browser()._targets.get(openerId);
   }
 

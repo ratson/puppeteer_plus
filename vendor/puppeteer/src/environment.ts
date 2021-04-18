@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export const isNode = !!(typeof process !== 'undefined' && process.version);
+export const isNode = typeof Deno === 'object';

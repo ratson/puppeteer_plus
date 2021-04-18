@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ElementHandle } from './JSHandle.js';
-import { Protocol } from 'devtools-protocol';
-import { assert } from './assert.js';
+import { ElementHandle } from './JSHandle.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
 
 /**
  * File choosers let you react to the page requesting for a file.

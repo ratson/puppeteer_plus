@@ -17,10 +17,11 @@ import {
   helper,
   debugError,
   PuppeteerEventListener,
-} from '../common/helper.js';
-import { ConnectionTransport } from '../common/ConnectionTransport.js';
+} from '../common/helper.ts';
+import { ConnectionTransport } from '../common/ConnectionTransport.ts';
 
 export class PipeTransport implements ConnectionTransport {
+  // @ts-expect-error TS2503
   _pipeWrite: NodeJS.WritableStream;
   _pendingMessage: string;
   _eventListeners: PuppeteerEventListener[];
@@ -29,7 +30,9 @@ export class PipeTransport implements ConnectionTransport {
   onmessage?: () => void;
 
   constructor(
+    // @ts-expect-error TS2503
     pipeWrite: NodeJS.WritableStream,
+    // @ts-expect-error TS2503
     pipeRead: NodeJS.ReadableStream
   ) {
     this._pipeWrite = pipeWrite;
@@ -44,7 +47,9 @@ export class PipeTransport implements ConnectionTransport {
       helper.addEventListener(pipeRead, 'error', debugError),
       helper.addEventListener(pipeWrite, 'error', debugError),
     ];
+    // @ts-expect-error TS2322
     this.onmessage = null;
+    // @ts-expect-error TS2322
     this.onclose = null;
   }
 
@@ -53,6 +58,7 @@ export class PipeTransport implements ConnectionTransport {
     this._pipeWrite.write('\0');
   }
 
+  // @ts-expect-error TS2580
   _dispatch(buffer: Buffer): void {
     let end = buffer.indexOf('\0');
     if (end === -1) {
@@ -60,12 +66,14 @@ export class PipeTransport implements ConnectionTransport {
       return;
     }
     const message = this._pendingMessage + buffer.toString(undefined, 0, end);
+    // @ts-expect-error TS2554
     if (this.onmessage) this.onmessage.call(null, message);
 
     let start = end + 1;
     end = buffer.indexOf('\0', start);
     while (end !== -1) {
       if (this.onmessage)
+        // @ts-expect-error TS2554
         this.onmessage.call(null, buffer.toString(undefined, start, end));
       start = end + 1;
       end = buffer.indexOf('\0', start);

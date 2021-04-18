@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.js';
-import { helper, debugError, PuppeteerEventListener } from './helper.js';
-import { Protocol } from 'devtools-protocol';
-import { CDPSession } from './Connection.js';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper, debugError, PuppeteerEventListener } from './helper.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { CDPSession } from './Connection.ts';
 
-import { EVALUATION_SCRIPT_URL } from './ExecutionContext.js';
+import { EVALUATION_SCRIPT_URL } from './ExecutionContext.ts';
 
 /**
  * @internal
  */
-export { PuppeteerEventListener };
+export type { PuppeteerEventListener };
 
 /**
  * The CoverageEntry class represents one entry of the coverage report.
@@ -386,6 +386,7 @@ export class CSSCoverage {
       coverage.push({ url, ranges, text });
     }
 
+    // @ts-expect-error TS2322
     return coverage;
   }
 }
@@ -422,6 +423,7 @@ function convertToDisjointRanges(
       lastOffset < point.offset &&
       hitCountStack[hitCountStack.length - 1] > 0
     ) {
+      // @ts-expect-error TS7022
       const lastResult = results.length ? results[results.length - 1] : null;
       if (lastResult && lastResult.end === lastOffset)
         lastResult.end = point.offset;

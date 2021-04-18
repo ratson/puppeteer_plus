@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isNode } from '../environment.js';
+declare const __PUPPETEER_DEBUG: string;
 
 /**
  * A debug function that can be used in any environment.
@@ -53,13 +53,9 @@ import { isNode } from '../environment.js';
  * ```
  */
 export const debug = (prefix: string): ((...args: unknown[]) => void) => {
-  if (isNode) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require('debug')(prefix);
-  }
 
   return (...logArgs: unknown[]): void => {
-    const debugLevel = globalThis.__PUPPETEER_DEBUG as string;
+    const debugLevel = typeof __PUPPETEER_DEBUG !== 'undefined' && __PUPPETEER_DEBUG;
     if (!debugLevel) return;
 
     const everythingShouldBeLogged = debugLevel === '*';

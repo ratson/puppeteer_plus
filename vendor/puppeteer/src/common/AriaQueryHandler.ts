@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { InternalQueryHandler } from './QueryHandler.js';
-import { ElementHandle, JSHandle } from './JSHandle.js';
-import { Protocol } from 'devtools-protocol';
-import { CDPSession } from './Connection.js';
-import { DOMWorld, PageBinding, WaitForSelectorOptions } from './DOMWorld.js';
+import { InternalQueryHandler } from './QueryHandler.ts';
+import { ElementHandle, JSHandle } from './JSHandle.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { CDPSession } from './Connection.ts';
+import { DOMWorld, PageBinding, WaitForSelectorOptions } from './DOMWorld.ts';
 
 async function queryAXTree(
   client: CDPSession,
@@ -32,6 +32,7 @@ async function queryAXTree(
     role,
   });
   const filteredNodes: Protocol.Accessibility.AXNode[] = nodes.filter(
+    // @ts-expect-error TS2532
     (node: Protocol.Accessibility.AXNode) => node.role.value !== 'text'
   );
   return filteredNodes;
@@ -59,6 +60,7 @@ function parseAriaSelector(selector: string): ariaQueryOption {
       attribute = attribute.trim();
       if (!knownAttributes.has(attribute))
         throw new Error(`Unknown aria attribute "${attribute}" in selector`);
+      // @ts-expect-error TS7053
       queryOptions[attribute] = normalize(value);
       return '';
     }
@@ -78,6 +80,7 @@ const queryOne = async (
   if (res.length < 1) {
     return null;
   }
+  // @ts-expect-error TS2345
   return exeCtx._adoptBackendNodeId(res[0].backendDOMNodeId);
 };
 
@@ -85,6 +88,7 @@ const waitFor = async (
   domWorld: DOMWorld,
   selector: string,
   options: WaitForSelectorOptions
+// @ts-expect-error TS2304
 ): Promise<ElementHandle<Element>> => {
   const binding: PageBinding = {
     name: 'ariaQuerySelector',
@@ -94,7 +98,9 @@ const waitFor = async (
       return element;
     },
   };
+  // @ts-expect-error TS2322
   return domWorld.waitForSelectorInPage(
+    // @ts-expect-error TS2304
     (_: Element, selector: string) => globalThis.ariaQuerySelector(selector),
     selector,
     options,
@@ -110,6 +116,7 @@ const queryAll = async (
   const { name, role } = parseAriaSelector(selector);
   const res = await queryAXTree(exeCtx._client, element, name, role);
   return Promise.all(
+    // @ts-expect-error TS2345
     res.map((axNode) => exeCtx._adoptBackendNodeId(axNode.backendDOMNodeId))
   );
 };

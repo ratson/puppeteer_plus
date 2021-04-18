@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import { debug } from '../common/Debug.js';
+import { debug } from '../common/Debug.ts';
 
 import removeFolder from 'rimraf';
 import * as childProcess from 'child_process';
-import { assert } from '../common/assert.js';
-import { helper, debugError } from '../common/helper.js';
-import { LaunchOptions } from './LaunchOptions.js';
-import { Connection } from '../common/Connection.js';
-import { NodeWebSocketTransport as WebSocketTransport } from '../node/NodeWebSocketTransport.js';
-import { PipeTransport } from './PipeTransport.js';
-import { Product } from '../common/Product.js';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper, debugError } from '../common/helper.ts';
+import { LaunchOptions } from './LaunchOptions.ts';
+import { Connection } from '../common/Connection.ts';
+import { NodeWebSocketTransport as WebSocketTransport } from '../node/NodeWebSocketTransport.ts';
+import { PipeTransport } from './PipeTransport.ts';
+import { Product } from '../common/Product.ts';
 import * as readline from 'readline';
-import { TimeoutError } from '../common/Errors.js';
+import { TimeoutError } from '../common/Errors.ts';
 import { promisify } from 'util';
 
 const removeFolderAsync = promisify(removeFolder);

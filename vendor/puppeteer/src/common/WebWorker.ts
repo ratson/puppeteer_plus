@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { EventEmitter } from './EventEmitter.js';
-import { debugError } from './helper.js';
-import { ExecutionContext } from './ExecutionContext.js';
-import { JSHandle } from './JSHandle.js';
-import { CDPSession } from './Connection.js';
-import { Protocol } from 'devtools-protocol';
-import { EvaluateHandleFn, SerializableOrJSHandle } from './EvalTypes.js';
+import { EventEmitter } from './EventEmitter.ts';
+import { debugError } from './helper.ts';
+import { ExecutionContext } from './ExecutionContext.ts';
+import { JSHandle } from './JSHandle.ts';
+import { CDPSession } from './Connection.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { EvaluateHandleFn, SerializableOrJSHandle } from './EvalTypes.ts';
 
 /**
  * @internal
@@ -63,6 +63,7 @@ export class WebWorker extends EventEmitter {
   _client: CDPSession;
   _url: string;
   _executionContextPromise: Promise<ExecutionContext>;
+  // @ts-expect-error TS2564
   _executionContextCallback: (value: ExecutionContext) => void;
 
   /**
@@ -90,6 +91,7 @@ export class WebWorker extends EventEmitter {
       const executionContext = new ExecutionContext(
         client,
         event.context,
+        // @ts-expect-error TS2345
         null
       );
       this._executionContextCallback(executionContext);

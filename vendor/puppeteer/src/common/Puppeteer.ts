@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { puppeteerErrors, PuppeteerErrors } from './Errors.js';
-import { ConnectionTransport } from './ConnectionTransport.js';
-import { devicesMap, DevicesMap } from './DeviceDescriptors.js';
-import { Browser } from './Browser.js';
+import { puppeteerErrors, PuppeteerErrors } from './Errors.ts';
+import { ConnectionTransport } from './ConnectionTransport.ts';
+import { devicesMap, DevicesMap } from './DeviceDescriptors.ts';
+import { Browser } from './Browser.ts';
 import {
   registerCustomQueryHandler,
   unregisterCustomQueryHandler,
   customQueryHandlerNames,
   clearCustomQueryHandlers,
   CustomQueryHandler,
-} from './QueryHandler.js';
-import { Product } from './Product.js';
-import { connectToBrowser, BrowserConnectOptions } from './BrowserConnector.js';
+} from './QueryHandler.ts';
+import { Product } from './Product.ts';
+import { connectToBrowser, BrowserConnectOptions } from './BrowserConnector.ts';
 import {
   PredefinedNetworkConditions,
   networkConditions,
-} from './NetworkConditions.js';
+} from './NetworkConditions.ts';
 
 /**
  * Settings that are common to the Puppeteer class, regardless of enviroment.

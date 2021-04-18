@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.js';
-import { helper } from './helper.js';
-import { Target } from './Target.js';
-import { EventEmitter } from './EventEmitter.js';
-import { Connection, ConnectionEmittedEvents } from './Connection.js';
-import { Protocol } from 'devtools-protocol';
-import { Page } from './Page.js';
-import { ChildProcess } from 'child_process';
-import { Viewport } from './PuppeteerViewport.js';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper } from './helper.ts';
+import { Target } from './Target.ts';
+import { EventEmitter } from './EventEmitter.ts';
+import { Connection, ConnectionEmittedEvents } from './Connection.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { Page } from './Page.ts';
+
+import { Viewport } from './PuppeteerViewport.ts';
 
 /**
  * @internal
@@ -188,7 +188,7 @@ export class Browser extends EventEmitter {
     contextIds: string[],
     ignoreHTTPSErrors: boolean,
     defaultViewport?: Viewport | null,
-    process?: ChildProcess,
+    process?: Deno.Process,
     closeCallback?: BrowserCloseCallback
   ): Promise<Browser> {
     const browser = new Browser(
@@ -204,7 +204,7 @@ export class Browser extends EventEmitter {
   }
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport?: Viewport | null;
-  private _process?: ChildProcess;
+  private _process?: Deno.Process;
   private _connection: Connection;
   private _closeCallback: BrowserCloseCallback;
   private _defaultContext: BrowserContext;
@@ -223,7 +223,7 @@ export class Browser extends EventEmitter {
     contextIds: string[],
     ignoreHTTPSErrors: boolean,
     defaultViewport?: Viewport | null,
-    process?: ChildProcess,
+    process?: Deno.Process,
     closeCallback?: BrowserCloseCallback
   ) {
     super();
@@ -233,6 +233,7 @@ export class Browser extends EventEmitter {
     this._connection = connection;
     this._closeCallback = closeCallback || function (): void {};
 
+    // @ts-expect-error TS2345
     this._defaultContext = new BrowserContext(this._connection, this, null);
     this._contexts = new Map();
     for (const contextId of contextIds)
@@ -260,7 +261,8 @@ export class Browser extends EventEmitter {
    * The spawned browser process. Returns `null` if the browser instance was created with
    * {@link Puppeteer.connect}.
    */
-  process(): ChildProcess | null {
+  process(): Deno.Process | null {
+    // @ts-expect-error TS2322
     return this._process;
   }
 
@@ -315,8 +317,10 @@ export class Browser extends EventEmitter {
    */
   async _disposeContext(contextId?: string): Promise<void> {
     await this._connection.send('Target.disposeBrowserContext', {
+      // @ts-expect-error TS2322
       browserContextId: contextId || undefined,
     });
+    // @ts-expect-error TS2345
     this._contexts.delete(contextId);
   }
 
@@ -332,6 +336,7 @@ export class Browser extends EventEmitter {
 
     const target = new Target(
       targetInfo,
+      // @ts-expect-error TS2345
       context,
       () => this._connection.createSession(targetInfo),
       this._ignoreHTTPSErrors,
@@ -345,17 +350,22 @@ export class Browser extends EventEmitter {
 
     if (await target._initializedPromise) {
       this.emit(BrowserEmittedEvents.TargetCreated, target);
+      // @ts-expect-error TS2532
       context.emit(BrowserContextEmittedEvents.TargetCreated, target);
     }
   }
 
   private async _targetDestroyed(event: { targetId: string }): Promise<void> {
     const target = this._targets.get(event.targetId);
+    // @ts-expect-error TS2532
     target._initializedCallback(false);
     this._targets.delete(event.targetId);
+    // @ts-expect-error TS2532
     target._closedCallback();
+    // @ts-expect-error TS2532
     if (await target._initializedPromise) {
       this.emit(BrowserEmittedEvents.TargetDestroyed, target);
+      // @ts-expect-error TS2532
       target
         .browserContext()
         .emit(BrowserContextEmittedEvents.TargetDestroyed, target);
@@ -417,10 +427,13 @@ export class Browser extends EventEmitter {
     });
     const target = await this._targets.get(targetId);
     assert(
+      // @ts-expect-error TS2532
       await target._initializedPromise,
       'Failed to create target for page'
     );
+    // @ts-expect-error TS2532
     const page = await target.page();
+    // @ts-expect-error TS2322
     return page;
   }
 
@@ -438,6 +451,7 @@ export class Browser extends EventEmitter {
    * The target associated with the browser.
    */
   target(): Target {
+    // @ts-expect-error TS2322
     return this.targets().find((target) => target.type() === 'browser');
   }
 
@@ -462,6 +476,7 @@ export class Browser extends EventEmitter {
     const { timeout = 30000 } = options;
     const existingTarget = this.targets().find(predicate);
     if (existingTarget) return existingTarget;
+    // @ts-expect-error TS7034
     let resolve;
     const targetPromise = new Promise<Target>((x) => (resolve = x));
     this.on(BrowserEmittedEvents.TargetCreated, check);
@@ -479,6 +494,7 @@ export class Browser extends EventEmitter {
     }
 
     function check(target: Target): void {
+      // @ts-expect-error TS7005
       if (predicate(target)) resolve(target);
     }
   }
@@ -675,6 +691,7 @@ export class BrowserContext extends EventEmitter {
         .filter((target) => target.type() === 'page')
         .map((target) => target.page())
     );
+    // @ts-expect-error TS2322
     return pages.filter((page) => !!page);
   }
 

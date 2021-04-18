@@ -13,54 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// deno-lint-ignore-file no-unused-vars
+import { writeAll } from "https://deno.land/std@0.93.0/io/util.ts";
+import * as os from "https://deno.land/std@0.93.0/node/os.ts";
+import * as fs from "https://deno.land/std@0.93.0/node/fs.ts";
+import * as path from "https://deno.land/std@0.93.0/node/path.ts";
+import * as util from "https://deno.land/std@0.93.0/node/util.ts";
 
-import * as os from 'os';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as util from 'util';
-import * as childProcess from 'child_process';
-import * as https from 'https';
-import * as http from 'http';
-
-import { Product } from '../common/Product.ts';
-import extractZip from 'extract-zip';
-import { debug } from '../common/Debug.ts';
-import { promisify } from 'util';
-import removeRecursive from 'rimraf';
-import * as URL from 'url';
-import createHttpsProxyAgent, {
-  HttpsProxyAgent,
-  HttpsProxyAgentOptions,
-} from 'https-proxy-agent';
-import { getProxyForUrl } from 'proxy-from-env';
-import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { Product } from "../vendor/puppeteer/src/common/Product.ts";
+import { debug } from "../vendor/puppeteer/src/common/Debug.ts";
+import { promisify } from "https://deno.land/std@0.93.0/node/util.ts";
+import { assert } from "https://deno.land/std@0.93.0/testing/asserts.ts";
+import { copy } from "https://deno.land/std@0.93.0/fs/copy.ts";
+import { extractZip } from "./deps.ts";
 
 const debugFetcher = debug(`puppeteer:fetcher`);
 
 const downloadURLs = {
   chrome: {
-    linux: '%s/chromium-browser-snapshots/Linux_x64/%d/%s.zip',
-    mac: '%s/chromium-browser-snapshots/Mac/%d/%s.zip',
-    win32: '%s/chromium-browser-snapshots/Win/%d/%s.zip',
-    win64: '%s/chromium-browser-snapshots/Win_x64/%d/%s.zip',
+    linux: "%s/chromium-browser-snapshots/Linux_x64/%d/%s.zip",
+    mac: "%s/chromium-browser-snapshots/Mac/%d/%s.zip",
+    win32: "%s/chromium-browser-snapshots/Win/%d/%s.zip",
+    win64: "%s/chromium-browser-snapshots/Win_x64/%d/%s.zip",
   },
   firefox: {
-    linux: '%s/firefox-%s.en-US.%s-x86_64.tar.bz2',
-    mac: '%s/firefox-%s.en-US.%s.dmg',
-    win32: '%s/firefox-%s.en-US.%s.zip',
-    win64: '%s/firefox-%s.en-US.%s.zip',
+    linux: "%s/firefox-%s.en-US.%s-x86_64.tar.bz2",
+    mac: "%s/firefox-%s.en-US.%s.dmg",
+    win32: "%s/firefox-%s.en-US.%s.zip",
+    win64: "%s/firefox-%s.en-US.%s.zip",
   },
 } as const;
 
 const browserConfig = {
   chrome: {
-    host: 'https://storage.googleapis.com',
-    destination: '.local-chromium',
+    host: "https://storage.googleapis.com",
+    destination: ".local-chromium",
   },
   firefox: {
     host:
-      'https://archive.mozilla.org/pub/firefox/nightly/latest-mozilla-central',
-    destination: '.local-firefox',
+      "https://archive.mozilla.org/pub/firefox/nightly/latest-mozilla-central",
+    destination: ".local-firefox",
   },
 } as const;
 
@@ -68,21 +60,22 @@ const browserConfig = {
  * Supported platforms.
  * @public
  */
-export type Platform = 'linux' | 'mac' | 'win32' | 'win64';
+export type Platform = "linux" | "mac" | "win32" | "win64";
 
 function archiveName(
   product: Product,
   platform: Platform,
-  revision: string
+  revision: string,
+  // @ts-expect-error patch(TS2366)
 ): string {
-  if (product === 'chrome') {
-    if (platform === 'linux') return 'chrome-linux';
-    if (platform === 'mac') return 'chrome-mac';
-    if (platform === 'win32' || platform === 'win64') {
+  if (product === "chrome") {
+    if (platform === "linux") return "chrome-linux";
+    if (platform === "mac") return "chrome-mac";
+    if (platform === "win32" || platform === "win64") {
       // Windows archive name changed at r591479.
-      return parseInt(revision, 10) > 591479 ? 'chrome-win' : 'chrome-win32';
+      return parseInt(revision, 10) > 591479 ? "chrome-win" : "chrome-win32";
     }
-  } else if (product === 'firefox') {
+  } else if (product === "firefox") {
     return platform;
   }
 }
@@ -94,13 +87,13 @@ function downloadURL(
   product: Product,
   platform: Platform,
   host: string,
-  revision: string
+  revision: string,
 ): string {
   const url = util.format(
     downloadURLs[product][platform],
     host,
     revision,
-    archiveName(product, platform, revision)
+    archiveName(product, platform, revision),
   );
   return url;
 }
@@ -109,9 +102,9 @@ function downloadURL(
  * @internal
  */
 function handleArm64(): void {
-  fs.stat('/usr/bin/chromium-browser', function (err, stats) {
+  fs.stat("/usr/bin/chromium-browser", function (err, stats) {
     if (stats === undefined) {
-      fs.stat('/usr/bin/chromium', function (err, stats) {
+      fs.stat("/usr/bin/chromium", function (err, stats) {
         if (stats === undefined) {
           console.error(`The chromium binary is not available for arm64.`);
           console.error(`If you are on Ubuntu, you can install with: `);
@@ -183,26 +176,28 @@ export class BrowserFetcher {
   private _product: Product;
   private _downloadsFolder: string;
   private _downloadHost: string;
+  // @ts-expect-error patch(TS2564)
   private _platform: Platform;
 
   /**
    * @internal
    */
   constructor(projectRoot: string, options: BrowserFetcherOptions = {}) {
-    this._product = (options.product || 'chrome').toLowerCase() as Product;
+    this._product = (options.product || "chrome").toLowerCase() as Product;
     assert(
-      this._product === 'chrome' || this._product === 'firefox',
-      `Unknown product: "${options.product}"`
+      this._product === "chrome" || this._product === "firefox",
+      `Unknown product: "${options.product}"`,
     );
 
-    this._downloadsFolder =
-      options.path ||
+    this._downloadsFolder = options.path ||
       path.join(projectRoot, browserConfig[this._product].destination);
     this._downloadHost = options.host || browserConfig[this._product].host;
     this.setPlatform(options.platform);
     assert(
+      // @ts-expect-error patch(TS2565)
       downloadURLs[this._product][this._platform],
-      'Unsupported platform: ' + this._platform
+      // @ts-expect-error patch(TS2565)
+      "Unsupported platform: " + this._platform,
     );
   }
 
@@ -213,11 +208,11 @@ export class BrowserFetcher {
     }
 
     const platform = os.platform();
-    if (platform === 'darwin') this._platform = 'mac';
-    else if (platform === 'linux') this._platform = 'linux';
-    else if (platform === 'win32')
-      this._platform = os.arch() === 'x64' ? 'win64' : 'win32';
-    else assert(this._platform, 'Unsupported platform: ' + os.platform());
+    if (platform === "darwin") this._platform = "mac";
+    else if (platform === "linux") this._platform = "linux";
+    else if (platform === "win32") {
+      this._platform = os.arch() === "x64" ? "win64" : "win32";
+    } else assert(this._platform, "Unsupported platform: " + os.platform());
   }
 
   /**
@@ -249,22 +244,15 @@ export class BrowserFetcher {
    * @returns A promise that resolves to `true` if the revision could be downloaded
    * from the host.
    */
-  canDownload(revision: string): Promise<boolean> {
+  async canDownload(revision: string): Promise<boolean> {
     const url = downloadURL(
       this._product,
       this._platform,
       this._downloadHost,
-      revision
+      revision,
     );
-    return new Promise((resolve) => {
-      const request = httpRequest(url, 'HEAD', (response) => {
-        resolve(response.statusCode === 200);
-      });
-      request.on('error', (error) => {
-        console.error(error);
-        resolve(false);
-      });
-    });
+    const req = await fetch(url, { method: "head" });
+    return req.status == 200;
   }
 
   /**
@@ -279,22 +267,24 @@ export class BrowserFetcher {
    */
   async download(
     revision: string,
-    progressCallback: (x: number, y: number) => void = (): void => {}
+    progressCallback: (x: number, y: number) => void = (): void => {},
   ): Promise<BrowserFetcherRevisionInfo> {
     const url = downloadURL(
       this._product,
       this._platform,
       this._downloadHost,
-      revision
+      revision,
     );
-    const fileName = url.split('/').pop();
-    const archivePath = path.join(this._downloadsFolder, fileName);
+    const fileName = url.split("/").pop();
+    const archivePath = path.join(this._downloadsFolder, fileName!);
     const outputPath = this._getFolderPath(revision);
     if (await existsAsync(outputPath)) return this.revisionInfo(revision);
-    if (!(await existsAsync(this._downloadsFolder)))
+    if (!(await existsAsync(this._downloadsFolder))) {
       await mkdirAsync(this._downloadsFolder);
-    if (os.arch() === 'arm64') {
+    }
+    if (os.arch() === "arm64") {
       handleArm64();
+      // @ts-expect-error patch(TS2322)
       return;
     }
     try {
@@ -318,8 +308,11 @@ export class BrowserFetcher {
     if (!(await existsAsync(this._downloadsFolder))) return [];
     const fileNames = await readdirAsync(this._downloadsFolder);
     return fileNames
+      // @ts-expect-error patch(TS7006)
       .map((fileName) => parseFolderPath(this._product, fileName))
+      // @ts-expect-error patch(TS7006)
       .filter((entry) => entry && entry.platform === this._platform)
+      // @ts-expect-error patch(TS7006)
       .map((entry) => entry.revision);
   }
 
@@ -334,9 +327,9 @@ export class BrowserFetcher {
     const folderPath = this._getFolderPath(revision);
     assert(
       await existsAsync(folderPath),
-      `Failed to remove: revision ${revision} is not downloaded`
+      `Failed to remove: revision ${revision} is not downloaded`,
     );
-    await new Promise((fulfill) => removeRecursive(folderPath, fulfill));
+    await Deno.remove(folderPath, { recursive: true });
   }
 
   /**
@@ -345,52 +338,52 @@ export class BrowserFetcher {
    */
   revisionInfo(revision: string): BrowserFetcherRevisionInfo {
     const folderPath = this._getFolderPath(revision);
-    let executablePath = '';
-    if (this._product === 'chrome') {
-      if (this._platform === 'mac')
+    let executablePath = "";
+    if (this._product === "chrome") {
+      if (this._platform === "mac") {
         executablePath = path.join(
           folderPath,
           archiveName(this._product, this._platform, revision),
-          'Chromium.app',
-          'Contents',
-          'MacOS',
-          'Chromium'
+          "Chromium.app",
+          "Contents",
+          "MacOS",
+          "Chromium",
         );
-      else if (this._platform === 'linux')
+      } else if (this._platform === "linux") {
         executablePath = path.join(
           folderPath,
           archiveName(this._product, this._platform, revision),
-          'chrome'
+          "chrome",
         );
-      else if (this._platform === 'win32' || this._platform === 'win64')
+      } else if (this._platform === "win32" || this._platform === "win64") {
         executablePath = path.join(
           folderPath,
           archiveName(this._product, this._platform, revision),
-          'chrome.exe'
+          "chrome.exe",
         );
-      else throw new Error('Unsupported platform: ' + this._platform);
-    } else if (this._product === 'firefox') {
-      if (this._platform === 'mac')
+      } else throw new Error("Unsupported platform: " + this._platform);
+    } else if (this._product === "firefox") {
+      if (this._platform === "mac") {
         executablePath = path.join(
           folderPath,
-          'Firefox Nightly.app',
-          'Contents',
-          'MacOS',
-          'firefox'
+          "Firefox Nightly.app",
+          "Contents",
+          "MacOS",
+          "firefox",
         );
-      else if (this._platform === 'linux')
-        executablePath = path.join(folderPath, 'firefox', 'firefox');
-      else if (this._platform === 'win32' || this._platform === 'win64')
-        executablePath = path.join(folderPath, 'firefox', 'firefox.exe');
-      else throw new Error('Unsupported platform: ' + this._platform);
+      } else if (this._platform === "linux") {
+        executablePath = path.join(folderPath, "firefox", "firefox");
+      } else if (this._platform === "win32" || this._platform === "win64") {
+        executablePath = path.join(folderPath, "firefox", "firefox.exe");
+      } else throw new Error("Unsupported platform: " + this._platform);
     } else {
-      throw new Error('Unsupported product: ' + this._product);
+      throw new Error("Unsupported product: " + this._product);
     }
     const url = downloadURL(
       this._product,
       this._platform,
       this._downloadHost,
-      revision
+      revision,
     );
     const local = fs.existsSync(folderPath);
     debugFetcher({
@@ -415,18 +408,19 @@ export class BrowserFetcher {
    * @internal
    */
   _getFolderPath(revision: string): string {
-    return path.join(this._downloadsFolder, this._platform + '-' + revision);
+    return path.join(this._downloadsFolder, this._platform + "-" + revision);
   }
 }
 
 function parseFolderPath(
   product: Product,
-  folderPath: string
+  folderPath: string,
 ): { product: string; platform: string; revision: string } | null {
   const name = path.basename(folderPath);
-  const splits = name.split('-');
+  const splits = name.split("-");
   if (splits.length !== 2) return null;
   const [platform, revision] = splits;
+  // @ts-expect-error patch(TS7053)
   if (!downloadURLs[product][platform]) return null;
   return { product, platform, revision };
 }
@@ -434,177 +428,116 @@ function parseFolderPath(
 /**
  * @internal
  */
-function downloadFile(
+async function downloadFile(
   url: string,
   destinationPath: string,
-  progressCallback: (x: number, y: number) => void
+  progressCallback: (x: number, y: number) => void,
 ): Promise<void> {
   debugFetcher(`Downloading binary from ${url}`);
-  let fulfill, reject;
-  let downloadedBytes = 0;
-  let totalBytes = 0;
 
-  const promise = new Promise<void>((x, y) => {
-    fulfill = x;
-    reject = y;
-  });
+  const response = await fetch(url, { method: "GET" });
 
-  const request = httpRequest(url, 'GET', (response) => {
-    if (response.statusCode !== 200) {
-      const error = new Error(
-        `Download failed: server returned code ${response.statusCode}. URL: ${url}`
-      );
-      // consume response data to free up memory
-      response.resume();
-      reject(error);
-      return;
-    }
-    const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => fulfill());
-    file.on('error', (error) => reject(error));
-    response.pipe(file);
-    totalBytes = parseInt(
-      /** @type {string} */ response.headers['content-length'],
-      10
+  if (response.status !== 200) {
+    const error = new Error(
+      `Download failed: server returned code ${response.status}. URL: ${url}`,
     );
-    if (progressCallback) response.on('data', onData);
-  });
-  request.on('error', (error) => reject(error));
-  return promise;
 
-  function onData(chunk: string): void {
+    // consume response data to free up memory
+    await response.arrayBuffer();
+    throw error;
+  }
+
+  let downloadedBytes = 0;
+  const totalBytes = parseInt(response.headers.get("content-length") ?? "", 10);
+
+  const file = await Deno.create(destinationPath);
+
+  for await (const chunk of response.body!) {
     downloadedBytes += chunk.length;
-    progressCallback(downloadedBytes, totalBytes);
+    progressCallback?.(downloadedBytes, totalBytes);
+    await writeAll(file, chunk);
   }
 }
 
 function install(archivePath: string, folderPath: string): Promise<unknown> {
   debugFetcher(`Installing ${archivePath} to ${folderPath}`);
-  if (archivePath.endsWith('.zip'))
+  if (archivePath.endsWith(".zip")) {
     return extractZip(archivePath, { dir: folderPath });
-  else if (archivePath.endsWith('.tar.bz2'))
+  } else if (archivePath.endsWith(".tar.bz2")) {
     return extractTar(archivePath, folderPath);
-  else if (archivePath.endsWith('.dmg'))
+  } else if (archivePath.endsWith(".dmg")) {
     return mkdirAsync(folderPath).then(() =>
       installDMG(archivePath, folderPath)
     );
-  else throw new Error(`Unsupported archive format: ${archivePath}`);
+  } else throw new Error(`Unsupported archive format: ${archivePath}`);
 }
 
 /**
  * @internal
  */
-function extractTar(tarPath: string, folderPath: string): Promise<unknown> {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const tar = require('tar-fs');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const bzip = require('unbzip2-stream');
-  return new Promise((fulfill, reject) => {
-    const tarStream = tar.extract(folderPath);
-    tarStream.on('error', reject);
-    tarStream.on('finish', fulfill);
-    const readStream = fs.createReadStream(tarPath);
-    readStream.pipe(bzip()).pipe(tarStream);
+async function extractTar(tarPath: string, folderPath: string): Promise<void> {
+  await Deno.mkdir(folderPath, { recursive: true });
+
+  const bzcat = Deno.run({
+    cmd: ["bzcat", tarPath],
+    stdout: "piped",
   });
+  const tmp = await Deno.makeTempFile();
+  const file = await Deno.create(tmp);
+  await Deno.copy(bzcat.stdout, file);
+  assert((await bzcat.status()).success, "failed bzcat");
+  bzcat.close();
+
+  const untar = Deno.run({
+    cmd: ["tar", "-C", folderPath, "-xvf", tmp],
+  });
+  assert((await untar.status()).success, "failed untar");
+  untar.close();
 }
 
 /**
  * @internal
  */
 function installDMG(dmgPath: string, folderPath: string): Promise<void> {
-  let mountPath;
+  let mountPath: string | undefined;
 
-  function mountAndCopy(fulfill: () => void, reject: (Error) => void): void {
-    const mountCommand = `hdiutil attach -nobrowse -noautoopen "${dmgPath}"`;
-    childProcess.exec(mountCommand, (err, stdout) => {
-      if (err) return reject(err);
-      const volumes = stdout.match(/\/Volumes\/(.*)/m);
-      if (!volumes)
-        return reject(new Error(`Could not find volume path in ${stdout}`));
-      mountPath = volumes[0];
-      readdirAsync(mountPath)
-        .then((fileNames) => {
-          const appName = fileNames.filter(
-            (item) => typeof item === 'string' && item.endsWith('.app')
-          )[0];
-          if (!appName)
-            return reject(new Error(`Cannot find app in ${mountPath}`));
-          const copyPath = path.join(mountPath, appName);
-          debugFetcher(`Copying ${copyPath} to ${folderPath}`);
-          childProcess.exec(`cp -R "${copyPath}" "${folderPath}"`, (err) => {
-            if (err) reject(err);
-            else fulfill();
-          });
-        })
-        .catch(reject);
+  async function mountAndCopy() {
+    const proc = Deno.run({
+      cmd: ["hdiutil", "attach", "-nobrowse", "-noautoopen", dmgPath],
     });
+    const stdout = new TextDecoder().decode(await proc.output());
+    proc.close();
+    const volumes = stdout.match(/\/Volumes\/(.*)/m);
+    if (!volumes) {
+      throw new Error(`Could not find volume path in ${stdout}`);
+    }
+    mountPath = volumes[0];
+
+    let appName = undefined;
+    for await (const file of Deno.readDir(mountPath)) {
+      if (file.name.endsWith(".app")) {
+        appName = file.name;
+        break;
+      }
+    }
+    if (!appName) throw new Error(`Cannot find app in ${mountPath}`);
+    await copy(path.join(mountPath, appName), folderPath);
   }
 
-  function unmount(): void {
+  async function unmount() {
     if (!mountPath) return;
-    const unmountCommand = `hdiutil detach "${mountPath}" -quiet`;
-    debugFetcher(`Unmounting ${mountPath}`);
-    childProcess.exec(unmountCommand, (err) => {
-      if (err) console.error(`Error unmounting dmg: ${err}`);
+    const proc = Deno.run({
+      cmd: ["hdiutil", "detach", mountPath, "-quiet"],
     });
+    debugFetcher(`Unmounting ${mountPath}`);
+    const status = await proc.status();
+    proc.close();
+    assert(status.success, `Error unmounting dmg: ${mountPath}`);
   }
 
-  return new Promise<void>(mountAndCopy)
+  return mountAndCopy()
     .catch((error) => {
       console.error(error);
     })
     .finally(unmount);
-}
-
-function httpRequest(
-  url: string,
-  method: string,
-  response: (x: http.IncomingMessage) => void
-): http.ClientRequest {
-  const urlParsed = URL.parse(url);
-
-  type Options = Partial<URL.UrlWithStringQuery> & {
-    method?: string;
-    agent?: HttpsProxyAgent;
-    rejectUnauthorized?: boolean;
-  };
-
-  let options: Options = {
-    ...urlParsed,
-    method,
-  };
-
-  const proxyURL = getProxyForUrl(url);
-  if (proxyURL) {
-    if (url.startsWith('http:')) {
-      const proxy = URL.parse(proxyURL);
-      options = {
-        path: options.href,
-        host: proxy.hostname,
-        port: proxy.port,
-      };
-    } else {
-      const parsedProxyURL = URL.parse(proxyURL);
-
-      const proxyOptions = {
-        ...parsedProxyURL,
-        secureProxy: parsedProxyURL.protocol === 'https:',
-      } as HttpsProxyAgentOptions;
-
-      options.agent = createHttpsProxyAgent(proxyOptions);
-      options.rejectUnauthorized = false;
-    }
-  }
-
-  const requestCallback = (res: http.IncomingMessage): void => {
-    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location)
-      httpRequest(res.headers.location, method, response);
-    else response(res);
-  };
-  const request =
-    options.protocol === 'https:'
-      ? https.request(options, requestCallback)
-      : http.request(options, requestCallback);
-  request.end();
-  return request;
 }

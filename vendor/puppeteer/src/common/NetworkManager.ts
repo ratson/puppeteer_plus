@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { EventEmitter } from './EventEmitter.js';
-import { assert } from './assert.js';
-import { helper, debugError } from './helper.js';
-import { Protocol } from 'devtools-protocol';
-import { CDPSession } from './Connection.js';
-import { FrameManager } from './FrameManager.js';
-import { HTTPRequest } from './HTTPRequest.js';
-import { HTTPResponse } from './HTTPResponse.js';
+import { EventEmitter } from './EventEmitter.ts';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper, debugError } from './helper.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { CDPSession } from './Connection.ts';
+import { FrameManager } from './FrameManager.ts';
+import { HTTPRequest } from './HTTPRequest.ts';
+import { HTTPResponse } from './HTTPResponse.ts';
 
 /**
  * @public
@@ -75,6 +75,7 @@ export class NetworkManager extends EventEmitter {
     Protocol.Network.RequestWillBeSentEvent
   >();
   _extraHTTPHeaders: Record<string, string> = {};
+  // @ts-expect-error TS2322
   _credentials?: Credentials = null;
   _attemptedAuthentications = new Set<string>();
   _userRequestInterceptionEnabled = false;
@@ -247,6 +248,7 @@ export class NetworkManager extends EventEmitter {
       }
       return;
     }
+    // @ts-expect-error TS2345
     this._onRequest(event, null);
   }
 
@@ -292,9 +294,11 @@ export class NetworkManager extends EventEmitter {
       const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(
         requestId
       );
+      // @ts-expect-error TS2345
       this._onRequest(requestWillBeSentEvent, interceptionId);
       this._requestIdToRequestWillBeSentEvent.delete(requestId);
     } else {
+      // @ts-expect-error TS2345
       this._requestIdToInterceptionId.set(requestId, interceptionId);
     }
   }
@@ -303,6 +307,7 @@ export class NetworkManager extends EventEmitter {
     event: Protocol.Network.RequestWillBeSentEvent,
     interceptionId?: string
   ): void {
+    // @ts-expect-error TS7034
     let redirectChain = [];
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
@@ -318,10 +323,12 @@ export class NetworkManager extends EventEmitter {
       : null;
     const request = new HTTPRequest(
       this._client,
+      // @ts-expect-error TS2345
       frame,
       interceptionId,
       this._userRequestInterceptionEnabled,
       event,
+      // @ts-expect-error TS7005
       redirectChain
     );
     this._requestIdToRequest.set(event.requestId, request);
@@ -369,6 +376,7 @@ export class NetworkManager extends EventEmitter {
 
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
+    // @ts-expect-error TS2531
     if (request.response()) request.response()._resolveBody(null);
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
@@ -380,6 +388,7 @@ export class NetworkManager extends EventEmitter {
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
     if (!request) return;
+    // @ts-expect-error TS2322
     request._failureText = event.errorText;
     const response = request.response();
     if (response) response._resolveBody(null);

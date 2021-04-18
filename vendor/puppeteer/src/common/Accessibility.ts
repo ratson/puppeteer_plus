@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { CDPSession } from './Connection.js';
-import { ElementHandle } from './JSHandle.js';
-import { Protocol } from 'devtools-protocol';
+import { CDPSession } from './Connection.ts';
+import { ElementHandle } from './JSHandle.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 
 /**
  * Represents a Node and the properties of it that are relevant to Accessibility.
@@ -183,6 +183,7 @@ export class Accessibility {
   ): Promise<SerializedAXNode> {
     const { interestingOnly = true, root = null } = options;
     const { nodes } = await this._client.send('Accessibility.getFullAXTree');
+    // @ts-expect-error TS7034
     let backendNodeId = null;
     if (root) {
       const { node } = await this._client.send('DOM.describeNode', {
@@ -193,15 +194,19 @@ export class Accessibility {
     const defaultRoot = AXNode.createTree(nodes);
     let needle = defaultRoot;
     if (backendNodeId) {
+      // @ts-expect-error TS2322
       needle = defaultRoot.find(
+        // @ts-expect-error TS7005
         (node) => node.payload.backendDOMNodeId === backendNodeId
       );
+      // @ts-expect-error TS2322
       if (!needle) return null;
     }
     if (!interestingOnly) return this.serializeTree(needle)[0];
 
     const interestingNodes = new Set<AXNode>();
     this.collectInterestingNodes(interestingNodes, defaultRoot, false);
+    // @ts-expect-error TS2322
     if (!interestingNodes.has(needle)) return null;
     return this.serializeTree(needle, interestingNodes)[0];
   }
@@ -495,6 +500,7 @@ class AXNode {
       nodeById.set(payload.nodeId, new AXNode(payload));
     for (const node of nodeById.values()) {
       for (const childId of node.payload.childIds || [])
+        // @ts-expect-error TS2345
         node.children.push(nodeById.get(childId));
     }
     return nodeById.values().next().value;

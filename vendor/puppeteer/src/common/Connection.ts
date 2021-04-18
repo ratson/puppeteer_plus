@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { assert } from './assert.js';
-import { debug } from './Debug.js';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { debug } from './Debug.ts';
 const debugProtocolSend = debug('puppeteer:protocol:SEND ►');
 const debugProtocolReceive = debug('puppeteer:protocol:RECV ◀');
 
-import { Protocol } from 'devtools-protocol';
-import { ProtocolMapping } from 'devtools-protocol/types/protocol-mapping.js';
-import { ConnectionTransport } from './ConnectionTransport.js';
-import { EventEmitter } from './EventEmitter.js';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { ProtocolMapping } from '../../../devtools-protocol/types/protocol-mapping.d.ts';
+import { ConnectionTransport } from './ConnectionTransport.ts';
+import { EventEmitter } from './EventEmitter.ts';
 
 /**
  * @public
  */
-export { ConnectionTransport, ProtocolMapping };
+export type { ConnectionTransport, ProtocolMapping };
 
 /**
  * @public
@@ -154,7 +154,9 @@ export class Connection extends EventEmitter {
   _onClose(): void {
     if (this._closed) return;
     this._closed = true;
+    // @ts-expect-error TS2322
     this._transport.onmessage = null;
+    // @ts-expect-error TS2322
     this._transport.onclose = null;
     for (const callback of this._callbacks.values())
       callback.reject(
@@ -185,6 +187,7 @@ export class Connection extends EventEmitter {
       targetId: targetInfo.targetId,
       flatten: true,
     });
+    // @ts-expect-error TS2322
     return this._sessions.get(sessionId);
   }
 }
@@ -290,9 +293,12 @@ export class CDPSession extends EventEmitter {
       const callback = this._callbacks.get(object.id);
       this._callbacks.delete(object.id);
       if (object.error)
+        // @ts-expect-error TS2532
         callback.reject(
+          // @ts-expect-error TS2532
           createProtocolError(callback.error, callback.method, object)
         );
+      // @ts-expect-error TS2532
       else callback.resolve(object.result);
     } else {
       assert(!object.id);
@@ -326,6 +332,7 @@ export class CDPSession extends EventEmitter {
         )
       );
     this._callbacks.clear();
+    // @ts-expect-error TS2322
     this._connection = null;
     this.emit(CDPSessionEmittedEvents.Disconnected);
   }

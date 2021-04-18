@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.js';
-import { helper, PuppeteerEventListener } from './helper.js';
-import { TimeoutError } from './Errors.js';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper, PuppeteerEventListener } from './helper.ts';
+import { TimeoutError } from './Errors.ts';
 import {
   FrameManager,
   Frame,
   FrameManagerEmittedEvents,
-} from './FrameManager.js';
-import { HTTPRequest } from './HTTPRequest.js';
-import { HTTPResponse } from './HTTPResponse.js';
-import { NetworkManagerEmittedEvents } from './NetworkManager.js';
-import { CDPSessionEmittedEvents } from './Connection.js';
+} from './FrameManager.ts';
+import { HTTPRequest } from './HTTPRequest.ts';
+import { HTTPResponse } from './HTTPResponse.ts';
+import { NetworkManagerEmittedEvents } from './NetworkManager.ts';
+import { CDPSessionEmittedEvents } from './Connection.ts';
 /**
  * @public
  */
@@ -67,20 +67,24 @@ export class LifecycleWatcher {
   _initialLoaderId: string;
 
   _sameDocumentNavigationPromise: Promise<Error | null>;
+  // @ts-expect-error TS2564
   _sameDocumentNavigationCompleteCallback: (x?: Error) => void;
 
   _lifecyclePromise: Promise<void>;
+  // @ts-expect-error TS2564
   _lifecycleCallback: () => void;
 
   _newDocumentNavigationPromise: Promise<Error | null>;
+  // @ts-expect-error TS2564
   _newDocumentNavigationCompleteCallback: (x?: Error) => void;
 
   _terminationPromise: Promise<Error | null>;
+  // @ts-expect-error TS2564
   _terminationCallback: (x?: Error) => void;
 
   _timeoutPromise: Promise<TimeoutError | null>;
 
-  _maximumTimer?: NodeJS.Timeout;
+  _maximumTimer?: number;
   _hasSameDocumentNavigation?: boolean;
 
   constructor(
@@ -101,6 +105,7 @@ export class LifecycleWatcher {
     this._frame = frame;
     this._initialLoaderId = frame._loaderId;
     this._timeout = timeout;
+    // @ts-expect-error TS2322
     this._navigationRequest = null;
     this._eventListeners = [
       helper.addEventListener(
@@ -135,6 +140,7 @@ export class LifecycleWatcher {
 
     this._sameDocumentNavigationPromise = new Promise<Error | null>(
       (fulfill) => {
+        // @ts-expect-error TS2322
         this._sameDocumentNavigationCompleteCallback = fulfill;
       }
     );
@@ -144,11 +150,13 @@ export class LifecycleWatcher {
     });
 
     this._newDocumentNavigationPromise = new Promise((fulfill) => {
+      // @ts-expect-error TS2322
       this._newDocumentNavigationCompleteCallback = fulfill;
     });
 
     this._timeoutPromise = this._createTimeoutPromise();
     this._terminationPromise = new Promise((fulfill) => {
+      // @ts-expect-error TS2322
       this._terminationCallback = fulfill;
     });
     this._checkLifecycleComplete();

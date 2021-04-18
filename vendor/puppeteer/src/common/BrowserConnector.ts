@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import { ConnectionTransport } from './ConnectionTransport.js';
-import { Browser } from './Browser.js';
-import { assert } from './assert.js';
-import { debugError } from '../common/helper.js';
-import { Connection } from './Connection.js';
-import { getFetch } from './fetch.js';
-import { Viewport } from './PuppeteerViewport.js';
-import { isNode } from '../environment.js';
+import { ConnectionTransport } from './ConnectionTransport.ts';
+import { Browser } from './Browser.ts';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { debugError } from '../common/helper.ts';
+import { Connection } from './Connection.ts';
+import { Viewport } from './PuppeteerViewport.ts';
+import { isNode } from '../environment.ts';
 
 /**
  * Generic browser options that can be passed when launching any browser or when
@@ -46,9 +45,7 @@ export interface BrowserConnectOptions {
 }
 
 const getWebSocketTransportClass = async () => {
-  return isNode
-    ? (await import('../node/NodeWebSocketTransport.js')).NodeWebSocketTransport
-    : (await import('./BrowserWebSocketTransport.js'))
+  return (await import('./BrowserWebSocketTransport.ts'))
         .BrowserWebSocketTransport;
 };
 
@@ -79,6 +76,7 @@ export const connectToBrowser = async (
     'Exactly one of browserWSEndpoint, browserURL or transport must be passed to puppeteer.connect'
   );
 
+  // @ts-expect-error TS7034
   let connection = null;
   if (transport) {
     connection = new Connection('', transport, slowMo);
@@ -97,15 +95,18 @@ export const connectToBrowser = async (
     connection = new Connection(connectionURL, connectionTransport, slowMo);
   }
 
+  // @ts-expect-error TS2531
   const { browserContextIds } = await connection.send(
     'Target.getBrowserContexts'
   );
   return Browser.create(
+    // @ts-expect-error TS2345
     connection,
     browserContextIds,
     ignoreHTTPSErrors,
     defaultViewport,
     null,
+    // @ts-expect-error TS7005
     () => connection.send('Browser.close').catch(debugError)
   );
 };
@@ -113,7 +114,6 @@ export const connectToBrowser = async (
 async function getWSEndpoint(browserURL: string): Promise<string> {
   const endpointURL = new URL('/json/version', browserURL);
 
-  const fetch = await getFetch();
   try {
     const result = await fetch(endpointURL.toString(), {
       method: 'GET',

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { CDPSession } from './Connection.js';
-import { Frame } from './FrameManager.js';
-import { HTTPRequest } from './HTTPRequest.js';
-import { SecurityDetails } from './SecurityDetails.js';
-import { Protocol } from 'devtools-protocol';
+import { decode as base64Decode } from 'https://deno.land/std@0.93.0/encoding/base64.ts';
+import { CDPSession } from './Connection.ts';
+import { Frame } from './FrameManager.ts';
+import { HTTPRequest } from './HTTPRequest.ts';
+import { SecurityDetails } from './SecurityDetails.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 
 /**
  * @public
@@ -36,8 +37,9 @@ export interface RemoteAddress {
 export class HTTPResponse {
   private _client: CDPSession;
   private _request: HTTPRequest;
-  private _contentPromise: Promise<Buffer> | null = null;
+  private _contentPromise: Promise<Uint8Array> | null = null;
   private _bodyLoadedPromise: Promise<Error | void>;
+  // @ts-expect-error TS2564
   private _bodyLoadedPromiseFulfill: (err: Error | void) => void;
   private _remoteAddress: RemoteAddress;
   private _status: number;
@@ -64,7 +66,9 @@ export class HTTPResponse {
     });
 
     this._remoteAddress = {
+      // @ts-expect-error TS2322
       ip: responsePayload.remoteIPAddress,
+      // @ts-expect-error TS2322
       port: responsePayload.remotePort,
     };
     this._status = responsePayload.status;
@@ -83,6 +87,7 @@ export class HTTPResponse {
    * @internal
    */
   _resolveBody(err: Error | null): void {
+    // @ts-expect-error TS2345
     return this._bodyLoadedPromiseFulfill(err);
   }
 
@@ -143,17 +148,14 @@ export class HTTPResponse {
   /**
    * @returns Promise which resolves to a buffer with response body.
    */
-  buffer(): Promise<Buffer> {
+  buffer(): Promise<Uint8Array> {
     if (!this._contentPromise) {
       this._contentPromise = this._bodyLoadedPromise.then(async (error) => {
         if (error) throw error;
         const response = await this._client.send('Network.getResponseBody', {
           requestId: this._request._requestId,
         });
-        return Buffer.from(
-          response.body,
-          response.base64Encoded ? 'base64' : 'utf8'
-        );
+        return response.base64Encoded ? base64Decode(response.body) : new TextEncoder().encode(response.body);
       });
     }
     return this._contentPromise;
@@ -164,7 +166,7 @@ export class HTTPResponse {
    */
   async text(): Promise<string> {
     const content = await this.buffer();
-    return content.toString('utf8');
+    return new TextDecoder().decode(content);
   }
 
   /**

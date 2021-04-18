@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.js';
-import { CDPSession } from './Connection.js';
-import { Protocol } from 'devtools-protocol';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { CDPSession } from './Connection.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 
 /**
  * Dialog instances are dispatched by the {@link Page} via the `dialog` event.

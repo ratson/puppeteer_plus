@@ -15,20 +15,20 @@
  */
 
 import {
-  Puppeteer,
   CommonPuppeteerSettings,
   ConnectOptions,
-} from '../common/Puppeteer.ts';
-import { BrowserFetcher, BrowserFetcherOptions } from './BrowserFetcher.ts';
+  Puppeteer,
+} from "../vendor/puppeteer/src/common/Puppeteer.ts";
+import { BrowserFetcher, BrowserFetcherOptions } from "./BrowserFetcher.ts";
 import {
-  LaunchOptions,
   BrowserLaunchArgumentOptions,
-} from './LaunchOptions.ts';
-import { BrowserConnectOptions } from '../common/BrowserConnector.ts';
-import { Browser } from '../common/Browser.ts';
-import Launcher, { ProductLauncher } from './Launcher.ts';
-import { PUPPETEER_REVISIONS } from '../revisions.ts';
-import { Product } from '../common/Product.ts';
+  LaunchOptions,
+} from "../vendor/puppeteer/src/node/LaunchOptions.ts";
+import { BrowserConnectOptions } from "../vendor/puppeteer/src/common/BrowserConnector.ts";
+import { Browser } from "../vendor/puppeteer/src/common/Browser.ts";
+import Launcher, { ProductLauncher } from "./Launcher.ts";
+import { PUPPETEER_REVISIONS } from "../vendor/puppeteer/src/revisions.ts";
+import { Product } from "../vendor/puppeteer/src/common/Product.ts";
 
 /**
  * Extends the main {@link Puppeteer} class with Node specific behaviour for fetching and
@@ -65,7 +65,8 @@ import { Product } from '../common/Product.ts';
  *
  * @public
  */
-export class PuppeteerNode extends Puppeteer {
+export class PuppeteerDeno extends Puppeteer {
+  // @ts-expect-error patch(TS2564)
   private _lazyLauncher: ProductLauncher;
   private _projectRoot: string;
   private __productName?: Product;
@@ -82,7 +83,7 @@ export class PuppeteerNode extends Puppeteer {
       projectRoot: string;
       preferredRevision: string;
       productName?: Product;
-    } & CommonPuppeteerSettings
+    } & CommonPuppeteerSettings,
   ) {
     const {
       projectRoot,
@@ -113,6 +114,7 @@ export class PuppeteerNode extends Puppeteer {
    * @internal
    */
   get _productName(): Product {
+    // @ts-expect-error patch(TS2322)
     return this.__productName;
   }
 
@@ -148,12 +150,14 @@ export class PuppeteerNode extends Puppeteer {
    * @returns Promise which resolves to browser instance.
    */
   launch(
-    options: LaunchOptions &
-      BrowserLaunchArgumentOptions &
-      BrowserConnectOptions & {
+    options:
+      & LaunchOptions
+      & BrowserLaunchArgumentOptions
+      & BrowserConnectOptions
+      & {
         product?: Product;
         extraPrefsFirefox?: Record<string, unknown>;
-      } = {}
+      } = {},
   ): Promise<Browser> {
     if (options.product) this._productName = options.product;
     return this._launcher.launch(options);
@@ -183,10 +187,10 @@ export class PuppeteerNode extends Puppeteer {
       this._changedProduct
     ) {
       switch (this._productName) {
-        case 'firefox':
+        case "firefox":
           this._preferredRevision = PUPPETEER_REVISIONS.firefox;
           break;
-        case 'chrome':
+        case "chrome":
         default:
           this._preferredRevision = PUPPETEER_REVISIONS.chromium;
       }
@@ -195,7 +199,7 @@ export class PuppeteerNode extends Puppeteer {
         this._projectRoot,
         this._preferredRevision,
         this._isPuppeteerCore,
-        this._productName
+        this._productName,
       );
     }
     return this._lazyLauncher;

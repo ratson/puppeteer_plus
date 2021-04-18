@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { WaitForSelectorOptions, DOMWorld } from './DOMWorld.js';
-import { ElementHandle, JSHandle } from './JSHandle.js';
-import { ariaHandler } from './AriaQueryHandler.js';
+import { WaitForSelectorOptions, DOMWorld } from './DOMWorld.ts';
+import { ElementHandle, JSHandle } from './JSHandle.ts';
+import { ariaHandler } from './AriaQueryHandler.ts';
 
 /**
  * @internal
@@ -53,10 +53,13 @@ export interface InternalQueryHandler {
  * @public
  */
 export interface CustomQueryHandler {
+  // @ts-expect-error TS2304
   queryOne?: (element: Element | Document, selector: string) => Element | null;
   queryAll?: (
+    // @ts-expect-error TS2304
     element: Element | Document,
     selector: string
+  // @ts-expect-error TS2304
   ) => Element[] | NodeListOf<Element>;
 }
 
@@ -65,6 +68,7 @@ function makeQueryHandler(handler: CustomQueryHandler): InternalQueryHandler {
 
   if (handler.queryOne) {
     internalHandler.queryOne = async (element, selector) => {
+      // @ts-expect-error TS2345
       const jsHandle = await element.evaluateHandle(handler.queryOne, selector);
       const elementHandle = jsHandle.asElement();
       if (elementHandle) return elementHandle;
@@ -75,11 +79,13 @@ function makeQueryHandler(handler: CustomQueryHandler): InternalQueryHandler {
       domWorld: DOMWorld,
       selector: string,
       options: WaitForSelectorOptions
+    // @ts-expect-error TS2345
     ) => domWorld.waitForSelectorInPage(handler.queryOne, selector, options);
   }
 
   if (handler.queryAll) {
     internalHandler.queryAll = async (element, selector) => {
+      // @ts-expect-error TS2345
       const jsHandle = await element.evaluateHandle(handler.queryAll, selector);
       const properties = await jsHandle.getProperties();
       await jsHandle.dispose();
@@ -92,10 +98,12 @@ function makeQueryHandler(handler: CustomQueryHandler): InternalQueryHandler {
     };
     internalHandler.queryAllArray = async (element, selector) => {
       const resultHandle = await element.evaluateHandle(
+        // @ts-expect-error TS2345
         handler.queryAll,
         selector
       );
       const arrayHandle = await resultHandle.evaluateHandle(
+        // @ts-expect-error TS2304
         (res: Element[] | NodeListOf<Element>) => Array.from(res)
       );
       return arrayHandle;
@@ -106,22 +114,29 @@ function makeQueryHandler(handler: CustomQueryHandler): InternalQueryHandler {
 }
 
 const _defaultHandler = makeQueryHandler({
+  // @ts-expect-error TS2304
   queryOne: (element: Element, selector: string) =>
     element.querySelector(selector),
+  // @ts-expect-error TS2304
   queryAll: (element: Element, selector: string) =>
     element.querySelectorAll(selector),
 });
 
 const pierceHandler = makeQueryHandler({
   queryOne: (element, selector) => {
+    // @ts-expect-error TS2304
     let found: Element | null = null;
+    // @ts-expect-error TS2304
     const search = (root: Element | ShadowRoot) => {
+      // @ts-expect-error TS2584
       const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
       do {
+        // @ts-expect-error TS2304
         const currentNode = iter.currentNode as HTMLElement;
         if (currentNode.shadowRoot) {
           search(currentNode.shadowRoot);
         }
+        // @ts-expect-error TS2304
         if (currentNode instanceof ShadowRoot) {
           continue;
         }
@@ -130,6 +145,7 @@ const pierceHandler = makeQueryHandler({
         }
       } while (!found && iter.nextNode());
     };
+    // @ts-expect-error TS2304
     if (element instanceof Document) {
       element = element.documentElement;
     }
@@ -138,14 +154,19 @@ const pierceHandler = makeQueryHandler({
   },
 
   queryAll: (element, selector) => {
+    // @ts-expect-error TS2304
     const result: Element[] = [];
+    // @ts-expect-error TS2304
     const collect = (root: Element | ShadowRoot) => {
+      // @ts-expect-error TS2584
       const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
       do {
+        // @ts-expect-error TS2304
         const currentNode = iter.currentNode as HTMLElement;
         if (currentNode.shadowRoot) {
           collect(currentNode.shadowRoot);
         }
+        // @ts-expect-error TS2304
         if (currentNode instanceof ShadowRoot) {
           continue;
         }
@@ -154,6 +175,7 @@ const pierceHandler = makeQueryHandler({
         }
       } while (iter.nextNode());
     };
+    // @ts-expect-error TS2304
     if (element instanceof Document) {
       element = element.documentElement;
     }

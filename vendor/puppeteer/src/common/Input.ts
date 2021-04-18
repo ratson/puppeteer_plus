@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.js';
-import { CDPSession } from './Connection.js';
-import { keyDefinitions, KeyDefinition, KeyInput } from './USKeyboardLayout.js';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { CDPSession } from './Connection.ts';
+import { keyDefinitions, KeyDefinition, KeyInput } from './USKeyboardLayout.ts';
 
 type KeyDescription = Required<
   Pick<KeyDefinition, 'keyCode' | 'key' | 'text' | 'code' | 'location'>
@@ -207,6 +207,7 @@ export class Keyboard {
   }
 
   private charIsKey(char: string): char is KeyInput {
+    // @ts-expect-error TS7053
     return !!keyDefinitions[char];
   }
 
@@ -236,6 +237,7 @@ export class Keyboard {
     const delay = options.delay || null;
     for (const char of text) {
       if (this.charIsKey(char)) {
+        // @ts-expect-error TS2322
         await this.press(char, { delay });
       } else {
         if (delay) await new Promise((f) => setTimeout(f, delay));

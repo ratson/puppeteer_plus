@@ -14,42 +14,43 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from './EventEmitter.js';
+import { decode as base64Decode } from 'https://deno.land/std@0.93.0/encoding/base64.ts';
+import { EventEmitter } from './EventEmitter.ts';
 import {
   Connection,
   CDPSession,
   CDPSessionEmittedEvents,
-} from './Connection.js';
-import { Dialog } from './Dialog.js';
-import { EmulationManager } from './EmulationManager.js';
+} from './Connection.ts';
+import { Dialog } from './Dialog.ts';
+import { EmulationManager } from './EmulationManager.ts';
 import {
   Frame,
   FrameManager,
   FrameManagerEmittedEvents,
-} from './FrameManager.js';
-import { Keyboard, Mouse, Touchscreen, MouseButton } from './Input.js';
-import { Tracing } from './Tracing.js';
-import { assert } from './assert.js';
-import { helper, debugError } from './helper.js';
-import { Coverage } from './Coverage.js';
-import { WebWorker } from './WebWorker.js';
-import { Browser, BrowserContext } from './Browser.js';
-import { Target } from './Target.js';
-import { createJSHandle, JSHandle, ElementHandle } from './JSHandle.js';
-import { Viewport } from './PuppeteerViewport.js';
+} from './FrameManager.ts';
+import { Keyboard, Mouse, Touchscreen, MouseButton } from './Input.ts';
+import { Tracing } from './Tracing.ts';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper, debugError } from './helper.ts';
+import { Coverage } from './Coverage.ts';
+import { WebWorker } from './WebWorker.ts';
+import { Browser, BrowserContext } from './Browser.ts';
+import { Target } from './Target.ts';
+import { createJSHandle, JSHandle, ElementHandle } from './JSHandle.ts';
+import { Viewport } from './PuppeteerViewport.ts';
 import {
   Credentials,
   NetworkConditions,
   NetworkManagerEmittedEvents,
-} from './NetworkManager.js';
-import { HTTPRequest } from './HTTPRequest.js';
-import { HTTPResponse } from './HTTPResponse.js';
-import { Accessibility } from './Accessibility.js';
-import { TimeoutSettings } from './TimeoutSettings.js';
-import { FileChooser } from './FileChooser.js';
-import { ConsoleMessage, ConsoleMessageType } from './ConsoleMessage.js';
-import { PuppeteerLifeCycleEvent } from './LifecycleWatcher.js';
-import { Protocol } from 'devtools-protocol';
+} from './NetworkManager.ts';
+import { HTTPRequest } from './HTTPRequest.ts';
+import { HTTPResponse } from './HTTPResponse.ts';
+import { Accessibility } from './Accessibility.ts';
+import { TimeoutSettings } from './TimeoutSettings.ts';
+import { FileChooser } from './FileChooser.ts';
+import { ConsoleMessage, ConsoleMessageType } from './ConsoleMessage.ts';
+import { PuppeteerLifeCycleEvent } from './LifecycleWatcher.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import {
   SerializableOrJSHandle,
   EvaluateHandleFn,
@@ -57,9 +58,9 @@ import {
   EvaluateFn,
   EvaluateFnReturnType,
   UnwrapPromiseLike,
-} from './EvalTypes.js';
-import { PDFOptions, paperFormats } from './PDFOptions.js';
-import { isNode } from '../environment.js';
+} from './EvalTypes.ts';
+import { PDFOptions, paperFormats } from './PDFOptions.ts';
+import { isNode } from '../environment.ts';
 
 /**
  * @public
@@ -367,15 +368,15 @@ export interface PageEventObject {
 }
 
 class ScreenshotTaskQueue {
-  _chain: Promise<Buffer | string | void>;
+  _chain: Promise<Uint8Array | string | void>;
 
   constructor() {
-    this._chain = Promise.resolve<Buffer | string | void>(undefined);
+    this._chain = Promise.resolve<Uint8Array | string | void>(undefined);
   }
 
   public postTask(
-    task: () => Promise<Buffer | string>
-  ): Promise<Buffer | string | void> {
+    task: () => Promise<Uint8Array | string>
+  ): Promise<Uint8Array | string | void> {
     const result = this._chain.then(task);
     this._chain = result.catch(() => {});
     return result;
@@ -499,6 +500,7 @@ export class Page extends EventEmitter {
       }
       const session = Connection.fromSession(client).session(event.sessionId);
       const worker = new WebWorker(
+        // @ts-expect-error TS2345
         session,
         event.targetInfo.url,
         this._addConsoleMessage.bind(this),
@@ -581,6 +583,7 @@ export class Page extends EventEmitter {
   ): Promise<void> {
     if (!this._fileChooserInterceptors.size) return;
     const frame = this._frameManager.frame(event.frameId);
+    // @ts-expect-error TS2531
     const context = await frame.executionContext();
     const element = await context._adoptBackendNodeId(event.backendNodeId);
     const interceptors = Array.from(this._fileChooserInterceptors);
@@ -630,8 +633,10 @@ export class Page extends EventEmitter {
       });
 
     const { timeout = this._timeoutSettings.timeout() } = options;
+    // @ts-expect-error TS7034
     let callback;
     const promise = new Promise<FileChooser>((x) => (callback = x));
+    // @ts-expect-error TS2345
     this._fileChooserInterceptors.add(callback);
     return helper
       .waitWithTimeout<FileChooser>(
@@ -640,6 +645,7 @@ export class Page extends EventEmitter {
         timeout
       )
       .catch((error) => {
+        // @ts-expect-error TS7005
         this._fileChooserInterceptors.delete(callback);
         throw error;
       });
@@ -838,6 +844,7 @@ export class Page extends EventEmitter {
    * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | selector}
    * to query page for.
    */
+  // @ts-expect-error TS2304
   async $<T extends Element = Element>(
     selector: string
   ): Promise<ElementHandle<T> | null> {
@@ -989,6 +996,7 @@ export class Page extends EventEmitter {
   async $eval<ReturnType>(
     selector: string,
     pageFunction: (
+      // @ts-expect-error TS2304
       element: Element,
       /* Unfortunately this has to be unknown[] because it's hard to get
        * TypeScript to understand that the arguments will be left alone unless
@@ -1072,6 +1080,7 @@ export class Page extends EventEmitter {
   async $$eval<ReturnType>(
     selector: string,
     pageFunction: (
+      // @ts-expect-error TS2304
       elements: Element[],
       /* These have to be typed as unknown[] for the same reason as the $eval
        * definition above, please see that comment for more details and the TODO
@@ -1084,6 +1093,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().$$eval<ReturnType>(selector, pageFunction, ...args);
   }
 
+  // @ts-expect-error TS2304
   async $$<T extends Element = Element>(
     selector: string
   ): Promise<Array<ElementHandle<T>>> {
@@ -1109,6 +1119,7 @@ export class Page extends EventEmitter {
     const filterUnsupportedAttributes = (
       cookie: Protocol.Network.Cookie
     ): Protocol.Network.Cookie => {
+      // @ts-expect-error TS7053
       for (const attr of unsupportedCookieAttributes) delete cookie[attr];
       return cookie;
     };
@@ -1213,6 +1224,7 @@ export class Page extends EventEmitter {
   ): Metrics {
     const result = {};
     for (const metric of metrics || []) {
+      // @ts-expect-error TS7053
       if (supportedMetrics.has(metric.name)) result[metric.name] = metric.value;
     }
     return result;
@@ -1268,6 +1280,7 @@ export class Page extends EventEmitter {
     if (type !== 'exposedFun' || !this._pageBindings.has(name)) return;
     let expression = null;
     try {
+      // @ts-expect-error TS2722
       const result = await this._pageBindings.get(name)(...args);
       expression = helper.pageBindingDeliverResultString(name, seq, result);
     } catch (error) {
@@ -1276,6 +1289,7 @@ export class Page extends EventEmitter {
           name,
           seq,
           error.message,
+          // @ts-expect-error TS2345
           error.stack
         );
       else
@@ -1382,11 +1396,13 @@ export class Page extends EventEmitter {
     url: string,
     options: WaitForOptions & { referer?: string } = {}
   ): Promise<HTTPResponse> {
+    // @ts-expect-error TS2322
     return await this._frameManager.mainFrame().goto(url, options);
   }
 
   async reload(options?: WaitForOptions): Promise<HTTPResponse | null> {
     const result = await Promise.all<HTTPResponse, void>([
+      // @ts-expect-error TS2322
       this.waitForNavigation(options),
       this._client.send('Page.reload'),
     ]);
@@ -1512,6 +1528,7 @@ export class Page extends EventEmitter {
 
   async emulateMediaFeatures(features?: MediaFeature[]): Promise<void> {
     if (features === null)
+      // @ts-expect-error TS2322
       await this._client.send('Emulation.setEmulatedMedia', { features: null });
     if (Array.isArray(features)) {
       features.every((mediaFeature) => {
@@ -1710,7 +1727,8 @@ export class Page extends EventEmitter {
 
   async screenshot(
     options: ScreenshotOptions = {}
-  ): Promise<Buffer | string | void> {
+  ): Promise<Uint8Array | string | void> {
+    // @ts-expect-error TS7034
     let screenshotType = null;
     // options.type takes precedence over inferring the type from options.path
     // because it may be a 0-length file with no extension created beforehand
@@ -1794,14 +1812,15 @@ export class Page extends EventEmitter {
       );
     }
     return this._screenshotTaskQueue.postTask(() =>
+      // @ts-expect-error TS7005
       this._screenshotTask(screenshotType, options)
     );
   }
 
   private async _screenshotTask(
     format: 'png' | 'jpeg',
-    options?: ScreenshotOptions
-  ): Promise<Buffer | string> {
+    options: ScreenshotOptions
+  ): Promise<Uint8Array | string> {
     await this._client.send('Target.activateTarget', {
       targetId: this._target._targetId,
     });
@@ -1855,7 +1874,7 @@ export class Page extends EventEmitter {
     const buffer =
       options.encoding === 'base64'
         ? result.data
-        : Buffer.from(result.data, 'base64');
+        : base64Decode(result.data);
 
     if (options.path) {
       if (!isNode) {
@@ -1897,7 +1916,7 @@ export class Page extends EventEmitter {
    *
    * @param options - options for generating the PDF.
    */
-  async pdf(options: PDFOptions = {}): Promise<Buffer> {
+  async pdf(options: PDFOptions = {}): Promise<Uint8Array> {
     const {
       scale = 1,
       displayHeaderFooter = false,
@@ -1915,6 +1934,7 @@ export class Page extends EventEmitter {
     let paperWidth = 8.5;
     let paperHeight = 11;
     if (options.format) {
+      // @ts-expect-error TS7053
       const format = paperFormats[options.format.toLowerCase()];
       assert(format, 'Unknown paper format: ' + options.format);
       paperWidth = format.width;
@@ -1956,6 +1976,7 @@ export class Page extends EventEmitter {
       await this._resetDefaultBackgroundColor();
     }
 
+    // @ts-expect-error TS2345
     return await helper.readProtocolStream(this._client, result.stream, path);
   }
 
@@ -2059,6 +2080,7 @@ export class Page extends EventEmitter {
     } = {},
     ...args: SerializableOrJSHandle[]
   ): Promise<JSHandle> {
+    // @ts-expect-error TS2322
     return this.mainFrame().waitFor(
       selectorOrFunctionOrTimeout,
       options,
@@ -2168,6 +2190,7 @@ function convertPrintParameterToInches(
     }
     const value = Number(valueText);
     assert(!isNaN(value), 'Failed to parse parameter value: ' + text);
+    // @ts-expect-error TS7053
     pixels = value * unitToPixels[unit];
   } else {
     throw new Error(

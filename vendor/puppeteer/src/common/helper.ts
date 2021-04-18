@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TimeoutError } from './Errors.js';
-import { debug } from './Debug.js';
-import { CDPSession } from './Connection.js';
-import { Protocol } from 'devtools-protocol';
-import { CommonEventEmitter } from './EventEmitter.js';
-import { assert } from './assert.js';
-import { isNode } from '../environment.js';
+import { concat as bytesConcat } from 'https://deno.land/std@0.93.0/bytes/mod.ts';
+import { decode as base64Decode } from 'https://deno.land/std@0.93.0/encoding/base64.ts';
+import { TimeoutError } from './Errors.ts';
+import { debug } from './Debug.ts';
+import { CDPSession } from './Connection.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { CommonEventEmitter } from './EventEmitter.ts';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { isNode } from '../environment.ts';
 
 export const debugError = debug('puppeteer:error');
 
@@ -131,6 +133,7 @@ async function waitForEvent<T extends any>(
   timeout: number,
   abortPromise: Promise<Error>
 ): Promise<T> {
+  // @ts-expect-error TS7034
   let eventTimeout, resolveCallback, rejectCallback;
   const promise = new Promise<T>((resolve, reject) => {
     resolveCallback = resolve;
@@ -138,10 +141,12 @@ async function waitForEvent<T extends any>(
   });
   const listener = addEventListener(emitter, eventName, async (event) => {
     if (!(await predicate(event))) return;
+    // @ts-expect-error TS7005
     resolveCallback(event);
   });
   if (timeout) {
     eventTimeout = setTimeout(() => {
+      // @ts-expect-error TS7005
       rejectCallback(
         new TimeoutError('Timeout exceeded while waiting for event')
       );
@@ -149,6 +154,7 @@ async function waitForEvent<T extends any>(
   }
   function cleanup(): void {
     removeEventListeners([listener]);
+    // @ts-expect-error TS7005
     clearTimeout(eventTimeout);
   }
   const result = await Promise.race([promise, abortPromise]).then(
@@ -189,6 +195,7 @@ function pageBindingInitString(type: string, name: string): string {
     const binding = win[bindingName];
 
     win[bindingName] = (...args: unknown[]): Promise<unknown> => {
+      // @ts-expect-error TS7053
       const me = window[bindingName];
       let callbacks = me.callbacks;
       if (!callbacks) {
@@ -213,7 +220,9 @@ function pageBindingDeliverResultString(
   result: unknown
 ): string {
   function deliverResult(name: string, seq: number, result: unknown): void {
+    // @ts-expect-error TS7053
     window[name].callbacks.get(seq).resolve(result);
+    // @ts-expect-error TS7053
     window[name].callbacks.delete(seq);
   }
   return evaluationString(deliverResult, name, seq, result);
@@ -233,7 +242,9 @@ function pageBindingDeliverErrorString(
   ): void {
     const error = new Error(message);
     error.stack = stack;
+    // @ts-expect-error TS7053
     window[name].callbacks.get(seq).reject(error);
+    // @ts-expect-error TS7053
     window[name].callbacks.delete(seq);
   }
   return evaluationString(deliverError, name, seq, message, stack);
@@ -245,7 +256,9 @@ function pageBindingDeliverErrorValueString(
   value: unknown
 ): string {
   function deliverErrorValue(name: string, seq: number, value: unknown): void {
+    // @ts-expect-error TS7053
     window[name].callbacks.get(seq).reject(value);
+    // @ts-expect-error TS7053
     window[name].callbacks.delete(seq);
   }
   return evaluationString(deliverErrorValue, name, seq, value);
@@ -256,15 +269,19 @@ function makePredicateString(
   predicateQueryHandler?: Function
 ): string {
   function checkWaitForOptions(
+    // @ts-expect-error TS2304
     node: Node,
     waitForVisible: boolean,
     waitForHidden: boolean
+  // @ts-expect-error TS2304
   ): Node | null | boolean {
     if (!node) return waitForHidden;
     if (!waitForVisible && !waitForHidden) return node;
     const element =
+      // @ts-expect-error TS2552
       node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element);
 
+    // @ts-expect-error TS2339
     const style = window.getComputedStyle(element);
     const isVisible =
       style && style.visibility !== 'hidden' && hasVisibleBoundingBox();
@@ -293,12 +310,14 @@ async function waitWithTimeout<T extends any>(
   taskName: string,
   timeout: number
 ): Promise<T> {
+  // @ts-expect-error TS7034
   let reject;
   const timeoutError = new TimeoutError(
     `waiting for ${taskName} failed: timeout ${timeout}ms exceeded`
   );
   const timeoutPromise = new Promise<T>((resolve, x) => (reject = x));
   let timeoutTimer = null;
+  // @ts-expect-error TS7005
   if (timeout) timeoutTimer = setTimeout(() => reject(timeoutError), timeout);
   try {
     return await Promise.race([promise, timeoutPromise]);
@@ -311,38 +330,30 @@ async function readProtocolStream(
   client: CDPSession,
   handle: string,
   path?: string
-): Promise<Buffer> {
-  if (!isNode && path) {
-    throw new Error('Cannot write to a path outside of Node.js environment.');
-  }
-
-  const fs = isNode ? await importFSModule() : null;
-
+): Promise<Uint8Array> {
   let eof = false;
-  let fileHandle: import('fs').promises.FileHandle;
-
-  if (path && fs) {
-    fileHandle = await fs.promises.open(path, 'w');
+  let fileHandle: Deno.File;
+  if (path) {
+    fileHandle = await Deno.open(path, { create: true, write: true });
   }
-  const bufs = [];
+  const bufs: Uint8Array[] = [];
   while (!eof) {
     const response = await client.send('IO.read', { handle });
     eof = response.eof;
-    const buf = Buffer.from(
-      response.data,
-      response.base64Encoded ? 'base64' : undefined
-    );
+    const buf = response.base64Encoded ? base64Decode(response.data) : new TextEncoder().encode(response.data);
     bufs.push(buf);
-    if (path && fs) {
-      await fs.promises.writeFile(fileHandle, buf);
+    if (path) {
+      await Deno.writeAll(fileHandle!, buf);
     }
   }
-  if (path) await fileHandle.close();
+  if (path) fileHandle!.close();
   await client.send('IO.close', { handle });
   let resultBuffer = null;
   try {
-    resultBuffer = Buffer.concat(bufs);
+    // @ts-expect-error TS2345
+    resultBuffer = bytesConcat(bufs);
   } finally {
+    // @ts-expect-error TS2322
     return resultBuffer;
   }
 }
@@ -357,18 +368,18 @@ async function readProtocolStream(
  * See https://github.com/puppeteer/puppeteer/issues/6548 for more details.
  *
  * Once Node 10 is no longer supported (April 2021) we can remove this and use
- * `(await import('fs')).promises`.
+ * `(await import('https://deno.land/std@0.93.0/node/fs.ts')).promises`.
  */
-async function importFSModule(): Promise<typeof import('fs')> {
+async function importFSModule(): Promise<typeof import('https://deno.land/std@0.93.0/node/fs.ts')> {
   if (!isNode) {
     throw new Error('Cannot load the fs module API outside of Node.');
   }
 
-  const fs = await import('fs');
+  const fs = await import('https://deno.land/std@0.93.0/node/fs.ts');
   if (fs.promises) {
     return fs;
   }
-  return fs.default;
+  return fs;
 }
 
 export const helper = {

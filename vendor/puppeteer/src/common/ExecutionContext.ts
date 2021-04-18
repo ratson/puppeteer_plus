@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.js';
-import { helper } from './helper.js';
-import { createJSHandle, JSHandle, ElementHandle } from './JSHandle.js';
-import { CDPSession } from './Connection.js';
-import { DOMWorld } from './DOMWorld.js';
-import { Frame } from './FrameManager.js';
-import { Protocol } from 'devtools-protocol';
-import { EvaluateHandleFn, SerializableOrJSHandle } from './EvalTypes.js';
+import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { helper } from './helper.ts';
+import { createJSHandle, JSHandle, ElementHandle } from './JSHandle.ts';
+import { CDPSession } from './Connection.ts';
+import { DOMWorld } from './DOMWorld.ts';
+import { Frame } from './FrameManager.ts';
+import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { EvaluateHandleFn, SerializableOrJSHandle } from './EvalTypes.ts';
 /**
  * @public
  */
@@ -254,6 +254,7 @@ export class ExecutionContext {
       callFunctionOnPromise = this._client.send('Runtime.callFunctionOn', {
         functionDeclaration: functionText + '\n' + suffix + '\n',
         executionContextId: this._contextId,
+        // @ts-expect-error TS2322
         arguments: args.map(convertArgument.bind(this)),
         returnByValue,
         awaitPromise: true,
