@@ -181,7 +181,7 @@ export namespace ProtocolMapping {
          */
         'DOM.childNodeRemoved': [Protocol.DOM.ChildNodeRemovedEvent];
         /**
-         * Called when distrubution is changed.
+         * Called when distribution is changed.
          */
         'DOM.distributedNodesUpdated': [Protocol.DOM.DistributedNodesUpdatedEvent];
         /**
@@ -353,6 +353,24 @@ export namespace ProtocolMapping {
          * or after the response was received.
          */
         'Network.trustTokenOperationDone': [Protocol.Network.TrustTokenOperationDoneEvent];
+        /**
+         * Fired once when parsing the .wbn file has succeeded.
+         * The event contains the information about the web bundle contents.
+         */
+        'Network.subresourceWebBundleMetadataReceived': [Protocol.Network.SubresourceWebBundleMetadataReceivedEvent];
+        /**
+         * Fired once when parsing the .wbn file has failed.
+         */
+        'Network.subresourceWebBundleMetadataError': [Protocol.Network.SubresourceWebBundleMetadataErrorEvent];
+        /**
+         * Fired when handling requests for resources within a .wbn file.
+         * Note: this will only be fired for resources that are requested by the webpage.
+         */
+        'Network.subresourceWebBundleInnerResponseParsed': [Protocol.Network.SubresourceWebBundleInnerResponseParsedEvent];
+        /**
+         * Fired when request for resources within a .wbn file failed.
+         */
+        'Network.subresourceWebBundleInnerResponseError': [Protocol.Network.SubresourceWebBundleInnerResponseErrorEvent];
         /**
          * Fired when the node should be inspected. This happens after call to `setInspectMode` or when
          * user manually inspects an element.
@@ -648,8 +666,8 @@ export namespace ProtocolMapping {
          */
         'Media.playerErrorsRaised': [Protocol.Media.PlayerErrorsRaisedEvent];
         /**
-         * Called whenever a player is created, or when a new agent joins and recieves
-         * a list of active players. If an agent is restored, it will recieve the full
+         * Called whenever a player is created, or when a new agent joins and receives
+         * a list of active players. If an agent is restored, it will receive the full
          * list of player ids and all events again.
          */
         'Media.playersCreated': [Protocol.Media.PlayersCreatedEvent];
@@ -1695,6 +1713,13 @@ export namespace ProtocolMapping {
             returnType: Protocol.CSS.SetMediaTextResponse;
         };
         /**
+         * Modifies the expression of a container query.
+         */
+        'CSS.setContainerQueryText': {
+            paramsType: [Protocol.CSS.SetContainerQueryTextRequest];
+            returnType: Protocol.CSS.SetContainerQueryTextResponse;
+        };
+        /**
          * Modifies the rule selector.
          */
         'CSS.setRuleSelector': {
@@ -2338,14 +2363,14 @@ export namespace ProtocolMapping {
             returnType: Protocol.Emulation.CanEmulateResponse;
         };
         /**
-         * Clears the overriden device metrics.
+         * Clears the overridden device metrics.
          */
         'Emulation.clearDeviceMetricsOverride': {
             paramsType: [];
             returnType: void;
         };
         /**
-         * Clears the overriden Geolocation Position and Error.
+         * Clears the overridden Geolocation Position and Error.
          */
         'Emulation.clearGeolocationOverride': {
             paramsType: [];
@@ -3065,13 +3090,6 @@ export namespace ProtocolMapping {
             returnType: void;
         };
         /**
-         * For testing.
-         */
-        'Network.setDataSizeLimitsForTest': {
-            paramsType: [Protocol.Network.SetDataSizeLimitsForTestRequest];
-            returnType: void;
-        };
-        /**
          * Specifies whether to always send extra HTTP headers with the requests from this page.
          */
         'Network.setExtraHTTPHeaders': {
@@ -3327,7 +3345,7 @@ export namespace ProtocolMapping {
             returnType: Protocol.Page.CaptureSnapshotResponse;
         };
         /**
-         * Clears the overriden device metrics.
+         * Clears the overridden device metrics.
          */
         'Page.clearDeviceMetricsOverride': {
             paramsType: [];
@@ -3341,7 +3359,7 @@ export namespace ProtocolMapping {
             returnType: void;
         };
         /**
-         * Clears the overriden Geolocation Position and Error.
+         * Clears the overridden Geolocation Position and Error.
          */
         'Page.clearGeolocationOverride': {
             paramsType: [];
