@@ -1030,6 +1030,11 @@ export namespace ProtocolProxyApi {
         setMediaText(params: Protocol.CSS.SetMediaTextRequest): Promise<Protocol.CSS.SetMediaTextResponse>;
 
         /**
+         * Modifies the expression of a container query.
+         */
+        setContainerQueryText(params: Protocol.CSS.SetContainerQueryTextRequest): Promise<Protocol.CSS.SetContainerQueryTextResponse>;
+
+        /**
          * Modifies the rule selector.
          */
         setRuleSelector(params: Protocol.CSS.SetRuleSelectorRequest): Promise<Protocol.CSS.SetRuleSelectorResponse>;
@@ -1448,7 +1453,7 @@ export namespace ProtocolProxyApi {
         on(event: 'childNodeRemoved', listener: (params: Protocol.DOM.ChildNodeRemovedEvent) => void): void;
 
         /**
-         * Called when distrubution is changed.
+         * Called when distribution is changed.
          */
         on(event: 'distributedNodesUpdated', listener: (params: Protocol.DOM.DistributedNodesUpdatedEvent) => void): void;
 
@@ -1640,12 +1645,12 @@ export namespace ProtocolProxyApi {
         canEmulate(): Promise<Protocol.Emulation.CanEmulateResponse>;
 
         /**
-         * Clears the overriden device metrics.
+         * Clears the overridden device metrics.
          */
         clearDeviceMetricsOverride(): Promise<void>;
 
         /**
-         * Clears the overriden Geolocation Position and Error.
+         * Clears the overridden Geolocation Position and Error.
          */
         clearGeolocationOverride(): Promise<void>;
 
@@ -2230,11 +2235,6 @@ export namespace ProtocolProxyApi {
         setCookies(params: Protocol.Network.SetCookiesRequest): Promise<void>;
 
         /**
-         * For testing.
-         */
-        setDataSizeLimitsForTest(params: Protocol.Network.SetDataSizeLimitsForTestRequest): Promise<void>;
-
-        /**
          * Specifies whether to always send extra HTTP headers with the requests from this page.
          */
         setExtraHTTPHeaders(params: Protocol.Network.SetExtraHTTPHeadersRequest): Promise<void>;
@@ -2389,6 +2389,28 @@ export namespace ProtocolProxyApi {
          * or after the response was received.
          */
         on(event: 'trustTokenOperationDone', listener: (params: Protocol.Network.TrustTokenOperationDoneEvent) => void): void;
+
+        /**
+         * Fired once when parsing the .wbn file has succeeded.
+         * The event contains the information about the web bundle contents.
+         */
+        on(event: 'subresourceWebBundleMetadataReceived', listener: (params: Protocol.Network.SubresourceWebBundleMetadataReceivedEvent) => void): void;
+
+        /**
+         * Fired once when parsing the .wbn file has failed.
+         */
+        on(event: 'subresourceWebBundleMetadataError', listener: (params: Protocol.Network.SubresourceWebBundleMetadataErrorEvent) => void): void;
+
+        /**
+         * Fired when handling requests for resources within a .wbn file.
+         * Note: this will only be fired for resources that are requested by the webpage.
+         */
+        on(event: 'subresourceWebBundleInnerResponseParsed', listener: (params: Protocol.Network.SubresourceWebBundleInnerResponseParsedEvent) => void): void;
+
+        /**
+         * Fired when request for resources within a .wbn file failed.
+         */
+        on(event: 'subresourceWebBundleInnerResponseError', listener: (params: Protocol.Network.SubresourceWebBundleInnerResponseErrorEvent) => void): void;
 
     }
 
@@ -2568,7 +2590,7 @@ export namespace ProtocolProxyApi {
         captureSnapshot(params: Protocol.Page.CaptureSnapshotRequest): Promise<Protocol.Page.CaptureSnapshotResponse>;
 
         /**
-         * Clears the overriden device metrics.
+         * Clears the overridden device metrics.
          */
         clearDeviceMetricsOverride(): Promise<void>;
 
@@ -2578,7 +2600,7 @@ export namespace ProtocolProxyApi {
         clearDeviceOrientationOverride(): Promise<void>;
 
         /**
-         * Clears the overriden Geolocation Position and Error.
+         * Clears the overridden Geolocation Position and Error.
          */
         clearGeolocationOverride(): Promise<void>;
 
@@ -3637,8 +3659,8 @@ export namespace ProtocolProxyApi {
         on(event: 'playerErrorsRaised', listener: (params: Protocol.Media.PlayerErrorsRaisedEvent) => void): void;
 
         /**
-         * Called whenever a player is created, or when a new agent joins and recieves
-         * a list of active players. If an agent is restored, it will recieve the full
+         * Called whenever a player is created, or when a new agent joins and receives
+         * a list of active players. If an agent is restored, it will receive the full
          * list of player ids and all events again.
          */
         on(event: 'playersCreated', listener: (params: Protocol.Media.PlayersCreatedEvent) => void): void;
