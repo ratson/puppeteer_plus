@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { decode as base64Decode } from 'https://deno.land/std@0.93.0/encoding/base64.ts';
+import { decode as base64Decode } from 'https://deno.land/std@0.99.0/encoding/base64.ts';
 import { CDPSession } from './Connection.ts';
 import { Frame } from './FrameManager.ts';
 import { HTTPRequest } from './HTTPRequest.ts';

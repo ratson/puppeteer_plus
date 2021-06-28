@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { decode as base64Decode } from 'https://deno.land/std@0.93.0/encoding/base64.ts';
+import { decode as base64Decode } from 'https://deno.land/std@0.99.0/encoding/base64.ts';
 import { EventEmitter } from './EventEmitter.ts';
 import {
   Connection,
@@ -30,7 +30,7 @@ import {
 } from './FrameManager.ts';
 import { Keyboard, Mouse, Touchscreen, MouseButton } from './Input.ts';
 import { Tracing } from './Tracing.ts';
-import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { Coverage } from './Coverage.ts';
 import { WebWorker } from './WebWorker.ts';

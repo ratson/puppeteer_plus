@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
 import { debug } from './Debug.ts';
 const debugProtocolSend = debug('puppeteer:protocol:SEND ►');
 const debugProtocolReceive = debug('puppeteer:protocol:RECV ◀');

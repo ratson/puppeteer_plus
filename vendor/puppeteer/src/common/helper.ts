@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { concat as bytesConcat } from 'https://deno.land/std@0.93.0/bytes/mod.ts';
-import { decode as base64Decode } from 'https://deno.land/std@0.93.0/encoding/base64.ts';
+import { concat as bytesConcat } from 'https://deno.land/std@0.99.0/bytes/mod.ts';
+import { decode as base64Decode } from 'https://deno.land/std@0.99.0/encoding/base64.ts';
 import { TimeoutError } from './Errors.ts';
 import { debug } from './Debug.ts';
 import { CDPSession } from './Connection.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import { CommonEventEmitter } from './EventEmitter.ts';
-import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
 import { isNode } from '../environment.ts';
 
 export const debugError = debug('puppeteer:error');
@@ -368,14 +368,14 @@ async function readProtocolStream(
  * See https://github.com/puppeteer/puppeteer/issues/6548 for more details.
  *
  * Once Node 10 is no longer supported (April 2021) we can remove this and use
- * `(await import('https://deno.land/std@0.93.0/node/fs.ts')).promises`.
+ * `(await import('https://deno.land/std@0.99.0/node/fs.ts')).promises`.
  */
-async function importFSModule(): Promise<typeof import('https://deno.land/std@0.93.0/node/fs.ts')> {
+async function importFSModule(): Promise<typeof import('https://deno.land/std@0.99.0/node/fs.ts')> {
   if (!isNode) {
     throw new Error('Cannot load the fs module API outside of Node.');
   }
 
-  const fs = await import('https://deno.land/std@0.93.0/node/fs.ts');
+  const fs = await import('https://deno.land/std@0.99.0/node/fs.ts');
   if (fs.promises) {
     return fs;
   }

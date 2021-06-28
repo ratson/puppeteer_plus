@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { encode as base64Encode } from 'https://deno.land/std@0.93.0/encoding/base64.ts';
+import { encode as base64Encode } from 'https://deno.land/std@0.99.0/encoding/base64.ts';
 import { CDPSession } from './Connection.ts';
 import { Frame } from './FrameManager.ts';
 import { HTTPResponse } from './HTTPResponse.ts';
-import { assert } from 'https://deno.land/std@0.93.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 
