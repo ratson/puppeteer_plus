@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { concat as bytesConcat } from 'https://deno.land/std@0.99.0/bytes/mod.ts';
-import { decode as base64Decode } from 'https://deno.land/std@0.99.0/encoding/base64.ts';
+
+import type { Readable } from 'https://deno.land/std@0.99.0/node/stream.ts';
+
 import { TimeoutError } from './Errors.ts';
 import { debug } from './Debug.ts';
 import { CDPSession } from './Connection.ts';
@@ -133,7 +134,7 @@ async function waitForEvent<T extends any>(
   timeout: number,
   abortPromise: Promise<Error>
 ): Promise<T> {
-  // @ts-expect-error TS7034
+  // @ts-expect-error TS2345
   let eventTimeout, resolveCallback, rejectCallback;
   const promise = new Promise<T>((resolve, reject) => {
     resolveCallback = resolve;
@@ -326,36 +327,73 @@ async function waitWithTimeout<T extends any>(
   }
 }
 
-async function readProtocolStream(
-  client: CDPSession,
-  handle: string,
+async function getReadableAsBuffer(
+  readable: Readable,
   path?: string
 ): Promise<Uint8Array> {
-  let eof = false;
-  let fileHandle: Deno.File;
-  if (path) {
-    fileHandle = await Deno.open(path, { create: true, write: true });
+  if (!isNode && path) {
+    throw new Error('Cannot write to a path outside of Node.js environment.');
   }
-  const bufs: Uint8Array[] = [];
-  while (!eof) {
-    const response = await client.send('IO.read', { handle });
-    eof = response.eof;
-    const buf = response.base64Encoded ? base64Decode(response.data) : new TextEncoder().encode(response.data);
-    bufs.push(buf);
-    if (path) {
-      await Deno.writeAll(fileHandle!, buf);
+
+  const fs = isNode ? await importFSModule() : null;
+
+  // @ts-expect-error TS2694
+  let fileHandle: import('https://deno.land/std@0.99.0/node/fs.ts').promises.FileHandle;
+
+  if (path) {
+    // @ts-expect-error TS2531
+    fileHandle = await fs.promises.open(path, 'w');
+  }
+  const buffers = [];
+  for await (const chunk of readable) {
+    buffers.push(chunk);
+    if (fileHandle) {
+      // @ts-expect-error TS2531
+      await fs.promises.writeFile(fileHandle, chunk);
     }
   }
+
   if (path) fileHandle!.close();
-  await client.send('IO.close', { handle });
   let resultBuffer = null;
   try {
-    // @ts-expect-error TS2345
-    resultBuffer = bytesConcat(bufs);
+    // @ts-expect-error TS2339
+    resultBuffer = Uint8Array.concat(buffers);
   } finally {
-    // @ts-expect-error TS2322
     return resultBuffer;
   }
+}
+
+async function getReadableFromProtocolStream(
+  client: CDPSession,
+  handle: string
+): Promise<Readable> {
+  // TODO:
+  // This restriction can be lifted once https://github.com/nodejs/node/pull/39062 has landed
+  if (!isNode) {
+    throw new Error('Cannot create a stream outside of Node.js environment.');
+  }
+
+  const { Readable } = await import('https://deno.land/std@0.99.0/node/stream.ts');
+
+  let eof = false;
+  return new Readable({
+    // @ts-expect-error TS2322
+    async read(size: number) {
+      if (eof) {
+        return null;
+      }
+
+      const response = await client.send('IO.read', { handle, size });
+      // @ts-expect-error TS2339
+      this.push(response.data, response.base64Encoded ? 'base64' : undefined);
+      if (response.eof) {
+        // @ts-expect-error TS2339
+        this.push(null);
+        eof = true;
+        await client.send('IO.close', { handle });
+      }
+    },
+  });
 }
 
 /**
@@ -389,7 +427,8 @@ export const helper = {
   pageBindingDeliverErrorString,
   pageBindingDeliverErrorValueString,
   makePredicateString,
-  readProtocolStream,
+  getReadableAsBuffer,
+  getReadableFromProtocolStream,
   waitWithTimeout,
   waitForEvent,
   isString,
