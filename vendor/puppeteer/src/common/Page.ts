@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Readable } from 'https://deno.land/std@0.99.0/node/stream.ts';
+import type { Readable } from 'https://deno.land/std@0.100.0/node/stream.ts';
 
-import { decode as base64Decode } from 'https://deno.land/std@0.99.0/encoding/base64.ts';
+import { Buffer } from 'https://deno.land/std@0.100.0/node/buffer.ts';
 import { EventEmitter } from './EventEmitter.ts';
 import {
   Connection,
@@ -32,7 +32,7 @@ import {
 } from './FrameManager.ts';
 import { Keyboard, Mouse, Touchscreen, MouseButton } from './Input.ts';
 import { Tracing } from './Tracing.ts';
-import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { Coverage } from './Coverage.ts';
 import { WebWorker } from './WebWorker.ts';
@@ -370,15 +370,15 @@ export interface PageEventObject {
 }
 
 class ScreenshotTaskQueue {
-  _chain: Promise<Uint8Array | string | void>;
+  _chain: Promise<Buffer | string | void>;
 
   constructor() {
-    this._chain = Promise.resolve<Uint8Array | string | void>(undefined);
+    this._chain = Promise.resolve<Buffer | string | void>(undefined);
   }
 
   public postTask(
-    task: () => Promise<Uint8Array | string>
-  ): Promise<Uint8Array | string | void> {
+    task: () => Promise<Buffer | string>
+  ): Promise<Buffer | string | void> {
     const result = this._chain.then(task);
     this._chain = result.catch(() => {});
     return result;
@@ -2467,7 +2467,7 @@ export class Page extends EventEmitter {
    */
   async screenshot(
     options: ScreenshotOptions = {}
-  ): Promise<Uint8Array | string | void> {
+  ): Promise<Buffer | string | void> {
     // @ts-expect-error TS7034
     let screenshotType = null;
     // options.type takes precedence over inferring the type from options.path
@@ -2560,7 +2560,7 @@ export class Page extends EventEmitter {
   private async _screenshotTask(
     format: 'png' | 'jpeg',
     options: ScreenshotOptions
-  ): Promise<Uint8Array | string> {
+  ): Promise<Buffer | string> {
     await this._client.send('Target.activateTarget', {
       targetId: this._target._targetId,
     });
@@ -2618,7 +2618,7 @@ export class Page extends EventEmitter {
     const buffer =
       options.encoding === 'base64'
         ? result.data
-        : base64Decode(result.data);
+        : Buffer.from(result.data, 'base64');
 
     if (options.path) {
       if (!isNode) {
@@ -2725,13 +2725,12 @@ export class Page extends EventEmitter {
 
   /**
    * @param {!PDFOptions=} options
-   * @returns {!Promise<!Uint8Array>}
+   * @returns {!Promise<!Buffer>}
    */
-  async pdf(options: PDFOptions = {}): Promise<Uint8Array> {
+  async pdf(options: PDFOptions = {}): Promise<Buffer> {
     const { path = undefined } = options;
     const readable = await this.createPDFStream(options);
-    // @ts-expect-error TS2339
-    return await helper.getReadableAsUint8Array(readable, path);
+    return await helper.getReadableAsBuffer(readable, path);
   }
 
   /**

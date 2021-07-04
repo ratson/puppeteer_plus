@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { decode as base64Decode } from 'https://deno.land/std@0.99.0/encoding/base64.ts';
+import { Buffer } from 'https://deno.land/std@0.100.0/node/buffer.ts';
 import { CDPSession } from './Connection.ts';
 import { Frame } from './FrameManager.ts';
 import { HTTPRequest } from './HTTPRequest.ts';
@@ -37,7 +37,7 @@ export interface RemoteAddress {
 export class HTTPResponse {
   private _client: CDPSession;
   private _request: HTTPRequest;
-  private _contentPromise: Promise<Uint8Array> | null = null;
+  private _contentPromise: Promise<Buffer> | null = null;
   private _bodyLoadedPromise: Promise<Error | void>;
   // @ts-expect-error TS2564
   private _bodyLoadedPromiseFulfill: (err: Error | void) => void;
@@ -148,14 +148,17 @@ export class HTTPResponse {
   /**
    * @returns Promise which resolves to a buffer with response body.
    */
-  buffer(): Promise<Uint8Array> {
+  buffer(): Promise<Buffer> {
     if (!this._contentPromise) {
       this._contentPromise = this._bodyLoadedPromise.then(async (error) => {
         if (error) throw error;
         const response = await this._client.send('Network.getResponseBody', {
           requestId: this._request._requestId,
         });
-        return response.base64Encoded ? base64Decode(response.body) : new TextEncoder().encode(response.body);
+        return Buffer.from(
+          response.body,
+          response.base64Encoded ? 'base64' : 'utf8'
+        );
       });
     }
     return this._contentPromise;
@@ -166,7 +169,7 @@ export class HTTPResponse {
    */
   async text(): Promise<string> {
     const content = await this.buffer();
-    return new TextDecoder().decode(content);
+    return content.toString('utf8');
   }
 
   /**

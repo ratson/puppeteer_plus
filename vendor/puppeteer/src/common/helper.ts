@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import type { Readable } from 'https://deno.land/std@0.99.0/node/stream.ts';
+import type { Readable } from 'https://deno.land/std@0.100.0/node/stream.ts';
+import { Buffer } from 'https://deno.land/std@0.100.0/node/buffer.ts';
 
 import { TimeoutError } from './Errors.ts';
 import { debug } from './Debug.ts';
 import { CDPSession } from './Connection.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import { CommonEventEmitter } from './EventEmitter.ts';
-import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
 import { isNode } from '../environment.ts';
 
 export const debugError = debug('puppeteer:error');
@@ -134,7 +135,7 @@ async function waitForEvent<T extends any>(
   timeout: number,
   abortPromise: Promise<Error>
 ): Promise<T> {
-  // @ts-expect-error TS2345
+  // @ts-expect-error TS7034
   let eventTimeout, resolveCallback, rejectCallback;
   const promise = new Promise<T>((resolve, reject) => {
     resolveCallback = resolve;
@@ -330,7 +331,7 @@ async function waitWithTimeout<T extends any>(
 async function getReadableAsBuffer(
   readable: Readable,
   path?: string
-): Promise<Uint8Array> {
+): Promise<Buffer> {
   if (!isNode && path) {
     throw new Error('Cannot write to a path outside of Node.js environment.');
   }
@@ -338,7 +339,7 @@ async function getReadableAsBuffer(
   const fs = isNode ? await importFSModule() : null;
 
   // @ts-expect-error TS2694
-  let fileHandle: import('https://deno.land/std@0.99.0/node/fs.ts').promises.FileHandle;
+  let fileHandle: import('https://deno.land/std@0.100.0/node/fs.ts').promises.FileHandle;
 
   if (path) {
     // @ts-expect-error TS2531
@@ -356,9 +357,10 @@ async function getReadableAsBuffer(
   if (path) fileHandle!.close();
   let resultBuffer = null;
   try {
-    // @ts-expect-error TS2339
-    resultBuffer = Uint8Array.concat(buffers);
+    // @ts-expect-error TS2345
+    resultBuffer = Buffer.concat(buffers);
   } finally {
+    // @ts-expect-error TS2322
     return resultBuffer;
   }
 }
@@ -373,7 +375,7 @@ async function getReadableFromProtocolStream(
     throw new Error('Cannot create a stream outside of Node.js environment.');
   }
 
-  const { Readable } = await import('https://deno.land/std@0.99.0/node/stream.ts');
+  const { Readable } = await import('https://deno.land/std@0.100.0/node/stream.ts');
 
   let eof = false;
   return new Readable({
@@ -406,14 +408,14 @@ async function getReadableFromProtocolStream(
  * See https://github.com/puppeteer/puppeteer/issues/6548 for more details.
  *
  * Once Node 10 is no longer supported (April 2021) we can remove this and use
- * `(await import('https://deno.land/std@0.99.0/node/fs.ts')).promises`.
+ * `(await import('https://deno.land/std@0.100.0/node/fs.ts')).promises`.
  */
-async function importFSModule(): Promise<typeof import('https://deno.land/std@0.99.0/node/fs.ts')> {
+async function importFSModule(): Promise<typeof import('https://deno.land/std@0.100.0/node/fs.ts')> {
   if (!isNode) {
     throw new Error('Cannot load the fs module API outside of Node.');
   }
 
-  const fs = await import('https://deno.land/std@0.99.0/node/fs.ts');
+  const fs = await import('https://deno.land/std@0.100.0/node/fs.ts');
   if (fs.promises) {
     return fs;
   }

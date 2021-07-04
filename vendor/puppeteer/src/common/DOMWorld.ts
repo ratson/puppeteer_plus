@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import {
   LifecycleWatcher,

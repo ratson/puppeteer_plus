@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
 import { helper } from './helper.ts';
 import { CDPSession } from './Connection.ts';
 

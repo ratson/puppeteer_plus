@@ -18,7 +18,7 @@ import { debug } from '../common/Debug.ts';
 
 import removeFolder from 'rimraf';
 import * as childProcess from 'child_process';
-import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
 import { helper, debugError } from '../common/helper.ts';
 import { LaunchOptions } from './LaunchOptions.ts';
 import { Connection } from '../common/Connection.ts';

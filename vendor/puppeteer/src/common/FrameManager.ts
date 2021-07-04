@@ -17,7 +17,7 @@
 import { debug } from '../common/Debug.ts';
 
 import { EventEmitter } from './EventEmitter.ts';
-import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { ExecutionContext, EVALUATION_SCRIPT_URL } from './ExecutionContext.ts';
 import {

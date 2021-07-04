@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { encode as base64Encode } from 'https://deno.land/std@0.99.0/encoding/base64.ts';
+import { Buffer } from 'https://deno.land/std@0.100.0/node/buffer.ts';
 import { CDPSession } from './Connection.ts';
 import { Frame } from './FrameManager.ts';
 import { HTTPResponse } from './HTTPResponse.ts';
-import { assert } from 'https://deno.land/std@0.99.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 
@@ -46,7 +46,7 @@ export interface ResponseForRequest {
    */
   headers: Record<string, unknown>;
   contentType: string;
-  body: string | Uint8Array;
+  body: string | Buffer;
 }
 
 /**
@@ -308,7 +308,7 @@ export class HTTPRequest {
     this._interceptionHandled = true;
 
     const postDataBinaryBase64 = postData
-      ? base64Encode(postData)
+      ? Buffer.from(postData).toString('base64')
       : undefined;
 
     await this._client
@@ -362,10 +362,10 @@ export class HTTPRequest {
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
 
-    const responseBody: Uint8Array | null =
+    const responseBody: Buffer | null =
       response.body && helper.isString(response.body)
-        ? new TextEncoder().encode(response.body)
-        : (response.body as Uint8Array) || null;
+        ? Buffer.from(response.body)
+        : (response.body as Buffer) || null;
 
     const responseHeaders: Record<string, string> = {};
     if (response.headers) {
@@ -378,7 +378,7 @@ export class HTTPRequest {
       responseHeaders['content-type'] = response.contentType;
     if (responseBody && !('content-length' in responseHeaders))
       responseHeaders['content-length'] = String(
-        responseBody.byteLength
+        Buffer.byteLength(responseBody)
       );
 
     await this._client
@@ -388,7 +388,6 @@ export class HTTPRequest {
         // @ts-expect-error TS7053
         responsePhrase: STATUS_TEXTS[response.status || 200],
         responseHeaders: headersArray(responseHeaders),
-        // @ts-expect-error TS2554
         body: responseBody ? responseBody.toString('base64') : undefined,
       })
       .catch((error) => {
