@@ -3359,12 +3359,19 @@ export namespace Protocol {
             location?: SourceCodeLocation;
         }
 
+        export interface WasmCrossOriginModuleSharingIssueDetails {
+            wasmModuleUrl: string;
+            sourceOrigin: string;
+            targetOrigin: string;
+            isWarning: boolean;
+        }
+
         /**
          * A unique identifier for the type of issue. Each type may use one of the
          * optional fields in InspectorIssueDetails to convey more specific
          * information about the kind of issue.
          */
-        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue');
+        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'WasmCrossOriginModuleSharingIssue');
 
         /**
          * This struct holds a list of optional fields with additional information
@@ -3384,6 +3391,7 @@ export namespace Protocol {
             attributionReportingIssueDetails?: AttributionReportingIssueDetails;
             quirksModeIssueDetails?: QuirksModeIssueDetails;
             navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
+            wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
         }
 
         /**
@@ -4352,6 +4360,10 @@ export namespace Protocol {
              * Identifier of the stylesheet containing this object (if exists).
              */
             styleSheetId?: StyleSheetId;
+            /**
+             * Optional name for the container.
+             */
+            name?: string;
         }
 
         /**
@@ -5075,7 +5087,7 @@ export namespace Protocol {
         /**
          * Pseudo element type.
          */
-        export type PseudoType = ('first-line' | 'first-letter' | 'before' | 'after' | 'marker' | 'backdrop' | 'selection' | 'target-text' | 'spelling-error' | 'grammar-error' | 'first-line-inherited' | 'scrollbar' | 'scrollbar-thumb' | 'scrollbar-button' | 'scrollbar-track' | 'scrollbar-track-piece' | 'scrollbar-corner' | 'resizer' | 'input-list-button');
+        export type PseudoType = ('first-line' | 'first-letter' | 'before' | 'after' | 'marker' | 'backdrop' | 'selection' | 'target-text' | 'spelling-error' | 'grammar-error' | 'highlight' | 'first-line-inherited' | 'scrollbar' | 'scrollbar-thumb' | 'scrollbar-button' | 'scrollbar-track' | 'scrollbar-track-piece' | 'scrollbar-corner' | 'resizer' | 'input-list-button');
 
         /**
          * Shadow root type.
@@ -5972,6 +5984,18 @@ export namespace Protocol {
             backendNodeId: BackendNodeId;
             /**
              * Id of the node at given coordinates, only when enabled and requested document.
+             */
+            nodeId?: NodeId;
+        }
+
+        export interface GetContainerForNodeRequest {
+            nodeId: NodeId;
+            containerName?: string;
+        }
+
+        export interface GetContainerForNodeResponse {
+            /**
+             * The container node for the given node, or null if not found.
              */
             nodeId?: NodeId;
         }
@@ -9044,6 +9068,11 @@ export namespace Protocol {
              * passed by the developer (e.g. via "fetch") as understood by the backend.
              */
             trustTokenParams?: TrustTokenParams;
+            /**
+             * True if this resource request is considered to be the 'same site' as the
+             * request correspondinfg to the main frame.
+             */
+            isSameSite?: boolean;
         }
 
         /**
