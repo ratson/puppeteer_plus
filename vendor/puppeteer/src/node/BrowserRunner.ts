@@ -18,7 +18,7 @@ import { debug } from '../common/Debug.ts';
 
 import removeFolder from 'rimraf';
 import * as childProcess from 'child_process';
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { helper, debugError } from '../common/helper.ts';
 import { LaunchOptions } from './LaunchOptions.ts';
 import { Connection } from '../common/Connection.ts';
@@ -91,14 +91,17 @@ export class BrowserRunner {
       this.proc.stdout.pipe(process.stdout);
     }
     this._closed = false;
-    this._processClosing = new Promise((fulfill) => {
+    this._processClosing = new Promise((fulfill, reject) => {
       this.proc.once('exit', () => {
         this._closed = true;
         // Cleanup as processes exit.
         if (this._tempDirectory) {
           removeFolderAsync(this._tempDirectory)
             .then(() => fulfill())
-            .catch((error) => console.error(error));
+            .catch((error) => {
+              console.error(error);
+              reject(error);
+            });
         } else {
           fulfill();
         }

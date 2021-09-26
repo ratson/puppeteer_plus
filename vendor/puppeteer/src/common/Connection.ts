@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { debug } from './Debug.ts';
 const debugProtocolSend = debug('puppeteer:protocol:SEND ►');
 const debugProtocolReceive = debug('puppeteer:protocol:RECV ◀');
@@ -48,7 +48,7 @@ export const ConnectionEmittedEvents = {
 } as const;
 
 /**
- * @internal
+ * @public
  */
 export class Connection extends EventEmitter {
   _url: string;
@@ -231,7 +231,7 @@ export const CDPSessionEmittedEvents = {
  * events can be subscribed to with `CDPSession.on` method.
  *
  * Useful links: {@link https://chromedevtools.github.io/devtools-protocol/ | DevTools Protocol Viewer}
- * and {@link https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md | Getting Started with DevTools Protocol}.
+ * and {@link https://github.com/aslushnikov/getting-started-with-cdp/blob/HEAD/README.md | Getting Started with DevTools Protocol}.
  *
  * @example
  * ```js

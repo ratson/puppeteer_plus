@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { ExecutionContext } from './ExecutionContext.ts';
 import { Page } from './Page.ts';
@@ -420,7 +420,10 @@ export class ElementHandle<
     if (error) throw new Error(error);
   }
 
-  async clickablePoint(): Promise<Point> {
+  /**
+   * Returns the middle point within an element unless a specific offset is provided.
+   */
+  async clickablePoint(offset?: Offset): Promise<Point> {
     const [result, layoutMetrics] = await Promise.all([
       this._client
         .send('DOM.getContentQuads', {
@@ -430,9 +433,11 @@ export class ElementHandle<
       this._client.send('Page.getLayoutMetrics'),
     ]);
     if (!result || !result.quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
+      throw new Error('Node is either not clickable or not an HTMLElement');
     // Filter out quads that have too small area to click into.
-    const { clientWidth, clientHeight } = layoutMetrics.layoutViewport;
+    // Fallback to `layoutViewport` in case of using Firefox.
+    const { clientWidth, clientHeight } =
+      layoutMetrics.cssLayoutViewport || layoutMetrics.layoutViewport;
     const quads = result.quads
       .map((quad) => this._fromProtocolQuad(quad))
       .map((quad) =>
@@ -440,9 +445,31 @@ export class ElementHandle<
       )
       .filter((quad) => computeQuadArea(quad) > 1);
     if (!quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    // Return the middle point of the first quad.
+      throw new Error('Node is either not clickable or not an HTMLElement');
     const quad = quads[0];
+    if (offset) {
+      // Return the point of the first quad identified by offset.
+      let minX = Number.MAX_SAFE_INTEGER;
+      let minY = Number.MAX_SAFE_INTEGER;
+      for (const point of quad) {
+        if (point.x < minX) {
+          minX = point.x;
+        }
+        if (point.y < minY) {
+          minY = point.y;
+        }
+      }
+      if (
+        minX !== Number.MAX_SAFE_INTEGER &&
+        minY !== Number.MAX_SAFE_INTEGER
+      ) {
+        return {
+          x: minX + offset.x,
+          y: minY + offset.y,
+        };
+      }
+    }
+    // Return the middle point of the first quad.
     let x = 0;
     let y = 0;
     for (const point of quad) {
@@ -502,7 +529,7 @@ export class ElementHandle<
    */
   async click(options: ClickOptions = {}): Promise<void> {
     await this._scrollIntoViewIfNeeded();
-    const { x, y } = await this.clickablePoint();
+    const { x, y } = await this.clickablePoint(options.offset);
     await this._page.mouse.click(x, y, options);
   }
 
@@ -511,7 +538,7 @@ export class ElementHandle<
    */
   async drag(target: Point): Promise<Protocol.Input.DragData> {
     assert(
-      this._page.isDragInterceptionEnabled,
+      this._page.isDragInterceptionEnabled(),
       'Drag Interception is not enabled!'
     );
     await this._scrollIntoViewIfNeeded();
@@ -649,7 +676,7 @@ export class ElementHandle<
      This import is only needed for `uploadFile`, so keep it scoped here to
      avoid paying the cost unnecessarily.
     */
-    const path = await import('https://deno.land/std@0.100.0/node/path.ts');
+    const path = await import('https://deno.land/std@0.108.0/node/path.ts');
     const fs = await helper.importFSModule();
     // Locate all files and confirm that they exist.
     const files = await Promise.all(
@@ -807,7 +834,7 @@ export class ElementHandle<
    * If the element is detached from DOM, the method throws an error.
    */
   // @ts-expect-error TS2580
-  async screenshot(options = {}): Promise<string | Buffer | void> {
+  async screenshot(options = {}): Promise<string | Buffer> {
     let needsViewportReset = false;
 
     let boundingBox = await this.boundingBox();
@@ -836,9 +863,10 @@ export class ElementHandle<
     assert(boundingBox.width !== 0, 'Node has 0 width.');
     assert(boundingBox.height !== 0, 'Node has 0 height.');
 
-    const {
-      layoutViewport: { pageX, pageY },
-    } = await this._client.send('Page.getLayoutMetrics');
+    const layoutMetrics = await this._client.send('Page.getLayoutMetrics');
+    // Fallback to `layoutViewport` in case of using Firefox.
+    const { pageX, pageY } =
+      layoutMetrics.cssLayoutViewport || layoutMetrics.layoutViewport;
 
     const clip = Object.assign({}, boundingBox);
     clip.x += pageX;
@@ -1025,23 +1053,37 @@ export class ElementHandle<
   /**
    * Resolves to true if the element is visible in the current viewport.
    */
-  async isIntersectingViewport(): Promise<boolean> {
+  async isIntersectingViewport(options?: {
+    threshold?: number;
+  }): Promise<boolean> {
+    const { threshold = 0 } = options || {};
     // @ts-expect-error TS2304
-    return await this.evaluate<(element: Element) => Promise<boolean>>(
-      async (element) => {
-        const visibleRatio = await new Promise((resolve) => {
-          // @ts-expect-error TS2304
-          const observer = new IntersectionObserver((entries) => {
-            resolve(entries[0].intersectionRatio);
-            observer.disconnect();
-          });
-          observer.observe(element);
+    return await this.evaluate(async (element: Element, threshold: number) => {
+      const visibleRatio = await new Promise<number>((resolve) => {
+        // @ts-expect-error TS2304
+        const observer = new IntersectionObserver((entries) => {
+          resolve(entries[0].intersectionRatio);
+          observer.disconnect();
         });
-        // @ts-expect-error TS2571
-        return visibleRatio > 0;
-      }
-    );
+        observer.observe(element);
+      });
+      return threshold === 1 ? visibleRatio === 1 : visibleRatio > threshold;
+    }, threshold);
   }
+}
+
+/**
+ * @public
+ */
+export interface Offset {
+  /**
+   * x-offset for the clickable point relative to the top-left corder of the border box.
+   */
+  x: number;
+  /**
+   * y-offset for the clickable point relative to the top-left corder of the border box.
+   */
+  y: number;
 }
 
 /**
@@ -1062,6 +1104,10 @@ export interface ClickOptions {
    * @defaultValue 1
    */
   clickCount?: number;
+  /**
+   * Offset for the clickable point relative to the top-left corder of the border box.
+   */
+  offset?: Offset;
 }
 
 /**

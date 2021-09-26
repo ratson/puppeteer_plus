@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { EventEmitter } from './EventEmitter.ts';
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import { CDPSession } from './Connection.ts';
@@ -189,6 +189,12 @@ export class NetworkManager extends EventEmitter {
     return Object.assign({}, this._extraHTTPHeaders);
   }
 
+  numRequestsInProgress(): number {
+    return [...this._requestIdToRequest].filter(([, request]) => {
+      return !request.response();
+    }).length;
+  }
+
   async setOfflineMode(value: boolean): Promise<void> {
     this._emulatedNetworkConditions.offline = value;
     await this._updateNetworkConditions();
@@ -219,8 +225,14 @@ export class NetworkManager extends EventEmitter {
     });
   }
 
-  async setUserAgent(userAgent: string): Promise<void> {
-    await this._client.send('Network.setUserAgentOverride', { userAgent });
+  async setUserAgent(
+    userAgent: string,
+    userAgentMetadata?: Protocol.Emulation.UserAgentMetadata
+  ): Promise<void> {
+    await this._client.send('Network.setUserAgentOverride', {
+      userAgent: userAgent,
+      userAgentMetadata: userAgentMetadata,
+    });
   }
 
   async setCacheEnabled(enabled: boolean): Promise<void> {
@@ -382,6 +394,10 @@ export class NetworkManager extends EventEmitter {
     );
     this._requestIdToRequest.set(event.requestId, request);
     this.emit(NetworkManagerEmittedEvents.Request, request);
+    request.finalizeInterceptions().catch((error) => {
+      // This should never happen, but catch just in case.
+      debugError(error);
+    });
   }
 
   _onRequestServedFromCache(

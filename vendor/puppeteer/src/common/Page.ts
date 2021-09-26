@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Readable } from 'https://deno.land/std@0.100.0/node/stream.ts';
+import type { Readable } from 'https://deno.land/std@0.108.0/node/stream.ts';
 
-import { Buffer } from 'https://deno.land/std@0.100.0/node/buffer.ts';
+import { Buffer } from 'https://deno.land/std@0.108.0/node/buffer.ts';
 import { EventEmitter } from './EventEmitter.ts';
 import {
   Connection,
@@ -32,7 +32,7 @@ import {
 } from './FrameManager.ts';
 import { Keyboard, Mouse, Touchscreen, MouseButton } from './Input.ts';
 import { Tracing } from './Tracing.ts';
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert, assertNever } from './assert.ts';
 import { helper, debugError } from './helper.ts';
 import { Coverage } from './Coverage.ts';
 import { WebWorker } from './WebWorker.ts';
@@ -63,6 +63,7 @@ import {
 } from './EvalTypes.ts';
 import { PDFOptions, paperFormats } from './PDFOptions.ts';
 import { isNode } from '../environment.ts';
+import { TaskQueue } from './TaskQueue.ts';
 
 /**
  * @public
@@ -158,7 +159,7 @@ export interface ScreenshotOptions {
   /**
    * @defaultValue 'png'
    */
-  type?: 'png' | 'jpeg';
+  type?: 'png' | 'jpeg' | 'webp';
   /**
    * The file path to save the image to. The screenshot type will be inferred
    * from file extension. If path is a relative path, then it is resolved
@@ -202,7 +203,9 @@ export interface ScreenshotOptions {
  * @public
  */
 export const enum PageEmittedEvents {
-  /** Emitted when the page closes. */
+  /** Emitted when the page closes.
+   * @eventProperty
+   */
   Close = 'close',
   /**
    * Emitted when JavaScript within the page calls one of console API methods,
@@ -369,22 +372,6 @@ export interface PageEventObject {
   workerdestroyed: WebWorker;
 }
 
-class ScreenshotTaskQueue {
-  _chain: Promise<Buffer | string | void>;
-
-  constructor() {
-    this._chain = Promise.resolve<Buffer | string | void>(undefined);
-  }
-
-  public postTask(
-    task: () => Promise<Buffer | string>
-  ): Promise<Buffer | string | void> {
-    const result = this._chain.then(task);
-    this._chain = result.catch(() => {});
-    return result;
-  }
-}
-
 /**
  * Page provides methods to interact with a single tab or
  * {@link https://developer.chrome.com/extensions/background_pages | extension background page} in Chromium.
@@ -436,9 +423,15 @@ export class Page extends EventEmitter {
     client: CDPSession,
     target: Target,
     ignoreHTTPSErrors: boolean,
-    defaultViewport: Viewport | null
+    defaultViewport: Viewport | null,
+    screenshotTaskQueue: TaskQueue
   ): Promise<Page> {
-    const page = new Page(client, target, ignoreHTTPSErrors);
+    const page = new Page(
+      client,
+      target,
+      ignoreHTTPSErrors,
+      screenshotTaskQueue
+    );
     await page._initialize();
     if (defaultViewport) await page.setViewport(defaultViewport);
     return page;
@@ -459,7 +452,7 @@ export class Page extends EventEmitter {
   private _coverage: Coverage;
   private _javascriptEnabled = true;
   private _viewport: Viewport | null;
-  private _screenshotTaskQueue: ScreenshotTaskQueue;
+  private _screenshotTaskQueue: TaskQueue;
   private _workers = new Map<string, WebWorker>();
   // TODO: improve this typedef - it's a function that takes a file chooser or
   // something?
@@ -471,7 +464,12 @@ export class Page extends EventEmitter {
   /**
    * @internal
    */
-  constructor(client: CDPSession, target: Target, ignoreHTTPSErrors: boolean) {
+  constructor(
+    client: CDPSession,
+    target: Target,
+    ignoreHTTPSErrors: boolean,
+    screenshotTaskQueue: TaskQueue
+  ) {
     super();
     this._client = client;
     this._target = target;
@@ -488,7 +486,7 @@ export class Page extends EventEmitter {
     this._emulationManager = new EmulationManager(client);
     this._tracing = new Tracing(client);
     this._coverage = new Coverage(client);
-    this._screenshotTaskQueue = new ScreenshotTaskQueue();
+    this._screenshotTaskQueue = screenshotTaskQueue;
     this._viewport = null;
 
     client.on('Target.attachedToTarget', (event) => {
@@ -500,7 +498,7 @@ export class Page extends EventEmitter {
         // We still want to attach to workers for emitting events.
         // We still want to attach to iframes so sessions may interact with them.
         // We detach from all other types out of an abundance of caution.
-        // See https://source.chromium.org/chromium/chromium/src/+/master:content/browser/devtools/devtools_agent_host_impl.cc?q=f:devtools%20-f:out%20%22::kTypePage%5B%5D%22&ss=chromium
+        // See https://source.chromium.org/chromium/chromium/src/+/main:content/browser/devtools/devtools_agent_host_impl.cc?ss=chromium&q=f:devtools%20-f:out%20%22::kTypePage%5B%5D%22
         // for the complete list of available types.
         client
           .send('Target.detachFromTarget', {
@@ -604,6 +602,13 @@ export class Page extends EventEmitter {
   }
 
   /**
+   * @returns `true` if drag events are being intercepted, `false` otherwise.
+   */
+  isDragInterceptionEnabled(): boolean {
+    return this._userDragInterceptionEnabled;
+  }
+
+  /**
    * @returns `true` if the page has JavaScript enabled, `false` otherwise.
    */
   public isJavaScriptEnabled(): boolean {
@@ -613,12 +618,20 @@ export class Page extends EventEmitter {
   /**
    * Listen to page events.
    */
+  // Note: this method exists to define event typings and handle
+  // proper wireup of cooperative request interception. Actual event listening and
+  // dispatching is delegated to EventEmitter.
   public on<K extends keyof PageEventObject>(
     eventName: K,
     handler: (event: PageEventObject[K]) => void
   ): EventEmitter {
-    // Note: this method only exists to define the types; we delegate the impl
-    // to EventEmitter.
+    if (eventName === 'request') {
+      return super.on(eventName, (event: HTTPRequest) => {
+        event.enqueueInterceptAction(() =>
+          handler(event as PageEventObject[K])
+        );
+      });
+    }
     return super.on(eventName, handler);
   }
 
@@ -717,6 +730,14 @@ export class Page extends EventEmitter {
   }
 
   /**
+   * Get the CDP session client the page belongs to.
+   * @internal
+   */
+  client(): CDPSession {
+    return this._client;
+  }
+
+  /**
    * Get the browser the page belongs to.
    */
   browser(): Browser {
@@ -771,10 +792,6 @@ export class Page extends EventEmitter {
 
   get accessibility(): Accessibility {
     return this._accessibility;
-  }
-
-  get isDragInterceptionEnabled(): boolean {
-    return this._userDragInterceptionEnabled;
   }
 
   /**
@@ -836,7 +853,7 @@ export class Page extends EventEmitter {
    * @param enabled - Whether to enable drag interception.
    *
    * @remarks
-   * Activating drag interception enables the {@link Input.drag},
+   * Activating drag interception enables the `Input.drag`,
    * methods  This provides the capability to capture drag events emitted
    * on the page, which can then be used to simulate drag-and-drop.
    */
@@ -847,6 +864,10 @@ export class Page extends EventEmitter {
 
   /**
    * @param enabled - When `true`, enables offline mode for the page.
+   * @remarks
+   * NOTE: while this method sets the network connection to offline, it does
+   * not change the parameters used in [page.emulateNetworkConditions(networkConditions)]
+   * (#pageemulatenetworkconditionsnetworkconditions)
    */
   setOfflineMode(enabled: boolean): Promise<void> {
     return this._frameManager.networkManager().setOfflineMode(enabled);
@@ -870,7 +891,8 @@ export class Page extends EventEmitter {
    * ```
    * @remarks
    * NOTE: This does not affect WebSockets and WebRTC PeerConnections (see
-   * https://crbug.com/563644)
+   * https://crbug.com/563644). To set the page offline, you can use
+   * [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled).
    */
   emulateNetworkConditions(
     networkConditions: NetworkConditions | null
@@ -1086,7 +1108,7 @@ export class Page extends EventEmitter {
        *
        * TODO(@jackfranklin): We could fix this by using overloads like
        * DefinitelyTyped does:
-       * https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/puppeteer/index.d.ts#L114
+       * https://github.com/DefinitelyTyped/DefinitelyTyped/blob/HEAD/types/puppeteer/index.d.ts#L114
        */
       ...args: unknown[]
     ) => ReturnType | Promise<ReturnType>,
@@ -1271,6 +1293,7 @@ export class Page extends EventEmitter {
     path?: string;
     content?: string;
     type?: string;
+    id?: string;
   }): Promise<ElementHandle> {
     return this.mainFrame().addScriptTag(options);
   }
@@ -1392,41 +1415,49 @@ export class Page extends EventEmitter {
 
   /**
    * @param userAgent - Specific user agent to use in this page
+   * @param userAgentData - Specific user agent client hint data to use in this
+   * page
    * @returns Promise which resolves when the user agent is set.
    */
-  async setUserAgent(userAgent: string): Promise<void> {
-    return this._frameManager.networkManager().setUserAgent(userAgent);
+  async setUserAgent(
+    userAgent: string,
+    userAgentMetadata?: Protocol.Emulation.UserAgentMetadata
+  ): Promise<void> {
+    return this._frameManager
+      .networkManager()
+      .setUserAgent(userAgent, userAgentMetadata);
   }
 
   /**
    * @returns Object containing metrics as key/value pairs.
    *
-   * - `Timestamp` : <number> The timestamp when the metrics sample was taken.
+   * - `Timestamp` : The timestamp when the metrics sample was taken.
    *
-   * - `Documents` : <number> Number of documents in the page.
+   * - `Documents` : Number of documents in the page.
    *
-   * - `Frames` : <number> Number of frames in the page.
+   * - `Frames` : Number of frames in the page.
    *
-   * - `JSEventListeners` : <number> Number of events in the page.
+   * - `JSEventListeners` : Number of events in the page.
    *
-   * - `Nodes` : <number> Number of DOM nodes in the page.
+   * - `Nodes` : Number of DOM nodes in the page.
    *
-   * - `LayoutCount` : <number> Total number of full or partial page layout.
+   * - `LayoutCount` : Total number of full or partial page layout.
    *
-   * - `RecalcStyleCount` : <number> Total number of page style recalculations.
+   * - `RecalcStyleCount` : Total number of page style recalculations.
    *
-   * - `LayoutDuration` : <number> Combined durations of all page layouts.
+   * - `LayoutDuration` : Combined durations of all page layouts.
    *
-   * - `RecalcStyleDuration` : <number> Combined duration of all page style
+   * - `RecalcStyleDuration` : Combined duration of all page style
    *   recalculations.
    *
-   * - `ScriptDuration` : <number> Combined duration of JavaScript execution.
+   * - `ScriptDuration` : Combined duration of JavaScript execution.
    *
-   * - `TaskDuration` : <number> Combined duration of all tasks performed by the browser.
+   * - `TaskDuration` : Combined duration of all tasks performed by the browser.
    *
-   * - `JSHeapUsedSize` : <number> Used JavaScript heap size.
    *
-   * - `JSHeapTotalSize` : <number> Total JavaScript heap size.
+   * - `JSHeapUsedSize` : Used JavaScript heap size.
+   *
+   * - `JSHeapTotalSize` : Total JavaScript heap size.
    * @remarks
    * NOTE: All timestamps are in monotonic time: monotonically increasing time
    * in seconds since an arbitrary point in the past.
@@ -1581,6 +1612,7 @@ export class Page extends EventEmitter {
 
     const dialog = new Dialog(
       this._client,
+      // @ts-expect-error TS2345
       dialogType,
       event.message,
       event.defaultPrompt
@@ -1632,10 +1664,9 @@ export class Page extends EventEmitter {
    *   or {@link Page.setDefaultTimeout | page.setDefaultTimeout(timeout)}
    *   methods.
    *
-   * - `waitUntil`: <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|Array>
-   *   When to consider setting markup succeeded, defaults to `load`. Given an
-   *   array of event strings, setting content is considered to be successful
-   *   after all events have been fired. Events can be either:<br/>
+   * - `waitUntil`: When to consider setting markup succeeded, defaults to `load`.
+   *    Given an array of event strings, setting content is considered to be
+   *    successful after all events have been fired. Events can be either:<br/>
    *  - `load` : consider setting content to be finished when the `load` event is
    *    fired.<br/>
    *  - `domcontentloaded` : consider setting content to be finished when the
@@ -1667,11 +1698,9 @@ export class Page extends EventEmitter {
    *   or {@link Page.setDefaultTimeout | page.setDefaultTimeout(timeout)}
    *   methods.
    *
-   * - `waitUntil`:
-   *   <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|Array> When to
-   *   consider navigation succeeded, defaults to `load`. Given an array of
-   *   event strings, navigation is considered to be successful after all events
-   *   have been fired. Events can be either:<br/>
+   * - `waitUntil`:When to consider navigation succeeded, defaults to `load`.
+   *    Given an array of event strings, navigation is considered to be successful
+   *    after all events have been fired. Events can be either:<br/>
    *  - `load` : consider navigation to be finished when the load event is
    *    fired.<br/>
    *  - `domcontentloaded` : consider navigation to be finished when the
@@ -1732,10 +1761,9 @@ export class Page extends EventEmitter {
    *   or {@link Page.setDefaultTimeout | page.setDefaultTimeout(timeout)}
    *   methods.
    *
-   * - `waitUntil`: <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|Array>
-   *   When to consider navigation succeeded, defaults to `load`. Given an array
-   *   of event strings, navigation is considered to be successful after all
-   *   events have been fired. Events can be either:<br/>
+   * - `waitUntil`: When to consider navigation succeeded, defaults to `load`.
+   *    Given an array of event strings, navigation is considered to be
+   *    successful after all events have been fired. Events can be either:<br/>
    *  - `load` : consider navigation to be finished when the load event is fired.<br/>
    *  - `domcontentloaded` : consider navigation to be finished when the
    *   DOMContentLoaded event is fired.<br/>
@@ -1887,6 +1915,87 @@ export class Page extends EventEmitter {
   }
 
   /**
+   * @param options - Optional waiting parameters
+   * @returns Promise which resolves when network is idle
+   */
+  async waitForNetworkIdle(
+    options: { idleTime?: number; timeout?: number } = {}
+  ): Promise<void> {
+    const { idleTime = 500, timeout = this._timeoutSettings.timeout() } =
+      options;
+
+    const networkManager = this._frameManager.networkManager();
+
+    // @ts-expect-error TS7034
+    let idleResolveCallback;
+    const idlePromise = new Promise((resolve) => {
+      idleResolveCallback = resolve;
+    });
+
+    // @ts-expect-error TS7034
+    let abortRejectCallback;
+    const abortPromise = new Promise<Error>((_, reject) => {
+      abortRejectCallback = reject;
+    });
+
+    // @ts-expect-error TS7034
+    let idleTimer;
+    // @ts-expect-error TS7005
+    const onIdle = () => idleResolveCallback();
+
+    const cleanup = () => {
+      // @ts-expect-error TS7005
+      idleTimer && clearTimeout(idleTimer);
+      // @ts-expect-error TS7005
+      abortRejectCallback(new Error('abort'));
+    };
+
+    const evaluate = () => {
+      // @ts-expect-error TS7005
+      idleTimer && clearTimeout(idleTimer);
+      if (networkManager.numRequestsInProgress() === 0)
+        idleTimer = setTimeout(onIdle, idleTime);
+    };
+
+    evaluate();
+
+    const eventHandler = () => {
+      evaluate();
+      return false;
+    };
+
+    // @ts-expect-error TS7006
+    const listenToEvent = (event) =>
+      helper.waitForEvent(
+        networkManager,
+        event,
+        eventHandler,
+        timeout,
+        abortPromise
+      );
+
+    const eventPromises = [
+      listenToEvent(NetworkManagerEmittedEvents.Request),
+      listenToEvent(NetworkManagerEmittedEvents.Response),
+    ];
+
+    await Promise.race([
+      idlePromise,
+      ...eventPromises,
+      this._sessionClosePromise(),
+    ]).then(
+      (r) => {
+        cleanup();
+        return r;
+      },
+      (error) => {
+        cleanup();
+        throw error;
+      }
+    );
+  }
+
+  /**
    * This method navigate to the previous page in history.
    * @param options - Navigation parameters
    * @returns Promise which resolves to the main resource response. In case of
@@ -1903,10 +2012,9 @@ export class Page extends EventEmitter {
    *   or {@link Page.setDefaultTimeout | page.setDefaultTimeout(timeout)}
    *   methods.
    *
-   * - `waitUntil` : <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|Array>
-   *   When to consider navigation succeeded, defaults to `load`. Given an array
-   *   of event strings, navigation is considered to be successful after all
-   *   events have been fired. Events can be either:<br/>
+   * - `waitUntil` : When to consider navigation succeeded, defaults to `load`.
+   *    Given an array of event strings, navigation is considered to be
+   *    successful after all events have been fired. Events can be either:<br/>
    *  - `load` : consider navigation to be finished when the load event is fired.<br/>
    *  - `domcontentloaded` : consider navigation to be finished when the
    *   DOMContentLoaded event is fired.<br/>
@@ -1936,10 +2044,9 @@ export class Page extends EventEmitter {
    *   or {@link Page.setDefaultTimeout | page.setDefaultTimeout(timeout)}
    *   methods.
    *
-   * - `waitUntil`: <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|Array>
-   *   When to consider navigation succeeded, defaults to `load`. Given an array
-   *   of event strings, navigation is considered to be successful after all
-   *   events have been fired. Events can be either:<br/>
+   * - `waitUntil`: When to consider navigation succeeded, defaults to `load`.
+   *    Given an array of event strings, navigation is considered to be
+   *    successful after all events have been fired. Events can be either:<br/>
    *  - `load` : consider navigation to be finished when the load event is fired.<br/>
    *  - `domcontentloaded` : consider navigation to be finished when the
    *   DOMContentLoaded event is fired.<br/>
@@ -2271,7 +2378,7 @@ export class Page extends EventEmitter {
    * await page.goto('https://example.com');
    * ```
    *
-   * @param viewport
+   * @param viewport -
    * @remarks
    * Argument viewport have following properties:
    *
@@ -2430,33 +2537,33 @@ export class Page extends EventEmitter {
    * @remarks
    * Options object which might have the following properties:
    *
-   * - `path` : <string> The file path to save the image to. The screenshot type
+   * - `path` : The file path to save the image to. The screenshot type
    *   will be inferred from file extension. If `path` is a relative path, then
    *   it is resolved relative to
    *   {@link https://nodejs.org/api/process.html#process_process_cwd
    *   | current working directory}.
    *   If no path is provided, the image won't be saved to the disk.
    *
-   * - `type` : <string> Specify screenshot type, can be either `jpeg` or `png`.
+   * - `type` : Specify screenshot type, can be either `jpeg` or `png`.
    *   Defaults to 'png'.
    *
-   * - `quality` : <number> The quality of the image, between 0-100. Not
+   * - `quality` : The quality of the image, between 0-100. Not
    *   applicable to `png` images.
    *
-   * - `fullPage` : <boolean> When true, takes a screenshot of the full
+   * - `fullPage` : When true, takes a screenshot of the full
    *   scrollable page. Defaults to `false`
    *
-   * - `clip` : <Object> An object which specifies clipping region of the page.
+   * - `clip` : An object which specifies clipping region of the page.
    *   Should have the following fields:<br/>
-   *  - `x` : <number> x-coordinate of top-left corner of clip area.<br/>
-   *  - `y` :  <number> y-coordinate of top-left corner of clip area.<br/>
-   *  - `width` : <number> width of clipping area.<br/>
-   *  - `height` : <number> height of clipping area.
+   *  - `x` : x-coordinate of top-left corner of clip area.<br/>
+   *  - `y` :  y-coordinate of top-left corner of clip area.<br/>
+   *  - `width` : width of clipping area.<br/>
+   *  - `height` : height of clipping area.
    *
-   * - `omitBackground` : <boolean> Hides default white background and allows
+   * - `omitBackground` : Hides default white background and allows
    *   capturing screenshots with transparency. Defaults to `false`
    *
-   * - `encoding` : <string> The encoding of the image, can be either base64 or
+   * - `encoding` : The encoding of the image, can be either base64 or
    *   binary. Defaults to `binary`.
    *
    *
@@ -2465,19 +2572,17 @@ export class Page extends EventEmitter {
    * @returns Promise which resolves to buffer or a base64 string (depending on
    * the value of `encoding`) with captured screenshot.
    */
-  async screenshot(
-    options: ScreenshotOptions = {}
-  ): Promise<Buffer | string | void> {
+  async screenshot(options: ScreenshotOptions = {}): Promise<Buffer | string> {
     // @ts-expect-error TS7034
     let screenshotType = null;
     // options.type takes precedence over inferring the type from options.path
     // because it may be a 0-length file with no extension created beforehand
     // (i.e. as a temp file).
     if (options.type) {
-      assert(
-        options.type === 'png' || options.type === 'jpeg',
-        'Unknown options.type value: ' + options.type
-      );
+      const type = options.type;
+      if (type !== 'png' && type !== 'jpeg' && type !== 'webp') {
+        assertNever(type, 'Unknown options.type value: ' + type);
+      }
       screenshotType = options.type;
     } else if (options.path) {
       const filePath = options.path;
@@ -2487,6 +2592,7 @@ export class Page extends EventEmitter {
       if (extension === 'png') screenshotType = 'png';
       else if (extension === 'jpg' || extension === 'jpeg')
         screenshotType = 'jpeg';
+      else if (extension === 'webp') screenshotType = 'webp';
       assert(
         screenshotType,
         `Unsupported screenshot type for extension \`.${extension}\``
@@ -2558,7 +2664,7 @@ export class Page extends EventEmitter {
   }
 
   private async _screenshotTask(
-    format: 'png' | 'jpeg',
+    format: Protocol.Page.CaptureScreenshotRequestFormat,
     options: ScreenshotOptions
   ): Promise<Buffer | string> {
     await this._client.send('Target.activateTarget', {
@@ -2571,8 +2677,8 @@ export class Page extends EventEmitter {
 
     if (options.fullPage) {
       const metrics = await this._client.send('Page.getLayoutMetrics');
-      const width = Math.ceil(metrics.contentSize.width);
-      const height = Math.ceil(metrics.contentSize.height);
+      // Fallback to `contentSize` in case of using Firefox.
+      const { width, height } = metrics.cssContentSize || metrics.contentSize;
 
       // Overwrite clip for full page.
       clip = { x: 0, y: 0, width, height, scale: 1 };
@@ -2597,7 +2703,7 @@ export class Page extends EventEmitter {
       }
     }
     const shouldSetDefaultBackground =
-      options.omitBackground && format === 'png';
+      options.omitBackground && (format === 'png' || format === 'webp');
     if (shouldSetDefaultBackground) {
       await this._setTransparentBackgroundColor();
     }
@@ -2672,6 +2778,7 @@ export class Page extends EventEmitter {
       preferCSSPageSize = false,
       margin = {},
       omitBackground = false,
+      timeout = 30000,
     } = options;
 
     let paperWidth = 8.5;
@@ -2697,7 +2804,7 @@ export class Page extends EventEmitter {
       await this._setTransparentBackgroundColor();
     }
 
-    const result = await this._client.send('Page.printToPDF', {
+    const printCommandPromise = this._client.send('Page.printToPDF', {
       transferMode: 'ReturnAsStream',
       landscape,
       displayHeaderFooter,
@@ -2715,6 +2822,12 @@ export class Page extends EventEmitter {
       preferCSSPageSize,
     });
 
+    const result = await helper.waitWithTimeout(
+      printCommandPromise,
+      'Page.printToPDF',
+      timeout
+    );
+
     if (omitBackground) {
       await this._resetDefaultBackgroundColor();
     }
@@ -2724,8 +2837,8 @@ export class Page extends EventEmitter {
   }
 
   /**
-   * @param {!PDFOptions=} options
-   * @returns {!Promise<!Buffer>}
+   * @param options -
+   * @returns
    */
   async pdf(options: PDFOptions = {}): Promise<Buffer> {
     const { path = undefined } = options;
@@ -2851,8 +2964,9 @@ export class Page extends EventEmitter {
    * page.select('select#colors', 'blue'); // single selection
    * page.select('select#colors', 'red', 'green', 'blue'); // multiple selections
    * ```
-   * @param selector - A {@link https://developer.mozilla.org/en-US/docs/Web/CSS/
-   * CSS_Selectors | Selector} to query the page for
+   * @param selector - A
+   * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | Selector}
+   * to query the page for
    * @param values - Values of options to select. If the `<select>` has the
    * `multiple` attribute, all values are considered, otherwise only the first one
    * is taken into account.
@@ -2901,7 +3015,7 @@ export class Page extends EventEmitter {
    * @param options - have property `delay` which is the Time to wait between
    * key presses in milliseconds. Defaults to `0`.
    * @returns
-   * {@link page.mainFrame().type(selector, text[, options])}
+   * @remarks
    */
   type(
     selector: string,

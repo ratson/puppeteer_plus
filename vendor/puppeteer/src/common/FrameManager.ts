@@ -17,7 +17,7 @@
 import { debug } from '../common/Debug.ts';
 
 import { EventEmitter } from './EventEmitter.ts';
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { ExecutionContext, EVALUATION_SCRIPT_URL } from './ExecutionContext.ts';
 import {
@@ -43,6 +43,7 @@ import {
 } from './EvalTypes.ts';
 
 const UTILITY_WORLD_NAME = '__puppeteer_utility_world__';
+const xPathPattern = /^\(\/\/[^\)]+\)|^\/\//;
 
 /**
  * We use symbols to prevent external parties listening to these events.
@@ -1081,16 +1082,13 @@ export class Frame {
     options: Record<string, unknown> = {},
     ...args: SerializableOrJSHandle[]
   ): Promise<JSHandle | null> {
-    const xPathPattern = '//';
-
     console.warn(
       'waitFor is deprecated and will be removed in a future release. See https://github.com/puppeteer/puppeteer/issues/6214 for details and how to migrate your code.'
     );
 
     if (helper.isString(selectorOrFunctionOrTimeout)) {
       const string = selectorOrFunctionOrTimeout;
-      if (string.startsWith(xPathPattern))
-        return this.waitForXPath(string, options);
+      if (xPathPattern.test(string)) return this.waitForXPath(string, options);
       return this.waitForSelector(string, options);
     }
     if (helper.isNumber(selectorOrFunctionOrTimeout))

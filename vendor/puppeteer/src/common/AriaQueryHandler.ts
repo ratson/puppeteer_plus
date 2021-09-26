@@ -38,6 +38,12 @@ async function queryAXTree(
   return filteredNodes;
 }
 
+const normalizeValue = (value: string): string =>
+  value.replace(/ +/g, ' ').trim();
+const knownAttributes = new Set(['name', 'role']);
+const attributeRegexp =
+  /\[\s*(?<attribute>\w+)\s*=\s*"(?<value>\\.|[^"\\]*)"\s*\]/g;
+
 /*
  * The selectors consist of an accessible name to query for and optionally
  * further aria attributes on the form `[<attribute>=<value>]`.
@@ -50,11 +56,7 @@ async function queryAXTree(
  */
 type ariaQueryOption = { name?: string; role?: string };
 function parseAriaSelector(selector: string): ariaQueryOption {
-  const normalize = (value: string): string => value.replace(/ +/g, ' ').trim();
-  const knownAttributes = new Set(['name', 'role']);
   const queryOptions: ariaQueryOption = {};
-  const attributeRegexp =
-    /\[\s*(?<attribute>\w+)\s*=\s*"(?<value>\\.|[^"\\]*)"\s*\]/g;
   const defaultName = selector.replace(
     attributeRegexp,
     (_, attribute: string, value: string) => {
@@ -62,12 +64,12 @@ function parseAriaSelector(selector: string): ariaQueryOption {
       if (!knownAttributes.has(attribute))
         throw new Error(`Unknown aria attribute "${attribute}" in selector`);
       // @ts-expect-error TS7053
-      queryOptions[attribute] = normalize(value);
+      queryOptions[attribute] = normalizeValue(value);
       return '';
     }
   );
   if (defaultName && !queryOptions.name)
-    queryOptions.name = normalize(defaultName);
+    queryOptions.name = normalizeValue(defaultName);
   return queryOptions;
 }
 

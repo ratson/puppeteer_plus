@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import {
   LifecycleWatcher,
@@ -308,15 +308,22 @@ export class DOMWorld {
     url?: string;
     path?: string;
     content?: string;
+    id?: string;
     type?: string;
   }): Promise<ElementHandle> {
-    const { url = null, path = null, content = null, type = '' } = options;
+    const {
+      url = null,
+      path = null,
+      content = null,
+      id = '',
+      type = '',
+    } = options;
     if (url !== null) {
       try {
         const context = await this.executionContext();
         // @ts-expect-error TS2322
         return (
-          await context.evaluateHandle(addScriptUrl, url, type)
+          await context.evaluateHandle(addScriptUrl, url, id, type)
         ).asElement();
       } catch (error) {
         throw new Error(`Loading script from ${url} failed`);
@@ -335,7 +342,7 @@ export class DOMWorld {
       const context = await this.executionContext();
       // @ts-expect-error TS2322
       return (
-        await context.evaluateHandle(addScriptContent, contents, type)
+        await context.evaluateHandle(addScriptContent, contents, id, type)
       ).asElement();
     }
 
@@ -343,7 +350,7 @@ export class DOMWorld {
       const context = await this.executionContext();
       // @ts-expect-error TS2322
       return (
-        await context.evaluateHandle(addScriptContent, content, type)
+        await context.evaluateHandle(addScriptContent, content, id, type)
       ).asElement();
     }
 
@@ -353,12 +360,14 @@ export class DOMWorld {
 
     async function addScriptUrl(
       url: string,
+      id: string,
       type: string
     // @ts-expect-error TS2304
     ): Promise<HTMLElement> {
       // @ts-expect-error TS2584
       const script = document.createElement('script');
       script.src = url;
+      if (id) script.id = id;
       if (type) script.type = type;
       const promise = new Promise((res, rej) => {
         script.onload = res;
@@ -372,6 +381,7 @@ export class DOMWorld {
 
     function addScriptContent(
       content: string,
+      id: string,
       type = 'text/javascript'
     // @ts-expect-error TS2304
     ): HTMLElement {
@@ -379,6 +389,7 @@ export class DOMWorld {
       const script = document.createElement('script');
       script.type = type;
       script.text = content;
+      if (id) script.id = id;
       let error = null;
       // @ts-expect-error TS7006
       script.onerror = (e) => (error = e);

@@ -20,6 +20,7 @@ import { CDPSession } from './Connection.ts';
 import { Browser, BrowserContext } from './Browser.ts';
 import { Viewport } from './PuppeteerViewport.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { TaskQueue } from './TaskQueue.ts';
 
 /**
  * @public
@@ -33,6 +34,7 @@ export class Target {
   private _defaultViewport?: Viewport;
   private _pagePromise?: Promise<Page>;
   private _workerPromise?: Promise<WebWorker>;
+  private _screenshotTaskQueue: TaskQueue;
   /**
    * @internal
    */
@@ -68,7 +70,8 @@ export class Target {
     browserContext: BrowserContext,
     sessionFactory: () => Promise<CDPSession>,
     ignoreHTTPSErrors: boolean,
-    defaultViewport: Viewport | null
+    defaultViewport: Viewport | null,
+    screenshotTaskQueue: TaskQueue
   ) {
     this._targetInfo = targetInfo;
     this._browserContext = browserContext;
@@ -77,6 +80,7 @@ export class Target {
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     // @ts-expect-error TS2322
     this._defaultViewport = defaultViewport;
+    this._screenshotTaskQueue = screenshotTaskQueue;
     /** @type {?Promise<!Puppeteer.Page>} */
     // @ts-expect-error TS2322
     this._pagePromise = null;
@@ -128,7 +132,8 @@ export class Target {
           this,
           this._ignoreHTTPSErrors,
           // @ts-expect-error TS2345
-          this._defaultViewport
+          this._defaultViewport,
+          this._screenshotTaskQueue
         )
       );
     }

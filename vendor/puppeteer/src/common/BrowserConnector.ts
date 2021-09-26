@@ -16,7 +16,7 @@
 
 import { ConnectionTransport } from './ConnectionTransport.ts';
 import { Browser, TargetFilterCallback } from './Browser.ts';
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { debugError } from '../common/helper.ts';
 import { Connection } from './Connection.ts';
 import { Viewport } from './PuppeteerViewport.ts';

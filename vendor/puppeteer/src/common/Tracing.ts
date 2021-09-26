@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { assert } from 'https://deno.land/std@0.100.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { helper } from './helper.ts';
 import { CDPSession } from './Connection.ts';
 
@@ -77,7 +77,6 @@ export class Tracing {
       'latencyInfo',
       'disabled-by-default-devtools.timeline.stack',
       'disabled-by-default-v8.cpu_profiler',
-      'disabled-by-default-v8.cpu_profiler.hires',
     ];
     const {
       path = null,
@@ -87,12 +86,20 @@ export class Tracing {
 
     if (screenshots) categories.push('disabled-by-default-devtools.screenshot');
 
+    const excludedCategories = categories
+      .filter((cat) => cat.startsWith('-'))
+      .map((cat) => cat.slice(1));
+    const includedCategories = categories.filter((cat) => !cat.startsWith('-'));
+
     // @ts-expect-error TS2322
     this._path = path;
     this._recording = true;
     await this._client.send('Tracing.start', {
       transferMode: 'ReturnAsStream',
-      categories: categories.join(','),
+      traceConfig: {
+        excludedCategories,
+        includedCategories,
+      },
     });
   }
 

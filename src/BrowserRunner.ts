@@ -147,6 +147,7 @@ export class BrowserRunner {
     // @ts-expect-error patch(TS2531)
     if (this.proc && this.proc.pid && !this.proc.killed) {
       try {
+        // @ts-expect-error TS2551
         this.proc.kill(9);
       } catch (error) {
         throw new Error(
