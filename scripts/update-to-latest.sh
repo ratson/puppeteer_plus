@@ -17,14 +17,14 @@ cd "$protocol_repo_path" || exit 1
 git pull origin master
 git submodule update --init
 # always work with the latest inspector_protocol repo
-git submodule foreach git pull origin master
+git submodule foreach git pull origin main
 
 # => cd into chromium
 cd "$chromium_src_path" || exit 1
 
-# get latest from chromium master
-git fetch origin master
-git checkout -f origin/master
+# get latest from chromium main
+git fetch origin main
+git checkout -f origin/main
 env GYP_DEFINES=disable_nacl=1 gclient sync --jobs=70 --nohooks --delete_unversioned_trees --reset
 
 
@@ -52,9 +52,6 @@ python2.7 "$convert_script" --map_binary_to_string=true "$protocol_repo_path/pdl
 python2.7 "$convert_script" --map_binary_to_string=true "$protocol_repo_path/pdl/js_protocol.pdl" "$protocol_repo_path/json/js_protocol.json"
 # The conversion script leaves json files next to the pdl's. Because reasons.
 rm -f "$protocol_repo_path"/pdl/*.json
-
-# generate externs
-python2.7 "$chromium_src_path/third_party/blink/renderer/devtools/scripts/build/generate_protocol_externs.py" -o "$protocol_repo_path/externs/protocol_externs.js" "$protocol_repo_path/pdl/browser_protocol.pdl" "$protocol_repo_path/pdl/js_protocol.pdl"
 
 # => cd into protocol repo
 cd "$protocol_repo_path" || exit 1
