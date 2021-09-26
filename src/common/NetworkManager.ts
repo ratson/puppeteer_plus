@@ -188,6 +188,12 @@ export class NetworkManager extends EventEmitter {
     return Object.assign({}, this._extraHTTPHeaders);
   }
 
+  numRequestsInProgress(): number {
+    return [...this._requestIdToRequest].filter(([, request]) => {
+      return !request.response();
+    }).length;
+  }
+
   async setOfflineMode(value: boolean): Promise<void> {
     this._emulatedNetworkConditions.offline = value;
     await this._updateNetworkConditions();
@@ -218,8 +224,14 @@ export class NetworkManager extends EventEmitter {
     });
   }
 
-  async setUserAgent(userAgent: string): Promise<void> {
-    await this._client.send('Network.setUserAgentOverride', { userAgent });
+  async setUserAgent(
+    userAgent: string,
+    userAgentMetadata?: Protocol.Emulation.UserAgentMetadata
+  ): Promise<void> {
+    await this._client.send('Network.setUserAgentOverride', {
+      userAgent: userAgent,
+      userAgentMetadata: userAgentMetadata,
+    });
   }
 
   async setCacheEnabled(enabled: boolean): Promise<void> {
@@ -376,6 +388,10 @@ export class NetworkManager extends EventEmitter {
     );
     this._requestIdToRequest.set(event.requestId, request);
     this.emit(NetworkManagerEmittedEvents.Request, request);
+    request.finalizeInterceptions().catch((error) => {
+      // This should never happen, but catch just in case.
+      debugError(error);
+    });
   }
 
   _onRequestServedFromCache(

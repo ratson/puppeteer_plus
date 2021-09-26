@@ -25,6 +25,7 @@ const {
 const EXCLUDE_PROPERTIES = new Set([
   'Browser.create',
   'Headers.fromPayload',
+  'Page.client',
   'Page.create',
   'JSHandle.toString',
   'TimeoutError.name',
@@ -372,6 +373,13 @@ function compareDocumentations(actual, expected) {
         },
       ],
       [
+        'Method ElementHandle.clickablePoint() offset',
+        {
+          actualName: 'Object',
+          expectedName: 'Offset',
+        },
+      ],
+      [
         'Method ElementHandle.press() options',
         {
           actualName: 'Object',
@@ -656,6 +664,13 @@ function compareDocumentations(actual, expected) {
         },
       ],
       [
+        'Method Browser.createIncognitoBrowserContext() options',
+        {
+          actualName: 'Object',
+          expectedName: 'BrowserContextOptions',
+        },
+      ],
+      [
         'Method BrowserContext.overridePermissions() permissions',
         {
           actualName: 'Array<string>',
@@ -695,6 +710,13 @@ function compareDocumentations(actual, expected) {
         {
           actualName: 'Object',
           expectedName: 'NetworkConditions',
+        },
+      ],
+      [
+        'Method Page.setUserAgent() userAgentMetadata',
+        {
+          actualName: 'Object',
+          expectedName: 'UserAgentMetadata',
         },
       ],
       [
@@ -806,8 +828,7 @@ function compareDocumentations(actual, expected) {
         'Method Page.emulateVisionDeficiency() type',
         {
           actualName: 'string',
-          expectedName:
-            '"none"|"achromatopsia"|"blurredVision"|"deuteranopia"|"protanopia"|"tritanopia"',
+          expectedName: 'Object',
         },
       ],
       [
@@ -1065,6 +1086,7 @@ function compareDocumentations(actual, expected) {
       'Method Page.deleteCookie() ...cookies',
       'Method Page.setCookie() ...cookies',
       'Method Puppeteer.connect() options',
+      'Method Page.setUserAgent() userAgentMetadata',
     ]);
     if (skipPropertyChecksOnMethods.has(source)) return;
 
