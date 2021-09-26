@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 // deno-lint-ignore-file no-unused-vars
-import { writeAll } from "https://deno.land/std@0.99.0/io/util.ts";
-import * as os from "https://deno.land/std@0.99.0/node/os.ts";
-import * as fs from "https://deno.land/std@0.99.0/node/fs.ts";
-import * as path from "https://deno.land/std@0.99.0/node/path.ts";
-import * as util from "https://deno.land/std@0.99.0/node/util.ts";
+import { writeAll } from "https://deno.land/std@0.108.0/io/util.ts";
+import * as os from "https://deno.land/std@0.108.0/node/os.ts";
+import * as fs from "https://deno.land/std@0.108.0/node/fs.ts";
+import * as path from "https://deno.land/std@0.108.0/node/path.ts";
+import * as util from "https://deno.land/std@0.108.0/node/util.ts";
 
 import { Product } from "../vendor/puppeteer/src/common/Product.ts";
 import { debug } from "../vendor/puppeteer/src/common/Debug.ts";
-import { promisify } from "https://deno.land/std@0.99.0/node/util.ts";
-import { assert } from "https://deno.land/std@0.99.0/testing/asserts.ts";
-import { copy } from "https://deno.land/std@0.99.0/fs/copy.ts";
+import { promisify } from "https://deno.land/std@0.108.0/node/util.ts";
+import { assert } from "https://deno.land/std@0.108.0/testing/asserts.ts";
+import { copy } from "https://deno.land/std@0.108.0/fs/copy.ts";
+import { copy as copyIO } from "https://deno.land/std@0.108.0/io/mod.ts";
 import { extractZip } from "./deps.ts";
 
 const debugFetcher = debug(`puppeteer:fetcher`);
@@ -484,7 +485,7 @@ async function extractTar(tarPath: string, folderPath: string): Promise<void> {
   });
   const tmp = await Deno.makeTempFile();
   const file = await Deno.create(tmp);
-  await Deno.copy(bzcat.stdout, file);
+  await copyIO(bzcat.stdout, file);
   assert((await bzcat.status()).success, "failed bzcat");
   bzcat.close();
 
