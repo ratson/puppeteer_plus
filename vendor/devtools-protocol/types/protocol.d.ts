@@ -2690,7 +2690,16 @@ export namespace Protocol {
              * The maximum depth at which descendants of the root node should be retrieved.
              * If omitted, the full tree is returned.
              */
+            depth?: integer;
+            /**
+             * Deprecated. This parameter has been renamed to `depth`. If depth is not provided, max_depth will be used.
+             */
             max_depth?: integer;
+            /**
+             * The frame for whose document the AX tree should be retrieved.
+             * If omited, the root frame is used.
+             */
+            frameId?: Page.FrameId;
         }
 
         export interface GetFullAXTreeResponse {
@@ -2699,6 +2708,11 @@ export namespace Protocol {
 
         export interface GetChildAXNodesRequest {
             id: AXNodeId;
+            /**
+             * The frame in whose document the node resides.
+             * If omitted, the root frame is used.
+             */
+            frameId?: Page.FrameId;
         }
 
         export interface GetChildAXNodesResponse {
@@ -2983,6 +2997,9 @@ export namespace Protocol {
         }
     }
 
+    /**
+     * The domain is deprecated as AppCache is being removed (see crbug.com/582750).
+     */
     export namespace ApplicationCache {
 
         /**
@@ -3138,7 +3155,7 @@ export namespace Protocol {
             frameId: Page.FrameId;
         }
 
-        export type SameSiteCookieExclusionReason = ('ExcludeSameSiteUnspecifiedTreatedAsLax' | 'ExcludeSameSiteNoneInsecure' | 'ExcludeSameSiteLax' | 'ExcludeSameSiteStrict' | 'ExcludeInvalidSameParty');
+        export type SameSiteCookieExclusionReason = ('ExcludeSameSiteUnspecifiedTreatedAsLax' | 'ExcludeSameSiteNoneInsecure' | 'ExcludeSameSiteLax' | 'ExcludeSameSiteStrict' | 'ExcludeInvalidSameParty' | 'ExcludeSamePartyCrossPartyContext');
 
         export type SameSiteCookieWarningReason = ('WarnSameSiteUnspecifiedCrossSiteContext' | 'WarnSameSiteNoneInsecure' | 'WarnSameSiteUnspecifiedLaxAllowUnsafe' | 'WarnSameSiteStrictLaxDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeLax' | 'WarnSameSiteLaxCrossDowngradeStrict' | 'WarnSameSiteLaxCrossDowngradeLax');
 
@@ -3324,7 +3341,7 @@ export namespace Protocol {
             clientSecurityState?: Network.ClientSecurityState;
         }
 
-        export type AttributionReportingIssueType = ('PermissionPolicyDisabled' | 'InvalidAttributionSourceEventId' | 'InvalidAttributionData' | 'AttributionSourceUntrustworthyOrigin' | 'AttributionUntrustworthyOrigin');
+        export type AttributionReportingIssueType = ('PermissionPolicyDisabled' | 'InvalidAttributionSourceEventId' | 'InvalidAttributionData' | 'AttributionSourceUntrustworthyOrigin' | 'AttributionUntrustworthyOrigin' | 'AttributionTriggerDataTooLarge' | 'AttributionEventSourceTriggerDataTooLarge');
 
         /**
          * Details for issues around "Attribution Reporting API" usage.
@@ -3366,12 +3383,25 @@ export namespace Protocol {
             isWarning: boolean;
         }
 
+        export type GenericIssueErrorType = ('CrossOriginPortalPostMessageError');
+
+        /**
+         * Depending on the concrete errorType, different properties are set.
+         */
+        export interface GenericIssueDetails {
+            /**
+             * Issues with the same errorType are aggregated in the frontend.
+             */
+            errorType: GenericIssueErrorType;
+            frameId?: Page.FrameId;
+        }
+
         /**
          * A unique identifier for the type of issue. Each type may use one of the
          * optional fields in InspectorIssueDetails to convey more specific
          * information about the kind of issue.
          */
-        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'WasmCrossOriginModuleSharingIssue');
+        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'WasmCrossOriginModuleSharingIssue' | 'GenericIssue');
 
         /**
          * This struct holds a list of optional fields with additional information
@@ -3392,6 +3422,7 @@ export namespace Protocol {
             quirksModeIssueDetails?: QuirksModeIssueDetails;
             navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
             wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
+            genericIssueDetails?: GenericIssueDetails;
         }
 
         /**
@@ -6000,6 +6031,20 @@ export namespace Protocol {
             nodeId?: NodeId;
         }
 
+        export interface GetQueryingDescendantsForContainerRequest {
+            /**
+             * Id of the container node to find querying descendants from.
+             */
+            nodeId: NodeId;
+        }
+
+        export interface GetQueryingDescendantsForContainerResponse {
+            /**
+             * Descendant nodes with container queries against the given container.
+             */
+            nodeIds: NodeId[];
+        }
+
         /**
          * Fired when `Element`'s attribute is modified.
          */
@@ -6670,6 +6715,10 @@ export namespace Protocol {
              */
             nodeType?: integer[];
             /**
+             * Type of the shadow root the `Node` is in. String values are equal to the `ShadowRootType` enum.
+             */
+            shadowRootType?: RareStringData;
+            /**
              * `Node`'s nodeName.
              */
             nodeName?: StringIndex[];
@@ -7131,6 +7180,14 @@ export namespace Protocol {
              * Whether to enable to disable focus emulation.
              */
             enabled: boolean;
+        }
+
+        export interface SetAutoDarkModeOverrideRequest {
+            /**
+             * Whether to enable or disable automatic dark mode.
+             * If not specified, any existing override will be cleared.
+             */
+            enabled?: boolean;
         }
 
         export interface SetCPUThrottlingRateRequest {
@@ -7927,6 +7984,10 @@ export namespace Protocol {
         export interface DragData {
             items: DragDataItem[];
             /**
+             * List of filenames that should be included when dropping
+             */
+            files?: string[];
+            /**
              * Bit field representing allowed drag operations. Copy = 1, Link = 2, Move = 16
              */
             dragOperationsMask: integer;
@@ -8043,6 +8104,29 @@ export namespace Protocol {
              * The text to insert.
              */
             text: string;
+        }
+
+        export interface ImeSetCompositionRequest {
+            /**
+             * The text to insert
+             */
+            text: string;
+            /**
+             * selection start
+             */
+            selectionStart: integer;
+            /**
+             * selection end
+             */
+            selectionEnd: integer;
+            /**
+             * replacement start
+             */
+            replacementStart?: integer;
+            /**
+             * replacement end
+             */
+            replacementEnd?: integer;
         }
 
         export const enum DispatchMouseEventRequestType {
@@ -8653,6 +8737,10 @@ export namespace Protocol {
             Error = 'error',
         }
 
+        export const enum LogEntryCategory {
+            Cors = 'cors',
+        }
+
         /**
          * Log entry.
          */
@@ -8669,6 +8757,10 @@ export namespace Protocol {
              * Logged text.
              */
             text: string;
+            /**
+             *  (LogEntryCategory enum)
+             */
+            category?: ('cors');
             /**
              * Timestamp when this entry was added.
              */
@@ -9243,7 +9335,7 @@ export namespace Protocol {
              */
             headers: Headers;
             /**
-             * HTTP response headers text.
+             * HTTP response headers text. This has been replaced by the headers in Network.responseReceivedExtraInfo.
              */
             headersText?: string;
             /**
@@ -9255,7 +9347,7 @@ export namespace Protocol {
              */
             requestHeaders?: Headers;
             /**
-             * HTTP request headers text.
+             * HTTP request headers text. This has been replaced by the headers in Network.requestWillBeSentExtraInfo.
              */
             requestHeadersText?: string;
             /**
@@ -9510,12 +9602,12 @@ export namespace Protocol {
         /**
          * Types of reasons why a cookie may not be stored from a response.
          */
-        export type SetCookieBlockedReason = ('SecureOnly' | 'SameSiteStrict' | 'SameSiteLax' | 'SameSiteUnspecifiedTreatedAsLax' | 'SameSiteNoneInsecure' | 'UserPreferences' | 'SyntaxError' | 'SchemeNotSupported' | 'OverwriteSecure' | 'InvalidDomain' | 'InvalidPrefix' | 'UnknownError' | 'SchemefulSameSiteStrict' | 'SchemefulSameSiteLax' | 'SchemefulSameSiteUnspecifiedTreatedAsLax' | 'SamePartyFromCrossPartyContext' | 'SamePartyConflictsWithOtherAttributes');
+        export type SetCookieBlockedReason = ('SecureOnly' | 'SameSiteStrict' | 'SameSiteLax' | 'SameSiteUnspecifiedTreatedAsLax' | 'SameSiteNoneInsecure' | 'UserPreferences' | 'SyntaxError' | 'SchemeNotSupported' | 'OverwriteSecure' | 'InvalidDomain' | 'InvalidPrefix' | 'UnknownError' | 'SchemefulSameSiteStrict' | 'SchemefulSameSiteLax' | 'SchemefulSameSiteUnspecifiedTreatedAsLax' | 'SamePartyFromCrossPartyContext' | 'SamePartyConflictsWithOtherAttributes' | 'NameValuePairExceedsMaxSize');
 
         /**
          * Types of reasons why a cookie may not be sent with a request.
          */
-        export type CookieBlockedReason = ('SecureOnly' | 'NotOnPath' | 'DomainMismatch' | 'SameSiteStrict' | 'SameSiteLax' | 'SameSiteUnspecifiedTreatedAsLax' | 'SameSiteNoneInsecure' | 'UserPreferences' | 'UnknownError' | 'SchemefulSameSiteStrict' | 'SchemefulSameSiteLax' | 'SchemefulSameSiteUnspecifiedTreatedAsLax' | 'SamePartyFromCrossPartyContext');
+        export type CookieBlockedReason = ('SecureOnly' | 'NotOnPath' | 'DomainMismatch' | 'SameSiteStrict' | 'SameSiteLax' | 'SameSiteUnspecifiedTreatedAsLax' | 'SameSiteNoneInsecure' | 'UserPreferences' | 'UnknownError' | 'SchemefulSameSiteStrict' | 'SchemefulSameSiteLax' | 'SchemefulSameSiteUnspecifiedTreatedAsLax' | 'SamePartyFromCrossPartyContext' | 'NameValuePairExceedsMaxSize');
 
         /**
          * A cookie which was not stored from a response with the corresponding reason.
@@ -9817,6 +9909,15 @@ export namespace Protocol {
 
         export type IPAddressSpace = ('Local' | 'Private' | 'Public' | 'Unknown');
 
+        export interface ConnectTiming {
+            /**
+             * Timing's requestTime is a baseline in seconds, while the other numbers are ticks in
+             * milliseconds relatively to this requestTime. Matches ResourceTiming's requestTime for
+             * the same request (but not for redirected requests).
+             */
+            requestTime: number;
+        }
+
         export interface ClientSecurityState {
             initiatorIsSecureContext: boolean;
             initiatorIPAddressSpace: IPAddressSpace;
@@ -9844,6 +9945,46 @@ export namespace Protocol {
         export interface SecurityIsolationStatus {
             coop?: CrossOriginOpenerPolicyStatus;
             coep?: CrossOriginEmbedderPolicyStatus;
+        }
+
+        /**
+         * The status of a Reporting API report.
+         */
+        export type ReportStatus = ('Queued' | 'Pending' | 'MarkedForRemoval' | 'Success');
+
+        export type ReportId = string;
+
+        /**
+         * An object representing a report generated by the Reporting API.
+         */
+        export interface ReportingApiReport {
+            id: ReportId;
+            /**
+             * The URL of the document that triggered the report.
+             */
+            initiatorUrl: string;
+            /**
+             * The name of the endpoint group that should be used to deliver the report.
+             */
+            destination: string;
+            /**
+             * The type of the report (specifies the set of data that is contained in the report body).
+             */
+            type: string;
+            /**
+             * When the report was generated.
+             */
+            timestamp: Network.TimeSinceEpoch;
+            /**
+             * How many uploads deep the related request was.
+             */
+            depth: integer;
+            /**
+             * The number of delivery attempts made so far, not including an active attempt.
+             */
+            completedAttempts: integer;
+            body: any;
+            status: ReportStatus;
         }
 
         /**
@@ -10270,11 +10411,19 @@ export namespace Protocol {
             status: SecurityIsolationStatus;
         }
 
+        export interface EnableReportingApiRequest {
+            /**
+             * Whether to enable or disable events for the Reporting API
+             */
+            enable: boolean;
+        }
+
         export interface LoadNetworkResourceRequest {
             /**
-             * Frame id to get the resource for.
+             * Frame id to get the resource for. Mandatory for frame targets, and
+             * should be omitted for worker targets.
              */
-            frameId: Page.FrameId;
+            frameId?: Page.FrameId;
             /**
              * URL of the resource to get content for.
              */
@@ -10774,6 +10923,10 @@ export namespace Protocol {
              */
             headers: Headers;
             /**
+             * Connection timing information for the request.
+             */
+            connectTiming: ConnectTiming;
+            /**
              * The client security state set for the request.
              */
             clientSecurityState?: ClientSecurityState;
@@ -10804,6 +10957,12 @@ export namespace Protocol {
              * established the connection, so we can't send it in `requestWillBeSentExtraInfo`.
              */
             resourceIPAddressSpace: IPAddressSpace;
+            /**
+             * The status code of the response. This is useful in cases the request failed and no responseReceived
+             * event is triggered, which is the case for, e.g., CORS errors. This is also the correct status code
+             * for cached requests, where the status in responseReceived is a 200 and this will be 304.
+             */
+            statusCode: integer;
             /**
              * Raw response header text as it was received over the wire. The raw text may not always be
              * available, such as in the case of HTTP/2 or QUIC.
@@ -10926,6 +11085,18 @@ export namespace Protocol {
              * after webbundle was parsed.
              */
             bundleRequestId?: RequestId;
+        }
+
+        /**
+         * Is sent whenever a new report is added.
+         * And after 'enableReportingApi' for all existing reports.
+         */
+        export interface ReportingApiReportAddedEvent {
+            report: ReportingApiReport;
+        }
+
+        export interface ReportingApiReportUpdatedEvent {
+            report: ReportingApiReport;
         }
     }
 
@@ -11201,6 +11372,10 @@ export namespace Protocol {
              * The contrast algorithm to use for the contrast ratio (default: aa).
              */
             contrastAlgorithm?: ContrastAlgorithm;
+            /**
+             * The container query container highlight configuration (default: all transparent).
+             */
+            containerQueryContainerHighlightConfig?: ContainerQueryContainerHighlightConfig;
         }
 
         export type ColorFormat = ('rgb' | 'hsl' | 'hex');
@@ -11276,6 +11451,28 @@ export namespace Protocol {
              * The content box highlight outline color (default: transparent).
              */
             outlineColor?: DOM.RGBA;
+        }
+
+        export interface ContainerQueryHighlightConfig {
+            /**
+             * A descriptor for the highlight appearance of container query containers.
+             */
+            containerQueryContainerHighlightConfig: ContainerQueryContainerHighlightConfig;
+            /**
+             * Identifier of the container node to highlight.
+             */
+            nodeId: DOM.NodeId;
+        }
+
+        export interface ContainerQueryContainerHighlightConfig {
+            /**
+             * The style of the container border.
+             */
+            containerBorder?: LineStyle;
+            /**
+             * The style of the descendants' borders.
+             */
+            descendantBorder?: LineStyle;
         }
 
         export type InspectMode = ('searchForNode' | 'searchForUAShadowDOM' | 'captureAreaScreenshot' | 'showDistances' | 'none');
@@ -11498,6 +11695,13 @@ export namespace Protocol {
             scrollSnapHighlightConfigs: ScrollSnapHighlightConfig[];
         }
 
+        export interface SetShowContainerQueryOverlaysRequest {
+            /**
+             * An array of node identifiers and descriptors for the highlight appearance.
+             */
+            containerQueryHighlightConfigs: ContainerQueryHighlightConfig[];
+        }
+
         export interface SetShowPaintRectsRequest {
             /**
              * True for showing paint rectangles
@@ -11614,7 +11818,7 @@ export namespace Protocol {
          * All Permissions Policy features. This enum should match the one defined
          * in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
          */
-        export type PermissionsPolicyFeature = ('accelerometer' | 'ambient-light-sensor' | 'attribution-reporting' | 'autoplay' | 'camera' | 'ch-dpr' | 'ch-device-memory' | 'ch-downlink' | 'ch-ect' | 'ch-lang' | 'ch-prefers-color-scheme' | 'ch-rtt' | 'ch-ua' | 'ch-ua-arch' | 'ch-ua-bitness' | 'ch-ua-platform' | 'ch-ua-model' | 'ch-ua-mobile' | 'ch-ua-full-version' | 'ch-ua-platform-version' | 'ch-viewport-width' | 'ch-width' | 'clipboard-read' | 'clipboard-write' | 'cross-origin-isolated' | 'direct-sockets' | 'display-capture' | 'document-domain' | 'encrypted-media' | 'execution-while-out-of-viewport' | 'execution-while-not-rendered' | 'focus-without-user-activation' | 'fullscreen' | 'frobulate' | 'gamepad' | 'geolocation' | 'gyroscope' | 'hid' | 'idle-detection' | 'interest-cohort' | 'magnetometer' | 'microphone' | 'midi' | 'otp-credentials' | 'payment' | 'picture-in-picture' | 'publickey-credentials-get' | 'screen-wake-lock' | 'serial' | 'shared-autofill' | 'storage-access-api' | 'sync-xhr' | 'trust-token-redemption' | 'usb' | 'vertical-scroll' | 'web-share' | 'window-placement' | 'xr-spatial-tracking');
+        export type PermissionsPolicyFeature = ('accelerometer' | 'ambient-light-sensor' | 'attribution-reporting' | 'autoplay' | 'camera' | 'ch-dpr' | 'ch-device-memory' | 'ch-downlink' | 'ch-ect' | 'ch-prefers-color-scheme' | 'ch-rtt' | 'ch-ua' | 'ch-ua-arch' | 'ch-ua-bitness' | 'ch-ua-platform' | 'ch-ua-model' | 'ch-ua-mobile' | 'ch-ua-full-version' | 'ch-ua-platform-version' | 'ch-ua-reduced' | 'ch-viewport-height' | 'ch-viewport-width' | 'ch-width' | 'clipboard-read' | 'clipboard-write' | 'cross-origin-isolated' | 'direct-sockets' | 'display-capture' | 'document-domain' | 'encrypted-media' | 'execution-while-out-of-viewport' | 'execution-while-not-rendered' | 'focus-without-user-activation' | 'fullscreen' | 'frobulate' | 'gamepad' | 'geolocation' | 'gyroscope' | 'hid' | 'idle-detection' | 'interest-cohort' | 'magnetometer' | 'microphone' | 'midi' | 'otp-credentials' | 'payment' | 'picture-in-picture' | 'publickey-credentials-get' | 'screen-wake-lock' | 'serial' | 'shared-autofill' | 'storage-access-api' | 'sync-xhr' | 'trust-token-redemption' | 'usb' | 'vertical-scroll' | 'web-share' | 'window-placement' | 'xr-spatial-tracking');
 
         /**
          * Reason for a permissions policy feature to be disabled.
@@ -11636,7 +11840,7 @@ export namespace Protocol {
          * Origin Trial(https://www.chromium.org/blink/origin-trials) support.
          * Status for an Origin Trial token.
          */
-        export type OriginTrialTokenStatus = ('Success' | 'NotSupported' | 'Insecure' | 'Expired' | 'WrongOrigin' | 'InvalidSignature' | 'Malformed' | 'WrongVersion' | 'FeatureDisabled' | 'TokenDisabled' | 'FeatureDisabledForUser');
+        export type OriginTrialTokenStatus = ('Success' | 'NotSupported' | 'Insecure' | 'Expired' | 'WrongOrigin' | 'InvalidSignature' | 'Malformed' | 'WrongVersion' | 'FeatureDisabled' | 'TokenDisabled' | 'FeatureDisabledForUser' | 'UnknownTrial');
 
         /**
          * Status for an Origin Trial.
@@ -11681,7 +11885,7 @@ export namespace Protocol {
             /**
              * Parent frame identifier.
              */
-            parentId?: string;
+            parentId?: FrameId;
             /**
              * Identifier of the loader associated with this frame.
              */
@@ -11733,10 +11937,6 @@ export namespace Protocol {
              * Indicated which gated APIs / features are available.
              */
             gatedAPIFeatures: GatedAPIFeatures[];
-            /**
-             * Frame document's origin trials with at least one token present.
-             */
-            originTrials?: OriginTrial[];
         }
 
         /**
@@ -12103,7 +12303,7 @@ export namespace Protocol {
         /**
          * List of not restored reasons for back-forward cache.
          */
-        export type BackForwardCacheNotRestoredReason = ('NotMainFrame' | 'BackForwardCacheDisabled' | 'RelatedActiveContentsExist' | 'HTTPStatusNotOK' | 'SchemeNotHTTPOrHTTPS' | 'Loading' | 'WasGrantedMediaAccess' | 'DisableForRenderFrameHostCalled' | 'DomainNotAllowed' | 'HTTPMethodNotGET' | 'SubframeIsNavigating' | 'Timeout' | 'CacheLimit' | 'JavaScriptExecution' | 'RendererProcessKilled' | 'RendererProcessCrashed' | 'GrantedMediaStreamAccess' | 'SchedulerTrackedFeatureUsed' | 'ConflictingBrowsingInstance' | 'CacheFlushed' | 'ServiceWorkerVersionActivation' | 'SessionRestored' | 'ServiceWorkerPostMessage' | 'EnteredBackForwardCacheBeforeServiceWorkerHostAdded' | 'RenderFrameHostReused_SameSite' | 'RenderFrameHostReused_CrossSite' | 'ServiceWorkerClaim' | 'IgnoreEventAndEvict' | 'HaveInnerContents' | 'TimeoutPuttingInCache' | 'BackForwardCacheDisabledByLowMemory' | 'BackForwardCacheDisabledByCommandLine' | 'NetworkRequestDatapipeDrainedAsBytesConsumer' | 'NetworkRequestRedirected' | 'NetworkRequestTimeout' | 'NetworkExceedsBufferLimit' | 'NavigationCancelledWhileRestoring' | 'NotMostRecentNavigationEntry' | 'BackForwardCacheDisabledForPrerender' | 'UserAgentOverrideDiffers' | 'ForegroundCacheLimit' | 'BrowsingInstanceNotSwapped' | 'BackForwardCacheDisabledForDelegate' | 'OptInUnloadHeaderNotPresent' | 'UnloadHandlerExistsInSubFrame' | 'ServiceWorkerUnregistration' | 'WebSocket' | 'WebRTC' | 'MainResourceHasCacheControlNoStore' | 'MainResourceHasCacheControlNoCache' | 'SubresourceHasCacheControlNoStore' | 'SubresourceHasCacheControlNoCache' | 'ContainsPlugins' | 'DocumentLoaded' | 'DedicatedWorkerOrWorklet' | 'OutstandingNetworkRequestOthers' | 'OutstandingIndexedDBTransaction' | 'RequestedGeolocationPermission' | 'RequestedNotificationsPermission' | 'RequestedMIDIPermission' | 'RequestedAudioCapturePermission' | 'RequestedVideoCapturePermission' | 'RequestedBackForwardCacheBlockedSensors' | 'RequestedBackgroundWorkPermission' | 'BroadcastChannel' | 'IndexedDBConnection' | 'WebXR' | 'SharedWorker' | 'WebLocks' | 'WebHID' | 'WebShare' | 'RequestedStorageAccessGrant' | 'WebNfc' | 'WebFileSystem' | 'OutstandingNetworkRequestFetch' | 'OutstandingNetworkRequestXHR' | 'AppBanner' | 'Printing' | 'WebDatabase' | 'PictureInPicture' | 'Portal' | 'SpeechRecognizer' | 'IdleManager' | 'PaymentManager' | 'SpeechSynthesis' | 'KeyboardLock' | 'WebOTPService' | 'OutstandingNetworkRequestDirectSocket' | 'IsolatedWorldScript' | 'InjectedStyleSheet' | 'MediaSessionImplOnServiceCreated' | 'Unknown');
+        export type BackForwardCacheNotRestoredReason = ('NotMainFrame' | 'BackForwardCacheDisabled' | 'RelatedActiveContentsExist' | 'HTTPStatusNotOK' | 'SchemeNotHTTPOrHTTPS' | 'Loading' | 'WasGrantedMediaAccess' | 'DisableForRenderFrameHostCalled' | 'DomainNotAllowed' | 'HTTPMethodNotGET' | 'SubframeIsNavigating' | 'Timeout' | 'CacheLimit' | 'JavaScriptExecution' | 'RendererProcessKilled' | 'RendererProcessCrashed' | 'GrantedMediaStreamAccess' | 'SchedulerTrackedFeatureUsed' | 'ConflictingBrowsingInstance' | 'CacheFlushed' | 'ServiceWorkerVersionActivation' | 'SessionRestored' | 'ServiceWorkerPostMessage' | 'EnteredBackForwardCacheBeforeServiceWorkerHostAdded' | 'RenderFrameHostReused_SameSite' | 'RenderFrameHostReused_CrossSite' | 'ServiceWorkerClaim' | 'IgnoreEventAndEvict' | 'HaveInnerContents' | 'TimeoutPuttingInCache' | 'BackForwardCacheDisabledByLowMemory' | 'BackForwardCacheDisabledByCommandLine' | 'NetworkRequestDatapipeDrainedAsBytesConsumer' | 'NetworkRequestRedirected' | 'NetworkRequestTimeout' | 'NetworkExceedsBufferLimit' | 'NavigationCancelledWhileRestoring' | 'NotMostRecentNavigationEntry' | 'BackForwardCacheDisabledForPrerender' | 'UserAgentOverrideDiffers' | 'ForegroundCacheLimit' | 'BrowsingInstanceNotSwapped' | 'BackForwardCacheDisabledForDelegate' | 'OptInUnloadHeaderNotPresent' | 'UnloadHandlerExistsInMainFrame' | 'UnloadHandlerExistsInSubFrame' | 'ServiceWorkerUnregistration' | 'CacheControlNoStore' | 'CacheControlNoStoreCookieModified' | 'CacheControlNoStoreHTTPOnlyCookieModified' | 'NoResponseHead' | 'Unknown' | 'ActivationNavigationsDisallowedForBug1234857' | 'WebSocket' | 'WebTransport' | 'WebRTC' | 'MainResourceHasCacheControlNoStore' | 'MainResourceHasCacheControlNoCache' | 'SubresourceHasCacheControlNoStore' | 'SubresourceHasCacheControlNoCache' | 'ContainsPlugins' | 'DocumentLoaded' | 'DedicatedWorkerOrWorklet' | 'OutstandingNetworkRequestOthers' | 'OutstandingIndexedDBTransaction' | 'RequestedNotificationsPermission' | 'RequestedMIDIPermission' | 'RequestedAudioCapturePermission' | 'RequestedVideoCapturePermission' | 'RequestedBackForwardCacheBlockedSensors' | 'RequestedBackgroundWorkPermission' | 'BroadcastChannel' | 'IndexedDBConnection' | 'WebXR' | 'SharedWorker' | 'WebLocks' | 'WebHID' | 'WebShare' | 'RequestedStorageAccessGrant' | 'WebNfc' | 'OutstandingNetworkRequestFetch' | 'OutstandingNetworkRequestXHR' | 'AppBanner' | 'Printing' | 'WebDatabase' | 'PictureInPicture' | 'Portal' | 'SpeechRecognizer' | 'IdleManager' | 'PaymentManager' | 'SpeechSynthesis' | 'KeyboardLock' | 'WebOTPService' | 'OutstandingNetworkRequestDirectSocket' | 'InjectedJavascript' | 'InjectedStyleSheet' | 'Dummy' | 'ContentSecurityHandler' | 'ContentWebAuthenticationAPI' | 'ContentFileChooser' | 'ContentSerial' | 'ContentFileSystemAccess' | 'ContentMediaDevicesDispatcherHost' | 'ContentWebBluetooth' | 'ContentWebUSB' | 'ContentMediaSession' | 'ContentMediaSessionService' | 'ContentMediaPlay' | 'EmbedderPopupBlockerTabHelper' | 'EmbedderSafeBrowsingTriggeredPopupBlocker' | 'EmbedderSafeBrowsingThreatDetails' | 'EmbedderAppBannerManager' | 'EmbedderDomDistillerViewerSource' | 'EmbedderDomDistillerSelfDeletingRequestDelegate' | 'EmbedderOomInterventionTabHelper' | 'EmbedderOfflinePage' | 'EmbedderChromePasswordManagerClientBindCredentialManager' | 'EmbedderPermissionRequestManager' | 'EmbedderModalDialog' | 'EmbedderExtensions' | 'EmbedderExtensionMessaging' | 'EmbedderExtensionMessagingForOpenPort' | 'EmbedderExtensionSentMessageToCachedFrame');
 
         /**
          * Types of not restored reasons for back-forward cache.
@@ -12264,6 +12464,17 @@ export namespace Protocol {
 
         export interface GetManifestIconsResponse {
             primaryIcon?: string;
+        }
+
+        export interface GetAppIdResponse {
+            /**
+             * App id, either from manifest's id attribute or computed from start_url
+             */
+            appId?: string;
+            /**
+             * Recommendation for manifest's id attribute to match current id computed from start_url
+             */
+            recommendedId?: string;
         }
 
         export interface GetCookiesResponse {
@@ -12575,6 +12786,14 @@ export namespace Protocol {
 
         export interface GetPermissionsPolicyStateResponse {
             states: PermissionsPolicyFeatureState[];
+        }
+
+        export interface GetOriginTrialsRequest {
+            frameId: FrameId;
+        }
+
+        export interface GetOriginTrialsResponse {
+            originTrials: OriginTrial[];
         }
 
         export interface SetDeviceMetricsOverrideRequest {
@@ -14371,6 +14590,15 @@ export namespace Protocol {
             flatten?: boolean;
         }
 
+        export interface AutoAttachRelatedRequest {
+            targetId: TargetID;
+            /**
+             * Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
+             * to run paused targets.
+             */
+            waitForDebuggerOnStart: boolean;
+        }
+
         export interface SetDiscoverTargetsRequest {
             /**
              * Whether to discover available targets.
@@ -14852,7 +15080,9 @@ export namespace Protocol {
              */
             binaryResponseHeaders?: string;
             /**
-             * A response body. (Encoded as a base64 string when passed over JSON)
+             * A response body. If absent, original response body will be used if
+             * the request is intercepted at the response stage and empty body
+             * will be used if the request is intercepted at the request stage. (Encoded as a base64 string when passed over JSON)
              */
             body?: string;
             /**
@@ -14883,6 +15113,10 @@ export namespace Protocol {
              * If set, overrides the request headers.
              */
             headers?: HeaderEntry[];
+            /**
+             * If set, overrides response interception behavior for this request.
+             */
+            interceptResponse?: boolean;
         }
 
         export interface ContinueWithAuthRequest {
@@ -14894,6 +15128,33 @@ export namespace Protocol {
              * Response to  with an authChallenge.
              */
             authChallengeResponse: AuthChallengeResponse;
+        }
+
+        export interface ContinueResponseRequest {
+            /**
+             * An id the client received in requestPaused event.
+             */
+            requestId: RequestId;
+            /**
+             * An HTTP response code. If absent, original response code will be used.
+             */
+            responseCode?: integer;
+            /**
+             * A textual representation of responseCode.
+             * If absent, a standard phrase matching responseCode is used.
+             */
+            responsePhrase?: string;
+            /**
+             * Response headers. If absent, original response headers will be used.
+             */
+            responseHeaders?: HeaderEntry[];
+            /**
+             * Alternative way of specifying response headers as a \0-separated
+             * series of name: value pairs. Prefer the above method unless you
+             * need to represent some non-UTF8 values that can't be transmitted
+             * over the protocol as text. (Encoded as a base64 string when passed over JSON)
+             */
+            binaryResponseHeaders?: string;
         }
 
         export interface GetResponseBodyRequest {
@@ -14955,6 +15216,10 @@ export namespace Protocol {
              * Response code if intercepted at response stage.
              */
             responseStatusCode?: integer;
+            /**
+             * Response status text if intercepted at response stage.
+             */
+            responseStatusText?: string;
             /**
              * Response headers if intercepted at the response stage.
              */
