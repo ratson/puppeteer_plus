@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.115.1/testing/asserts.ts';
 import { CDPSession } from './Connection.ts';
 import { keyDefinitions, KeyDefinition, KeyInput } from './USKeyboardLayout.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';

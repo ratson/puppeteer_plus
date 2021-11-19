@@ -17,7 +17,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.115.1/testing/asserts.ts';
 import { BrowserFetcher } from './BrowserFetcher.ts';
 import { Browser } from '../common/Browser.ts';
 import { BrowserRunner } from './BrowserRunner.ts';

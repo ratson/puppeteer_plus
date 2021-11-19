@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 // deno-lint-ignore-file no-unused-vars
-import { writeAll } from "https://deno.land/std@0.108.0/io/util.ts";
-import * as os from "https://deno.land/std@0.108.0/node/os.ts";
-import * as fs from "https://deno.land/std@0.108.0/node/fs.ts";
-import * as path from "https://deno.land/std@0.108.0/node/path.ts";
-import * as util from "https://deno.land/std@0.108.0/node/util.ts";
+import { writeAll } from "https://deno.land/std@0.115.1/io/util.ts";
+import * as os from "https://deno.land/std@0.115.1/node/os.ts";
+import * as fs from "https://deno.land/std@0.115.1/node/fs.ts";
+import * as path from "https://deno.land/std@0.115.1/node/path.ts";
+import * as util from "https://deno.land/std@0.115.1/node/util.ts";
 
 import { Product } from "../vendor/puppeteer/src/common/Product.ts";
 import { debug } from "../vendor/puppeteer/src/common/Debug.ts";
-import { promisify } from "https://deno.land/std@0.108.0/node/util.ts";
-import { assert } from "https://deno.land/std@0.108.0/testing/asserts.ts";
-import { copy } from "https://deno.land/std@0.108.0/fs/copy.ts";
-import { copy as copyIO } from "https://deno.land/std@0.108.0/io/mod.ts";
+import { promisify } from "https://deno.land/std@0.115.1/node/util.ts";
+import { assert } from "https://deno.land/std@0.115.1/testing/asserts.ts";
+import { copy } from "https://deno.land/std@0.115.1/fs/copy.ts";
+import { copy as copyIO } from "https://deno.land/std@0.115.1/io/mod.ts";
 import { extractZip } from "./deps.ts";
 
 const debugFetcher = debug(`puppeteer:fetcher`);

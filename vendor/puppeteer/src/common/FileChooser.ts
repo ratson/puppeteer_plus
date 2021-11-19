@@ -16,7 +16,7 @@
 
 import { ElementHandle } from './JSHandle.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
-import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.115.1/testing/asserts.ts';
 
 /**
  * File choosers let you react to the page requesting for a file.

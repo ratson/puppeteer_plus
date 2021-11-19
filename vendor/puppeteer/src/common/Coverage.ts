@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.115.1/testing/asserts.ts';
 import { helper, debugError, PuppeteerEventListener } from './helper.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import { CDPSession } from './Connection.ts';

@@ -16,14 +16,14 @@
 // deno-lint-ignore-file no-unused-vars
 import { debug } from "../vendor/puppeteer/src/common/Debug.ts";
 
-import { assert } from "https://deno.land/std@0.108.0/testing/asserts.ts";
+import { assert } from "https://deno.land/std@0.115.1/testing/asserts.ts";
 import { debugError, helper } from "../vendor/puppeteer/src/common/helper.ts";
 import { LaunchOptions } from "../vendor/puppeteer/src/node/LaunchOptions.ts";
 import { Connection } from "../vendor/puppeteer/src/common/Connection.ts";
 import { BrowserWebSocketTransport as WebSocketTransport } from "../vendor/puppeteer/src/common/BrowserWebSocketTransport.ts";
 import { PipeTransport } from "../vendor/puppeteer/src/node/PipeTransport.ts";
 import { Product } from "../vendor/puppeteer/src/common/Product.ts";
-import { readLines, copy } from "https://deno.land/std@0.108.0/io/mod.ts";
+import { readLines, copy } from "https://deno.land/std@0.115.1/io/mod.ts";
 import { TimeoutError } from "../vendor/puppeteer/src/common/Errors.ts";
 
 const debugLauncher = debug("puppeteer:launcher");

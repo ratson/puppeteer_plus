@@ -33,7 +33,7 @@ import createHttpsProxyAgent, {
   HttpsProxyAgentOptions,
 } from 'https-proxy-agent';
 import { getProxyForUrl } from 'proxy-from-env';
-import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.115.1/testing/asserts.ts';
 
 const debugFetcher = debug('puppeteer:fetcher');
 
