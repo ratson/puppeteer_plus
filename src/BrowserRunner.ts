@@ -23,7 +23,8 @@ import { Connection } from "../vendor/puppeteer/src/common/Connection.ts";
 import { BrowserWebSocketTransport as WebSocketTransport } from "../vendor/puppeteer/src/common/BrowserWebSocketTransport.ts";
 import { PipeTransport } from "../vendor/puppeteer/src/node/PipeTransport.ts";
 import { Product } from "../vendor/puppeteer/src/common/Product.ts";
-import { readLines, copy } from "https://deno.land/std@0.115.1/io/mod.ts";
+import { readLines } from "https://deno.land/std@0.115.1/io/mod.ts";
+import { copy } from "https://deno.land/std@0.115.1/streams/conversion.ts";
 import { TimeoutError } from "../vendor/puppeteer/src/common/Errors.ts";
 
 const debugLauncher = debug("puppeteer:launcher");
