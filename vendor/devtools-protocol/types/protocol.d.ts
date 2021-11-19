@@ -289,7 +289,7 @@ export namespace Protocol {
         export interface EnableRequest {
             /**
              * The maximum size in bytes of collected scripts (not referenced by other heap objects)
-             * the debugger can hold. Puts no limit if paramter is omitted.
+             * the debugger can hold. Puts no limit if parameter is omitted.
              */
             maxScriptsCacheSize?: number;
         }
@@ -1069,6 +1069,10 @@ export namespace Protocol {
              */
             reportProgress?: boolean;
             treatGlobalObjectsAsRoots?: boolean;
+            /**
+             * If true, numerical values are included in the snapshot
+             */
+            captureNumericValue?: boolean;
         }
 
         export interface TakeHeapSnapshotRequest {
@@ -1077,9 +1081,13 @@ export namespace Protocol {
              */
             reportProgress?: boolean;
             /**
-             * If true, a raw snapshot without artifical roots will be generated
+             * If true, a raw snapshot without artificial roots will be generated
              */
             treatGlobalObjectsAsRoots?: boolean;
+            /**
+             * If true, numerical values are included in the snapshot
+             */
+            captureNumericValue?: boolean;
         }
 
         export interface AddHeapSnapshotChunkEvent {
@@ -1285,38 +1293,6 @@ export namespace Protocol {
             entries: TypeProfileEntry[];
         }
 
-        /**
-         * Collected counter information.
-         */
-        export interface CounterInfo {
-            /**
-             * Counter name.
-             */
-            name: string;
-            /**
-             * Counter value.
-             */
-            value: integer;
-        }
-
-        /**
-         * Runtime call counter information.
-         */
-        export interface RuntimeCallCounterInfo {
-            /**
-             * Counter name.
-             */
-            name: string;
-            /**
-             * Counter value.
-             */
-            value: number;
-            /**
-             * Counter time in seconds.
-             */
-            time: number;
-        }
-
         export interface GetBestEffortCoverageResponse {
             /**
              * Coverage data for the current isolate.
@@ -1378,20 +1354,6 @@ export namespace Protocol {
             result: ScriptTypeProfile[];
         }
 
-        export interface GetCountersResponse {
-            /**
-             * Collected counters information.
-             */
-            result: CounterInfo[];
-        }
-
-        export interface GetRuntimeCallStatsResponse {
-            /**
-             * Collected runtime call counter information.
-             */
-            result: RuntimeCallCounterInfo[];
-        }
-
         export interface ConsoleProfileFinishedEvent {
             id: string;
             /**
@@ -1424,7 +1386,7 @@ export namespace Protocol {
          * Reports coverage delta since the last poll (either from an event like this, or from
          * `takePreciseCoverage` for the current isolate. May only be sent if precise code
          * coverage has been started. This event can be trigged by the embedder to, for example,
-         * trigger collection of coverage data immediatelly at a certain point in time.
+         * trigger collection of coverage data immediately at a certain point in time.
          */
         export interface PreciseCoverageDeltaUpdateEvent {
             /**
@@ -1434,7 +1396,7 @@ export namespace Protocol {
             /**
              * Identifier for distinguishing coverage events.
              */
-            occassion: string;
+            occasion: string;
             /**
              * Coverage data for the current isolate.
              */
@@ -1817,7 +1779,7 @@ export namespace Protocol {
              */
             name: string;
             /**
-             * A system-unique execution context identifier. Unlike the id, this is unique accross
+             * A system-unique execution context identifier. Unlike the id, this is unique across
              * multiple processes, so can be reliably used to identify specific context while backend
              * performs a cross-process navigation.
              */
@@ -1869,6 +1831,12 @@ export namespace Protocol {
              * Identifier of the context where exception happened.
              */
             executionContextId?: ExecutionContextId;
+            /**
+             * Dictionary with entries of meta data that the client associated
+             * with this exception, such as information about associated network
+             * requests, etc.
+             */
+            exceptionMetaData?: any;
         }
 
         /**
@@ -2017,6 +1985,10 @@ export namespace Protocol {
              * specified and objectId is, objectGroup will be inherited from object.
              */
             objectGroup?: string;
+            /**
+             * Whether to throw an exception if side effect cannot be ruled out during evaluation.
+             */
+            throwOnSideEffect?: boolean;
         }
 
         export interface CallFunctionOnResponse {
@@ -2132,9 +2104,9 @@ export namespace Protocol {
             allowUnsafeEvalBlockedByCSP?: boolean;
             /**
              * An alternative way to specify the execution context to evaluate in.
-             * Compared to contextId that may be reused accross processes, this is guaranteed to be
+             * Compared to contextId that may be reused across processes, this is guaranteed to be
              * system-unique, so it can be used to prevent accidental evaluation of the expression
-             * in context different than intended (e.g. as a result of navigation accross process
+             * in context different than intended (e.g. as a result of navigation across process
              * boundaries).
              * This is mutually exclusive with `contextId`.
              */
@@ -2189,6 +2161,10 @@ export namespace Protocol {
              * Whether preview should be generated for the results.
              */
             generatePreview?: boolean;
+            /**
+             * If true, returns non-indexed properties only.
+             */
+            nonIndexedPropertiesOnly?: boolean;
         }
 
         export interface GetPropertiesResponse {
@@ -2325,6 +2301,9 @@ export namespace Protocol {
              * execution context. If omitted and `executionContextName` is not set,
              * the binding is exposed to all execution contexts of the target.
              * This parameter is mutually exclusive with `executionContextName`.
+             * Deprecated in favor of `executionContextName` due to an unclear use case
+             * and bugs in implementation (crbug.com/1169639). `executionContextId` will be
+             * removed in the future.
              */
             executionContextId?: ExecutionContextId;
             /**
@@ -2460,6 +2439,10 @@ export namespace Protocol {
         export interface InspectRequestedEvent {
             object: RemoteObject;
             hints: any;
+            /**
+             * Identifier of the context where the call was made.
+             */
+            executionContextId?: ExecutionContextId;
         }
     }
 
@@ -2510,7 +2493,7 @@ export namespace Protocol {
         /**
          * Enum of possible native property sources (as a subtype of a particular AXValueSourceType).
          */
-        export type AXValueNativeSourceType = ('figcaption' | 'label' | 'labelfor' | 'labelwrapped' | 'legend' | 'rubyannotation' | 'tablecaption' | 'title' | 'other');
+        export type AXValueNativeSourceType = ('description' | 'figcaption' | 'label' | 'labelfor' | 'labelwrapped' | 'legend' | 'rubyannotation' | 'tablecaption' | 'title' | 'other');
 
         /**
          * A single source for a computed AX property.
@@ -2649,6 +2632,10 @@ export namespace Protocol {
              */
             properties?: AXProperty[];
             /**
+             * ID for this node's parent.
+             */
+            parentId?: AXNodeId;
+            /**
              * IDs for each of this node's child nodes.
              */
             childIds?: AXNodeId[];
@@ -2656,6 +2643,10 @@ export namespace Protocol {
              * The backend ID for the associated DOM node, if any.
              */
             backendDOMNodeId?: DOM.BackendNodeId;
+            /**
+             * The frame ID for the frame associated with this nodes document.
+             */
+            frameId?: Page.FrameId;
         }
 
         export interface GetPartialAXTreeRequest {
@@ -2706,6 +2697,37 @@ export namespace Protocol {
             nodes: AXNode[];
         }
 
+        export interface GetRootAXNodeRequest {
+            /**
+             * The frame in whose document the node resides.
+             * If omitted, the root frame is used.
+             */
+            frameId?: Page.FrameId;
+        }
+
+        export interface GetRootAXNodeResponse {
+            node: AXNode;
+        }
+
+        export interface GetAXNodeAndAncestorsRequest {
+            /**
+             * Identifier of the node to get.
+             */
+            nodeId?: DOM.NodeId;
+            /**
+             * Identifier of the backend node to get.
+             */
+            backendNodeId?: DOM.BackendNodeId;
+            /**
+             * JavaScript object id of the node wrapper to get.
+             */
+            objectId?: Runtime.RemoteObjectId;
+        }
+
+        export interface GetAXNodeAndAncestorsResponse {
+            nodes: AXNode[];
+        }
+
         export interface GetChildAXNodesRequest {
             id: AXNodeId;
             /**
@@ -2746,6 +2768,27 @@ export namespace Protocol {
             /**
              * A list of `Accessibility.AXNode` matching the specified attributes,
              * including nodes that are ignored for accessibility.
+             */
+            nodes: AXNode[];
+        }
+
+        /**
+         * The loadComplete event mirrors the load complete event sent by the browser to assistive
+         * technology when the web page has finished loading.
+         */
+        export interface LoadCompleteEvent {
+            /**
+             * New document root node.
+             */
+            root: AXNode;
+        }
+
+        /**
+         * The nodesUpdated event is sent every time a previously requested node has changed the in tree.
+         */
+        export interface NodesUpdatedEvent {
+            /**
+             * Updated node data.
              */
             nodes: AXNode[];
         }
@@ -2998,129 +3041,6 @@ export namespace Protocol {
     }
 
     /**
-     * The domain is deprecated as AppCache is being removed (see crbug.com/582750).
-     */
-    export namespace ApplicationCache {
-
-        /**
-         * Detailed application cache resource information.
-         */
-        export interface ApplicationCacheResource {
-            /**
-             * Resource url.
-             */
-            url: string;
-            /**
-             * Resource size.
-             */
-            size: integer;
-            /**
-             * Resource type.
-             */
-            type: string;
-        }
-
-        /**
-         * Detailed application cache information.
-         */
-        export interface ApplicationCache {
-            /**
-             * Manifest URL.
-             */
-            manifestURL: string;
-            /**
-             * Application cache size.
-             */
-            size: number;
-            /**
-             * Application cache creation time.
-             */
-            creationTime: number;
-            /**
-             * Application cache update time.
-             */
-            updateTime: number;
-            /**
-             * Application cache resources.
-             */
-            resources: ApplicationCacheResource[];
-        }
-
-        /**
-         * Frame identifier - manifest URL pair.
-         */
-        export interface FrameWithManifest {
-            /**
-             * Frame identifier.
-             */
-            frameId: Page.FrameId;
-            /**
-             * Manifest URL.
-             */
-            manifestURL: string;
-            /**
-             * Application cache status.
-             */
-            status: integer;
-        }
-
-        export interface GetApplicationCacheForFrameRequest {
-            /**
-             * Identifier of the frame containing document whose application cache is retrieved.
-             */
-            frameId: Page.FrameId;
-        }
-
-        export interface GetApplicationCacheForFrameResponse {
-            /**
-             * Relevant application cache data for the document in given frame.
-             */
-            applicationCache: ApplicationCache;
-        }
-
-        export interface GetFramesWithManifestsResponse {
-            /**
-             * Array of frame identifiers with manifest urls for each frame containing a document
-             * associated with some application cache.
-             */
-            frameIds: FrameWithManifest[];
-        }
-
-        export interface GetManifestForFrameRequest {
-            /**
-             * Identifier of the frame containing document whose manifest is retrieved.
-             */
-            frameId: Page.FrameId;
-        }
-
-        export interface GetManifestForFrameResponse {
-            /**
-             * Manifest URL for document in the given frame.
-             */
-            manifestURL: string;
-        }
-
-        export interface ApplicationCacheStatusUpdatedEvent {
-            /**
-             * Identifier of the frame containing document whose application cache updated status.
-             */
-            frameId: Page.FrameId;
-            /**
-             * Manifest URL.
-             */
-            manifestURL: string;
-            /**
-             * Updated application cache status.
-             */
-            status: integer;
-        }
-
-        export interface NetworkStateUpdatedEvent {
-            isNowOnline: boolean;
-        }
-    }
-
-    /**
      * Audits domain allows investigation of page violations and possible improvements.
      */
     export namespace Audits {
@@ -3259,7 +3179,7 @@ export namespace Protocol {
             frame: AffectedFrame;
         }
 
-        export type ContentSecurityPolicyViolationType = ('kInlineViolation' | 'kEvalViolation' | 'kURLViolation' | 'kTrustedTypesSinkViolation' | 'kTrustedTypesPolicyViolation');
+        export type ContentSecurityPolicyViolationType = ('kInlineViolation' | 'kEvalViolation' | 'kURLViolation' | 'kTrustedTypesSinkViolation' | 'kTrustedTypesPolicyViolation' | 'kWasmEvalViolation');
 
         export interface SourceCodeLocation {
             scriptId?: Runtime.ScriptId;
@@ -3397,11 +3317,31 @@ export namespace Protocol {
         }
 
         /**
+         * This issue tracks information needed to print a deprecation message.
+         * The formatting is inherited from the old console.log version, see more at:
+         * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/deprecation.cc
+         * TODO(crbug.com/1264960): Re-work format to add i18n support per:
+         * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/devtools_protocol/README.md
+         */
+        export interface DeprecationIssueDetails {
+            affectedFrame?: AffectedFrame;
+            sourceCodeLocation: SourceCodeLocation;
+            /**
+             * The content of the deprecation issue (this won't be translated),
+             * e.g. "window.inefficientLegacyStorageMethod will be removed in M97,
+             * around January 2022. Please use Web Storage or Indexed Database
+             * instead. This standard was abandoned in January, 1970. See
+             * https://www.chromestatus.com/feature/5684870116278272 for more details."
+             */
+            message?: string;
+        }
+
+        /**
          * A unique identifier for the type of issue. Each type may use one of the
          * optional fields in InspectorIssueDetails to convey more specific
          * information about the kind of issue.
          */
-        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'WasmCrossOriginModuleSharingIssue' | 'GenericIssue');
+        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'WasmCrossOriginModuleSharingIssue' | 'GenericIssue' | 'DeprecationIssue');
 
         /**
          * This struct holds a list of optional fields with additional information
@@ -3423,6 +3363,7 @@ export namespace Protocol {
             navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
             wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
             genericIssueDetails?: GenericIssueDetails;
+            deprecationIssueDetails?: DeprecationIssueDetails;
         }
 
         /**
@@ -6401,6 +6342,29 @@ export namespace Protocol {
     }
 
     /**
+     * EventBreakpoints permits setting breakpoints on particular operations and
+     * events in targets that run JavaScript but do not have a DOM.
+     * JavaScript execution will stop on these operations as if there was a regular
+     * breakpoint set.
+     */
+    export namespace EventBreakpoints {
+
+        export interface SetInstrumentationBreakpointRequest {
+            /**
+             * Instrumentation name to stop on.
+             */
+            eventName: string;
+        }
+
+        export interface RemoveInstrumentationBreakpointRequest {
+            /**
+             * Instrumentation name to stop on.
+             */
+            eventName: string;
+        }
+    }
+
+    /**
      * This domain facilitates obtaining document snapshots with DOM, layout, and style information.
      */
     export namespace DOMSnapshot {
@@ -7155,6 +7119,7 @@ export namespace Protocol {
          */
         export interface UserAgentMetadata {
             brands?: UserAgentBrandVersion[];
+            fullVersionList?: UserAgentBrandVersion[];
             fullVersion?: string;
             platform: string;
             platformVersion: string;
@@ -9188,9 +9153,10 @@ export namespace Protocol {
              */
             logId: string;
             /**
-             * Issuance date.
+             * Issuance date. Unlike TimeSinceEpoch, this contains the number of
+             * milliseconds since January 1, 1970, UTC, not the number of seconds.
              */
-            timestamp: TimeSinceEpoch;
+            timestamp: number;
             /**
              * Hash algorithm.
              */
@@ -9276,7 +9242,7 @@ export namespace Protocol {
         /**
          * The reason why request was blocked.
          */
-        export type CorsError = ('DisallowedByMode' | 'InvalidResponse' | 'WildcardOriginNotAllowed' | 'MissingAllowOriginHeader' | 'MultipleAllowOriginValues' | 'InvalidAllowOriginValue' | 'AllowOriginMismatch' | 'InvalidAllowCredentials' | 'CorsDisabledScheme' | 'PreflightInvalidStatus' | 'PreflightDisallowedRedirect' | 'PreflightWildcardOriginNotAllowed' | 'PreflightMissingAllowOriginHeader' | 'PreflightMultipleAllowOriginValues' | 'PreflightInvalidAllowOriginValue' | 'PreflightAllowOriginMismatch' | 'PreflightInvalidAllowCredentials' | 'PreflightMissingAllowExternal' | 'PreflightInvalidAllowExternal' | 'InvalidAllowMethodsPreflightResponse' | 'InvalidAllowHeadersPreflightResponse' | 'MethodDisallowedByPreflightResponse' | 'HeaderDisallowedByPreflightResponse' | 'RedirectContainsCredentials' | 'InsecurePrivateNetwork' | 'NoCorsRedirectModeNotFollow');
+        export type CorsError = ('DisallowedByMode' | 'InvalidResponse' | 'WildcardOriginNotAllowed' | 'MissingAllowOriginHeader' | 'MultipleAllowOriginValues' | 'InvalidAllowOriginValue' | 'AllowOriginMismatch' | 'InvalidAllowCredentials' | 'CorsDisabledScheme' | 'PreflightInvalidStatus' | 'PreflightDisallowedRedirect' | 'PreflightWildcardOriginNotAllowed' | 'PreflightMissingAllowOriginHeader' | 'PreflightMultipleAllowOriginValues' | 'PreflightInvalidAllowOriginValue' | 'PreflightAllowOriginMismatch' | 'PreflightInvalidAllowCredentials' | 'PreflightMissingAllowExternal' | 'PreflightInvalidAllowExternal' | 'InvalidAllowMethodsPreflightResponse' | 'InvalidAllowHeadersPreflightResponse' | 'MethodDisallowedByPreflightResponse' | 'HeaderDisallowedByPreflightResponse' | 'RedirectContainsCredentials' | 'InsecurePrivateNetwork' | 'InvalidPrivateNetworkAccess' | 'UnexpectedPrivateNetworkAccess' | 'NoCorsRedirectModeNotFollow');
 
         export interface CorsErrorStatus {
             corsError: CorsError;
@@ -9597,6 +9563,15 @@ export namespace Protocol {
              * This is a temporary ability and it will be removed in the future.
              */
             sourcePort: integer;
+            /**
+             * Cookie partition key. The site of the top-level URL the browser was visiting at the start
+             * of the request to the endpoint that set the cookie.
+             */
+            partitionKey?: string;
+            /**
+             * True if cookie partition key is opaque.
+             */
+            partitionKeyOpaque?: boolean;
         }
 
         /**
@@ -9703,6 +9678,12 @@ export namespace Protocol {
              * This is a temporary ability and it will be removed in the future.
              */
             sourcePort?: integer;
+            /**
+             * Cookie partition key. The site of the top-level URL the browser was visiting at the start
+             * of the request to the endpoint that set the cookie.
+             * If not set, the cookie will be set as not partitioned.
+             */
+            partitionKey?: string;
         }
 
         export const enum AuthChallengeSource {
@@ -9905,7 +9886,7 @@ export namespace Protocol {
          */
         export type ContentEncoding = ('deflate' | 'gzip' | 'br');
 
-        export type PrivateNetworkRequestPolicy = ('Allow' | 'BlockFromInsecureToMorePrivate' | 'WarnFromInsecureToMorePrivate');
+        export type PrivateNetworkRequestPolicy = ('Allow' | 'BlockFromInsecureToMorePrivate' | 'WarnFromInsecureToMorePrivate' | 'PreflightBlock' | 'PreflightWarn');
 
         export type IPAddressSpace = ('Local' | 'Private' | 'Public' | 'Unknown');
 
@@ -10343,6 +10324,12 @@ export namespace Protocol {
              * This is a temporary ability and it will be removed in the future.
              */
             sourcePort?: integer;
+            /**
+             * Cookie partition key. The site of the top-level URL the browser was visiting at the start
+             * of the request to the endpoint that set the cookie.
+             * If not set, the cookie will be set as not partitioned.
+             */
+            partitionKey?: string;
         }
 
         export interface SetCookieResponse {
@@ -10647,6 +10634,12 @@ export namespace Protocol {
              */
             initiator: Initiator;
             /**
+             * In the case that redirectResponse is populated, this flag indicates whether
+             * requestWillBeSentExtraInfo and responseReceivedExtraInfo events will be or were emitted
+             * for the request which was just redirected.
+             */
+            redirectHasExtraInfo: boolean;
+            /**
              * Redirect response data.
              */
             redirectResponse?: Response;
@@ -10720,6 +10713,11 @@ export namespace Protocol {
              * Response data.
              */
             response: Response;
+            /**
+             * Indicates whether requestWillBeSentExtraInfo and responseReceivedExtraInfo events will be
+             * or were emitted for this request.
+             */
+            hasExtraInfo: boolean;
             /**
              * Frame identifier.
              */
@@ -11475,6 +11473,32 @@ export namespace Protocol {
             descendantBorder?: LineStyle;
         }
 
+        export interface IsolatedElementHighlightConfig {
+            /**
+             * A descriptor for the highlight appearance of an element in isolation mode.
+             */
+            isolationModeHighlightConfig: IsolationModeHighlightConfig;
+            /**
+             * Identifier of the isolated element to highlight.
+             */
+            nodeId: DOM.NodeId;
+        }
+
+        export interface IsolationModeHighlightConfig {
+            /**
+             * The fill color of the resizers (default: transparent).
+             */
+            resizerColor?: DOM.RGBA;
+            /**
+             * The fill color for resizer handles (default: transparent).
+             */
+            resizerHandleColor?: DOM.RGBA;
+            /**
+             * The fill color for the mask covering non-isolated elements (default: transparent).
+             */
+            maskColor?: DOM.RGBA;
+        }
+
         export type InspectMode = ('searchForNode' | 'searchForUAShadowDOM' | 'captureAreaScreenshot' | 'showDistances' | 'none');
 
         export interface GetHighlightObjectForTestRequest {
@@ -11748,6 +11772,13 @@ export namespace Protocol {
             hingeConfig?: HingeConfig;
         }
 
+        export interface SetShowIsolatedElementsRequest {
+            /**
+             * An array of node identifiers and descriptors for the highlight appearance.
+             */
+            isolatedElementHighlightConfigs: IsolatedElementHighlightConfig[];
+        }
+
         /**
          * Fired when the node should be inspected. This happens after call to `setInspectMode` or when
          * user manually inspects an element.
@@ -11818,7 +11849,7 @@ export namespace Protocol {
          * All Permissions Policy features. This enum should match the one defined
          * in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
          */
-        export type PermissionsPolicyFeature = ('accelerometer' | 'ambient-light-sensor' | 'attribution-reporting' | 'autoplay' | 'camera' | 'ch-dpr' | 'ch-device-memory' | 'ch-downlink' | 'ch-ect' | 'ch-prefers-color-scheme' | 'ch-rtt' | 'ch-ua' | 'ch-ua-arch' | 'ch-ua-bitness' | 'ch-ua-platform' | 'ch-ua-model' | 'ch-ua-mobile' | 'ch-ua-full-version' | 'ch-ua-platform-version' | 'ch-ua-reduced' | 'ch-viewport-height' | 'ch-viewport-width' | 'ch-width' | 'clipboard-read' | 'clipboard-write' | 'cross-origin-isolated' | 'direct-sockets' | 'display-capture' | 'document-domain' | 'encrypted-media' | 'execution-while-out-of-viewport' | 'execution-while-not-rendered' | 'focus-without-user-activation' | 'fullscreen' | 'frobulate' | 'gamepad' | 'geolocation' | 'gyroscope' | 'hid' | 'idle-detection' | 'interest-cohort' | 'magnetometer' | 'microphone' | 'midi' | 'otp-credentials' | 'payment' | 'picture-in-picture' | 'publickey-credentials-get' | 'screen-wake-lock' | 'serial' | 'shared-autofill' | 'storage-access-api' | 'sync-xhr' | 'trust-token-redemption' | 'usb' | 'vertical-scroll' | 'web-share' | 'window-placement' | 'xr-spatial-tracking');
+        export type PermissionsPolicyFeature = ('accelerometer' | 'ambient-light-sensor' | 'attribution-reporting' | 'autoplay' | 'camera' | 'ch-dpr' | 'ch-device-memory' | 'ch-downlink' | 'ch-ect' | 'ch-prefers-color-scheme' | 'ch-rtt' | 'ch-ua' | 'ch-ua-arch' | 'ch-ua-bitness' | 'ch-ua-platform' | 'ch-ua-model' | 'ch-ua-mobile' | 'ch-ua-full-version' | 'ch-ua-full-version-list' | 'ch-ua-platform-version' | 'ch-ua-reduced' | 'ch-viewport-height' | 'ch-viewport-width' | 'ch-width' | 'clipboard-read' | 'clipboard-write' | 'cross-origin-isolated' | 'direct-sockets' | 'display-capture' | 'document-domain' | 'encrypted-media' | 'execution-while-out-of-viewport' | 'execution-while-not-rendered' | 'focus-without-user-activation' | 'fullscreen' | 'frobulate' | 'gamepad' | 'geolocation' | 'gyroscope' | 'hid' | 'idle-detection' | 'interest-cohort' | 'join-ad-interest-group' | 'keyboard-map' | 'magnetometer' | 'microphone' | 'midi' | 'otp-credentials' | 'payment' | 'picture-in-picture' | 'publickey-credentials-get' | 'run-ad-auction' | 'screen-wake-lock' | 'serial' | 'shared-autofill' | 'storage-access-api' | 'sync-xhr' | 'trust-token-redemption' | 'usb' | 'vertical-scroll' | 'web-share' | 'window-placement' | 'xr-spatial-tracking');
 
         /**
          * Reason for a permissions policy feature to be disabled.
@@ -12303,7 +12334,7 @@ export namespace Protocol {
         /**
          * List of not restored reasons for back-forward cache.
          */
-        export type BackForwardCacheNotRestoredReason = ('NotMainFrame' | 'BackForwardCacheDisabled' | 'RelatedActiveContentsExist' | 'HTTPStatusNotOK' | 'SchemeNotHTTPOrHTTPS' | 'Loading' | 'WasGrantedMediaAccess' | 'DisableForRenderFrameHostCalled' | 'DomainNotAllowed' | 'HTTPMethodNotGET' | 'SubframeIsNavigating' | 'Timeout' | 'CacheLimit' | 'JavaScriptExecution' | 'RendererProcessKilled' | 'RendererProcessCrashed' | 'GrantedMediaStreamAccess' | 'SchedulerTrackedFeatureUsed' | 'ConflictingBrowsingInstance' | 'CacheFlushed' | 'ServiceWorkerVersionActivation' | 'SessionRestored' | 'ServiceWorkerPostMessage' | 'EnteredBackForwardCacheBeforeServiceWorkerHostAdded' | 'RenderFrameHostReused_SameSite' | 'RenderFrameHostReused_CrossSite' | 'ServiceWorkerClaim' | 'IgnoreEventAndEvict' | 'HaveInnerContents' | 'TimeoutPuttingInCache' | 'BackForwardCacheDisabledByLowMemory' | 'BackForwardCacheDisabledByCommandLine' | 'NetworkRequestDatapipeDrainedAsBytesConsumer' | 'NetworkRequestRedirected' | 'NetworkRequestTimeout' | 'NetworkExceedsBufferLimit' | 'NavigationCancelledWhileRestoring' | 'NotMostRecentNavigationEntry' | 'BackForwardCacheDisabledForPrerender' | 'UserAgentOverrideDiffers' | 'ForegroundCacheLimit' | 'BrowsingInstanceNotSwapped' | 'BackForwardCacheDisabledForDelegate' | 'OptInUnloadHeaderNotPresent' | 'UnloadHandlerExistsInMainFrame' | 'UnloadHandlerExistsInSubFrame' | 'ServiceWorkerUnregistration' | 'CacheControlNoStore' | 'CacheControlNoStoreCookieModified' | 'CacheControlNoStoreHTTPOnlyCookieModified' | 'NoResponseHead' | 'Unknown' | 'ActivationNavigationsDisallowedForBug1234857' | 'WebSocket' | 'WebTransport' | 'WebRTC' | 'MainResourceHasCacheControlNoStore' | 'MainResourceHasCacheControlNoCache' | 'SubresourceHasCacheControlNoStore' | 'SubresourceHasCacheControlNoCache' | 'ContainsPlugins' | 'DocumentLoaded' | 'DedicatedWorkerOrWorklet' | 'OutstandingNetworkRequestOthers' | 'OutstandingIndexedDBTransaction' | 'RequestedNotificationsPermission' | 'RequestedMIDIPermission' | 'RequestedAudioCapturePermission' | 'RequestedVideoCapturePermission' | 'RequestedBackForwardCacheBlockedSensors' | 'RequestedBackgroundWorkPermission' | 'BroadcastChannel' | 'IndexedDBConnection' | 'WebXR' | 'SharedWorker' | 'WebLocks' | 'WebHID' | 'WebShare' | 'RequestedStorageAccessGrant' | 'WebNfc' | 'OutstandingNetworkRequestFetch' | 'OutstandingNetworkRequestXHR' | 'AppBanner' | 'Printing' | 'WebDatabase' | 'PictureInPicture' | 'Portal' | 'SpeechRecognizer' | 'IdleManager' | 'PaymentManager' | 'SpeechSynthesis' | 'KeyboardLock' | 'WebOTPService' | 'OutstandingNetworkRequestDirectSocket' | 'InjectedJavascript' | 'InjectedStyleSheet' | 'Dummy' | 'ContentSecurityHandler' | 'ContentWebAuthenticationAPI' | 'ContentFileChooser' | 'ContentSerial' | 'ContentFileSystemAccess' | 'ContentMediaDevicesDispatcherHost' | 'ContentWebBluetooth' | 'ContentWebUSB' | 'ContentMediaSession' | 'ContentMediaSessionService' | 'ContentMediaPlay' | 'EmbedderPopupBlockerTabHelper' | 'EmbedderSafeBrowsingTriggeredPopupBlocker' | 'EmbedderSafeBrowsingThreatDetails' | 'EmbedderAppBannerManager' | 'EmbedderDomDistillerViewerSource' | 'EmbedderDomDistillerSelfDeletingRequestDelegate' | 'EmbedderOomInterventionTabHelper' | 'EmbedderOfflinePage' | 'EmbedderChromePasswordManagerClientBindCredentialManager' | 'EmbedderPermissionRequestManager' | 'EmbedderModalDialog' | 'EmbedderExtensions' | 'EmbedderExtensionMessaging' | 'EmbedderExtensionMessagingForOpenPort' | 'EmbedderExtensionSentMessageToCachedFrame');
+        export type BackForwardCacheNotRestoredReason = ('NotMainFrame' | 'BackForwardCacheDisabled' | 'RelatedActiveContentsExist' | 'HTTPStatusNotOK' | 'SchemeNotHTTPOrHTTPS' | 'Loading' | 'WasGrantedMediaAccess' | 'DisableForRenderFrameHostCalled' | 'DomainNotAllowed' | 'HTTPMethodNotGET' | 'SubframeIsNavigating' | 'Timeout' | 'CacheLimit' | 'JavaScriptExecution' | 'RendererProcessKilled' | 'RendererProcessCrashed' | 'GrantedMediaStreamAccess' | 'SchedulerTrackedFeatureUsed' | 'ConflictingBrowsingInstance' | 'CacheFlushed' | 'ServiceWorkerVersionActivation' | 'SessionRestored' | 'ServiceWorkerPostMessage' | 'EnteredBackForwardCacheBeforeServiceWorkerHostAdded' | 'RenderFrameHostReused_SameSite' | 'RenderFrameHostReused_CrossSite' | 'ServiceWorkerClaim' | 'IgnoreEventAndEvict' | 'HaveInnerContents' | 'TimeoutPuttingInCache' | 'BackForwardCacheDisabledByLowMemory' | 'BackForwardCacheDisabledByCommandLine' | 'NetworkRequestDatapipeDrainedAsBytesConsumer' | 'NetworkRequestRedirected' | 'NetworkRequestTimeout' | 'NetworkExceedsBufferLimit' | 'NavigationCancelledWhileRestoring' | 'NotMostRecentNavigationEntry' | 'BackForwardCacheDisabledForPrerender' | 'UserAgentOverrideDiffers' | 'ForegroundCacheLimit' | 'BrowsingInstanceNotSwapped' | 'BackForwardCacheDisabledForDelegate' | 'OptInUnloadHeaderNotPresent' | 'UnloadHandlerExistsInMainFrame' | 'UnloadHandlerExistsInSubFrame' | 'ServiceWorkerUnregistration' | 'CacheControlNoStore' | 'CacheControlNoStoreCookieModified' | 'CacheControlNoStoreHTTPOnlyCookieModified' | 'NoResponseHead' | 'Unknown' | 'ActivationNavigationsDisallowedForBug1234857' | 'WebSocket' | 'WebTransport' | 'WebRTC' | 'MainResourceHasCacheControlNoStore' | 'MainResourceHasCacheControlNoCache' | 'SubresourceHasCacheControlNoStore' | 'SubresourceHasCacheControlNoCache' | 'ContainsPlugins' | 'DocumentLoaded' | 'DedicatedWorkerOrWorklet' | 'OutstandingNetworkRequestOthers' | 'OutstandingIndexedDBTransaction' | 'RequestedNotificationsPermission' | 'RequestedMIDIPermission' | 'RequestedAudioCapturePermission' | 'RequestedVideoCapturePermission' | 'RequestedBackForwardCacheBlockedSensors' | 'RequestedBackgroundWorkPermission' | 'BroadcastChannel' | 'IndexedDBConnection' | 'WebXR' | 'SharedWorker' | 'WebLocks' | 'WebHID' | 'WebShare' | 'RequestedStorageAccessGrant' | 'WebNfc' | 'OutstandingNetworkRequestFetch' | 'OutstandingNetworkRequestXHR' | 'AppBanner' | 'Printing' | 'WebDatabase' | 'PictureInPicture' | 'Portal' | 'SpeechRecognizer' | 'IdleManager' | 'PaymentManager' | 'SpeechSynthesis' | 'KeyboardLock' | 'WebOTPService' | 'OutstandingNetworkRequestDirectSocket' | 'InjectedJavascript' | 'InjectedStyleSheet' | 'Dummy' | 'ContentSecurityHandler' | 'ContentWebAuthenticationAPI' | 'ContentFileChooser' | 'ContentSerial' | 'ContentFileSystemAccess' | 'ContentMediaDevicesDispatcherHost' | 'ContentWebBluetooth' | 'ContentWebUSB' | 'ContentMediaSession' | 'ContentMediaSessionService' | 'EmbedderPopupBlockerTabHelper' | 'EmbedderSafeBrowsingTriggeredPopupBlocker' | 'EmbedderSafeBrowsingThreatDetails' | 'EmbedderAppBannerManager' | 'EmbedderDomDistillerViewerSource' | 'EmbedderDomDistillerSelfDeletingRequestDelegate' | 'EmbedderOomInterventionTabHelper' | 'EmbedderOfflinePage' | 'EmbedderChromePasswordManagerClientBindCredentialManager' | 'EmbedderPermissionRequestManager' | 'EmbedderModalDialog' | 'EmbedderExtensions' | 'EmbedderExtensionMessaging' | 'EmbedderExtensionMessagingForOpenPort' | 'EmbedderExtensionSentMessageToCachedFrame');
 
         /**
          * Types of not restored reasons for back-forward cache.
@@ -12984,10 +13015,6 @@ export namespace Protocol {
             state: ('frozen' | 'active');
         }
 
-        export interface SetProduceCompilationCacheRequest {
-            enabled: boolean;
-        }
-
         export interface ProduceCompilationCacheRequest {
             scripts: CompilationCacheParams[];
         }
@@ -12998,6 +13025,19 @@ export namespace Protocol {
              * Base64-encoded data (Encoded as a base64 string when passed over JSON)
              */
             data: string;
+        }
+
+        export const enum SetSPCTransactionModeRequestMode {
+            None = 'none',
+            Autoaccept = 'autoaccept',
+            Autoreject = 'autoreject',
+        }
+
+        export interface SetSPCTransactionModeRequest {
+            /**
+             *  (SetSPCTransactionModeRequestMode enum)
+             */
+            mode: ('none' | 'autoaccept' | 'autoreject');
         }
 
         export interface GenerateTestReportRequest {
@@ -13809,7 +13849,7 @@ export namespace Protocol {
         }
 
         /**
-         * The security state of the page changed.
+         * The security state of the page changed. No longer being sent.
          */
         export interface SecurityStateChangedEvent {
             /**
@@ -13821,8 +13861,8 @@ export namespace Protocol {
              */
             schemeIsCryptographic: boolean;
             /**
-             * List of explanations for the security state. If the overall security state is `insecure` or
-             * `warning`, at least one corresponding explanation should be included.
+             * Previously a list of explanations for the security state. Now always
+             * empty.
              */
             explanations: SecurityStateExplanation[];
             /**
@@ -13830,7 +13870,7 @@ export namespace Protocol {
              */
             insecureContentStatus: InsecureContentStatus;
             /**
-             * Overrides user-visible description of the state.
+             * Overrides user-visible description of the state. Always omitted.
              */
             summary?: string;
         }

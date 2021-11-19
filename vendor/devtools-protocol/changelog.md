@@ -1,5 +1,255 @@
 
 
+## Roll protocol to r942138
+###### _2021-11-16 06:15:29 -0800_ | Diff: [0308368...22bc316](https://github.com/ChromeDevTools/devtools-protocol/compare/0308368...22bc316)
+#### `Accessibility`: new events
+* [`Accessibility.loadComplete`](https://chromedevtools.github.io/devtools-protocol/tot/Accessibility/#event-loadComplete)
+* [`Accessibility.nodesUpdated`](https://chromedevtools.github.io/devtools-protocol/tot/Accessibility/#event-nodesUpdated)
+
+
+## Roll protocol to r940865
+###### _2021-11-11 11:15:26 -0800_ | Diff: [a2c84e8...0308368](https://github.com/ChromeDevTools/devtools-protocol/compare/a2c84e8...0308368)
+#### `Emulation`: modified type
+* [`Emulation.UserAgentMetadata`](https://chromedevtools.github.io/devtools-protocol/tot/Emulation/#type-UserAgentMetadata) - The `fullVersion` in the properties had `name` _updated_. The `fullVersion` in the properties had `type` _updated_. The `platform` in the properties had `name` _updated_. The `platformVersion` in the properties had `name` _updated_. The `architecture` in the properties had `name` _updated_. The `model` in the properties had `name` _updated_. The `mobile` in the properties had `name` _updated_. The `mobile` in the properties had `type` _updated_. The properties's `items` _added_. The properties's `deprecated` _added_. The properties's `optional` _added_. The properties's `mobile` _added_.
+#### `Page`: modified type
+* [`Page.PermissionsPolicyFeature`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-PermissionsPolicyFeature) - The enum's `ch-ua-platform-version` _updated_. The enum's `ch-ua-reduced` _updated_. The enum's `ch-viewport-height` _updated_. The enum's `ch-viewport-width` _updated_. The enum's `ch-width` _updated_. The enum's `clipboard-read` _updated_. The enum's `clipboard-write` _updated_. The enum's `cross-origin-isolated` _updated_. The enum's `direct-sockets` _updated_. The enum's `display-capture` _updated_. The enum's `document-domain` _updated_. The enum's `encrypted-media` _updated_. The enum's `execution-while-out-of-viewport` _updated_. The enum's `execution-while-not-rendered` _updated_. The enum's `focus-without-user-activation` _updated_. The enum's `fullscreen` _updated_. The enum's `frobulate` _updated_. The enum's `gamepad` _updated_. The enum's `geolocation` _updated_. The enum's `gyroscope` _updated_. The enum's `hid` _updated_. The enum's `idle-detection` _updated_. The enum's `interest-cohort` _updated_. The enum's `join-ad-interest-group` _updated_. The enum's `keyboard-map` _updated_. The enum's `magnetometer` _updated_. The enum's `microphone` _updated_. The enum's `midi` _updated_. The enum's `otp-credentials` _updated_. The enum's `payment` _updated_. The enum's `picture-in-picture` _updated_. The enum's `publickey-credentials-get` _updated_. The enum's `run-ad-auction` _updated_. The enum's `screen-wake-lock` _updated_. The enum's `serial` _updated_. The enum's `shared-autofill` _updated_. The enum's `storage-access-api` _updated_. The enum's `sync-xhr` _updated_. The enum's `trust-token-redemption` _updated_. The enum's `usb` _updated_. The enum's `vertical-scroll` _updated_. The enum's `web-share` _updated_. The enum's `window-placement` _updated_. The enum's `xr-spatial-tracking` _updated_. The enum's `xr-spatial-tracking` _added_.
+
+
+## Roll protocol to r939882
+###### _2021-11-09 09:15:27 -0800_ | Diff: [e9d7ebc...ef5e053](https://github.com/ChromeDevTools/devtools-protocol/compare/e9d7ebc...ef5e053)
+#### `Security`: modified event
+* [`Security.securityStateChanged`](https://chromedevtools.github.io/devtools-protocol/tot/Security/#event-securityStateChanged) - `description` updated. `deprecated` added.
+
+
+## Roll protocol to r939725
+###### _2021-11-08 23:16:13 -0800_ | Diff: [ec485f2...e9d7ebc](https://github.com/ChromeDevTools/devtools-protocol/compare/ec485f2...e9d7ebc)
+#### `Accessibility`: new command
+* [`Accessibility.getAXNodeAndAncestors`](https://chromedevtools.github.io/devtools-protocol/tot/Accessibility/#method-getAXNodeAndAncestors)
+
+
+## Roll protocol to r939404
+###### _2021-11-08 09:15:45 -0800_ | Diff: [8ae67d9...ec485f2](https://github.com/ChromeDevTools/devtools-protocol/compare/8ae67d9...ec485f2)
+#### `Accessibility`: new command
+* [`Accessibility.getRootAXNode`](https://chromedevtools.github.io/devtools-protocol/tot/Accessibility/#method-getRootAXNode)
+
+
+## Roll protocol to r939359
+###### _2021-11-08 07:15:23 -0800_ | Diff: [e42953d...8ae67d9](https://github.com/ChromeDevTools/devtools-protocol/compare/e42953d...8ae67d9)
+#### `Accessibility`: modified type
+* [`Accessibility.AXNode`](https://chromedevtools.github.io/devtools-protocol/tot/Accessibility/#type-AXNode) - The `childIds` in the properties had `type` _removed_. The `childIds` in the properties had `items` _removed_. The `backendDOMNodeId` in the properties had `$ref` _removed_. The `childIds` in the properties had `name` _updated_. The `childIds` in the properties had `description` _updated_. The `backendDOMNodeId` in the properties had `name` _updated_. The `backendDOMNodeId` in the properties had `description` _updated_. The properties's `$ref` _added_. The properties's `type` _added_. The properties's `items` _added_. The properties's `backendDOMNodeId` _added_. The properties's `frameId` _added_.
+
+
+## Roll protocol to r938885
+###### _2021-11-05 12:15:27_ | Diff: [3c2ebcf...790428e](https://github.com/ChromeDevTools/devtools-protocol/compare/3c2ebcf...790428e)
+#### `Page`: modified type
+* [`Page.PermissionsPolicyFeature`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-PermissionsPolicyFeature) - The enum's `keyboard-map` _updated_. The enum's `magnetometer` _updated_. The enum's `microphone` _updated_. The enum's `midi` _updated_. The enum's `otp-credentials` _updated_. The enum's `payment` _updated_. The enum's `picture-in-picture` _updated_. The enum's `publickey-credentials-get` _updated_. The enum's `screen-wake-lock` _updated_. The enum's `serial` _updated_. The enum's `shared-autofill` _updated_. The enum's `storage-access-api` _updated_. The enum's `sync-xhr` _updated_. The enum's `trust-token-redemption` _updated_. The enum's `usb` _updated_. The enum's `vertical-scroll` _updated_. The enum's `web-share` _updated_. The enum's `window-placement` _updated_. The enum's `xr-spatial-tracking` _updated_. The enum's `window-placement` _added_. The enum's `xr-spatial-tracking` _added_.
+
+
+## Roll protocol to r938546
+###### _2021-11-04 15:15:26_ | Diff: [4957f55...3c2ebcf](https://github.com/ChromeDevTools/devtools-protocol/compare/4957f55...3c2ebcf)
+#### `Page`: new command
+* [`Page.setSPCTransactionMode`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-setSPCTransactionMode)
+
+
+## Roll protocol to r938504
+###### _2021-11-04 14:15:28_ | Diff: [0fe9d20...4957f55](https://github.com/ChromeDevTools/devtools-protocol/compare/0fe9d20...4957f55)
+#### `Security`: modified event
+* [`Security.securityStateChanged`](https://chromedevtools.github.io/devtools-protocol/tot/Security/#event-securityStateChanged) - The `explanations` in the parameters had `description` _updated_. The `summary` in the parameters had `description` _updated_. The parameters's `deprecated` _added_ (2 times).
+
+
+## Roll protocol to r938446
+###### _2021-11-04 13:15:28_ | Diff: [e73ddb9...0fe9d20](https://github.com/ChromeDevTools/devtools-protocol/compare/e73ddb9...0fe9d20)
+#### `Network`: modified type
+* [`Network.SignedCertificateTimestamp`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-SignedCertificateTimestamp) - The `timestamp` in the properties had `$ref` _removed_. The `timestamp` in the properties had `description` _updated_. The properties's `type` _added_.
+
+
+## Roll protocol to r937139
+###### _2021-11-01 17:15:24_ | Diff: [23061aa...e73ddb9](https://github.com/ChromeDevTools/devtools-protocol/compare/23061aa...e73ddb9)
+#### `Audits`: modified type
+* [`Audits.DeprecationIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-DeprecationIssueDetails) - The properties's `deprecated` _added_.
+
+
+## Roll protocol to r937072
+###### _2021-11-01 15:15:26_ | Diff: [3a36442...23061aa](https://github.com/ChromeDevTools/devtools-protocol/compare/3a36442...23061aa)
+#### `EventBreakpoints`: new domain
+* [`EventBreakpoints.EventBreakpoints`](https://chromedevtools.github.io/devtools-protocol/tot/EventBreakpoints/#domain-EventBreakpoints)
+#### `EventBreakpoints`: new commands
+* [`EventBreakpoints.setInstrumentationBreakpoint`](https://chromedevtools.github.io/devtools-protocol/tot/EventBreakpoints/#method-setInstrumentationBreakpoint)
+* [`EventBreakpoints.removeInstrumentationBreakpoint`](https://chromedevtools.github.io/devtools-protocol/tot/EventBreakpoints/#method-removeInstrumentationBreakpoint)
+
+
+## Roll protocol to r937044
+###### _2021-11-01 14:15:26_ | Diff: [bc8fa61...3a36442](https://github.com/ChromeDevTools/devtools-protocol/compare/bc8fa61...3a36442)
+#### `Audits`: new type
+* [`Audits.DeprecationIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-DeprecationIssueDetails)
+#### `Audits`: modified types
+* [`Audits.InspectorIssueCode`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueCode) - The enum's `DeprecationIssue` _added_.
+* [`Audits.InspectorIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueDetails) - The properties's `deprecationIssueDetails` _added_.
+
+
+## Roll protocol to r933220
+###### _2021-10-19 16:15:31_ | Diff: [ed35fe7...df7c5a3](https://github.com/ChromeDevTools/devtools-protocol/compare/ed35fe7...df7c5a3)
+#### `Network`: modified events
+* [`Network.requestWillBeSent`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#event-requestWillBeSent) - The `redirectResponse` in the parameters had `optional` _removed_. The `redirectResponse` in the parameters had `$ref` _removed_. The `hasUserGesture` in the parameters had `type` _removed_. The `redirectResponse` in the parameters had `name` _updated_. The `redirectResponse` in the parameters had `description` _updated_. The `type` in the parameters had `name` _updated_. The `type` in the parameters had `description` _updated_. The `type` in the parameters had `$ref` _updated_. The `frameId` in the parameters had `name` _updated_. The `frameId` in the parameters had `description` _updated_. The `frameId` in the parameters had `$ref` _updated_. The `hasUserGesture` in the parameters had `name` _updated_. The `hasUserGesture` in the parameters had `description` _updated_. The parameters's `experimental` _added_. The parameters's `type` _added_. The parameters's `$ref` _added_. The parameters's `hasUserGesture` _added_.
+* [`Network.responseReceived`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#event-responseReceived) - The `frameId` in the parameters had `optional` _removed_. The `frameId` in the parameters had `$ref` _removed_. The `frameId` in the parameters had `name` _updated_. The `frameId` in the parameters had `description` _updated_. The parameters's `experimental` _added_. The parameters's `type` _added_. The parameters's `frameId` _added_.
+
+
+## Roll protocol to r932485
+###### _2021-10-18 05:15:24_ | Diff: [204c97a...ed35fe7](https://github.com/ChromeDevTools/devtools-protocol/compare/204c97a...ed35fe7)
+#### `Page`: modified type
+* [`Page.BackForwardCacheNotRestoredReason`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-BackForwardCacheNotRestoredReason) - The enum's `EmbedderExtensionSentMessageToCachedFrame` _removed_. The enum's `ContentMediaPlay` _updated_. The enum's `EmbedderPopupBlockerTabHelper` _updated_. The enum's `EmbedderSafeBrowsingTriggeredPopupBlocker` _updated_. The enum's `EmbedderSafeBrowsingThreatDetails` _updated_. The enum's `EmbedderAppBannerManager` _updated_. The enum's `EmbedderDomDistillerViewerSource` _updated_. The enum's `EmbedderDomDistillerSelfDeletingRequestDelegate` _updated_. The enum's `EmbedderOomInterventionTabHelper` _updated_. The enum's `EmbedderOfflinePage` _updated_. The enum's `EmbedderChromePasswordManagerClientBindCredentialManager` _updated_. The enum's `EmbedderPermissionRequestManager` _updated_. The enum's `EmbedderModalDialog` _updated_. The enum's `EmbedderExtensions` _updated_. The enum's `EmbedderExtensionMessaging` _updated_. The enum's `EmbedderExtensionMessagingForOpenPort` _updated_.
+
+
+## Roll protocol to r931720
+###### _2021-10-14 15:15:25_ | Diff: [5095a49...204c97a](https://github.com/ChromeDevTools/devtools-protocol/compare/5095a49...204c97a)
+#### `Target`: modified command
+* [`Target.createTarget`](https://chromedevtools.github.io/devtools-protocol/tot/Target/#method-createTarget) - The parameters's `experimental` _added_.
+
+
+## Roll protocol to r931360
+###### _2021-10-13 20:15:26_ | Diff: [8bbdba3...5095a49](https://github.com/ChromeDevTools/devtools-protocol/compare/8bbdba3...5095a49)
+#### `Page`: modified type
+* [`Page.PermissionsPolicyFeature`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-PermissionsPolicyFeature) - The enum's `magnetometer` _updated_. The enum's `microphone` _updated_. The enum's `midi` _updated_. The enum's `otp-credentials` _updated_. The enum's `payment` _updated_. The enum's `picture-in-picture` _updated_. The enum's `publickey-credentials-get` _updated_. The enum's `screen-wake-lock` _updated_. The enum's `serial` _updated_. The enum's `shared-autofill` _updated_. The enum's `storage-access-api` _updated_. The enum's `sync-xhr` _updated_. The enum's `trust-token-redemption` _updated_. The enum's `usb` _updated_. The enum's `vertical-scroll` _updated_. The enum's `web-share` _updated_. The enum's `window-placement` _updated_. The enum's `xr-spatial-tracking` _updated_. The enum's `xr-spatial-tracking` _added_.
+
+
+## Roll protocol to r931234
+###### _2021-10-13 14:15:26_ | Diff: [76bd05b...8bbdba3](https://github.com/ChromeDevTools/devtools-protocol/compare/76bd05b...8bbdba3)
+#### `Audits`: modified type
+* [`Audits.ContentSecurityPolicyViolationType`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-ContentSecurityPolicyViolationType) - The enum's `kWasmEvalViolation` _added_.
+
+
+## Roll protocol to r931171
+###### _2021-10-13 12:15:29_ | Diff: [35e6406...76bd05b](https://github.com/ChromeDevTools/devtools-protocol/compare/35e6406...76bd05b)
+#### `Accessibility`: modified type
+* [`Accessibility.AXValueNativeSourceType`](https://chromedevtools.github.io/devtools-protocol/tot/Accessibility/#type-AXValueNativeSourceType) - The enum's `figcaption` _updated_. The enum's `label` _updated_. The enum's `labelfor` _updated_. The enum's `labelwrapped` _updated_. The enum's `legend` _updated_. The enum's `rubyannotation` _updated_. The enum's `tablecaption` _updated_. The enum's `title` _updated_. The enum's `other` _updated_. The enum's `other` _added_.
+
+
+## Roll protocol to r930289
+###### _2021-10-11 14:15:33_ | Diff: [5f55be2...35e6406](https://github.com/ChromeDevTools/devtools-protocol/compare/5f55be2...35e6406)
+#### `Page`: removed command
+* [`Page.setProduceCompilationCache`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-setProduceCompilationCache)
+#### `Page`: modified command
+* [`Page.produceCompilationCache`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-produceCompilationCache) - `description` updated.
+
+
+## Roll protocol to r928170
+###### _2021-10-05 09:15:26_ | Diff: [6d3ed49...5f55be2](https://github.com/ChromeDevTools/devtools-protocol/compare/6d3ed49...5f55be2)
+#### `Network`: modified types
+* [`Network.CorsError`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-CorsError) - The enum's `NoCorsRedirectModeNotFollow` _updated_. The enum's `NoCorsRedirectModeNotFollow` _added_.
+* [`Network.PrivateNetworkRequestPolicy`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-PrivateNetworkRequestPolicy) - The enum's `PreflightBlock` _added_. The enum's `PreflightWarn` _added_.
+
+
+## Roll protocol to r927854
+###### _2021-10-04 15:15:31_ | Diff: [d24ecc6...6d3ed49](https://github.com/ChromeDevTools/devtools-protocol/compare/d24ecc6...6d3ed49)
+#### `ApplicationCache`: removed domain
+* [`ApplicationCache.ApplicationCache`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#domain-ApplicationCache)
+
+
+## Roll protocol to r927104
+###### _2021-09-30 22:15:28_ | Diff: [75edf97...d24ecc6](https://github.com/ChromeDevTools/devtools-protocol/compare/75edf97...d24ecc6)
+#### `ApplicationCache`: new domain
+* [`ApplicationCache.ApplicationCache`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#domain-ApplicationCache)
+#### `ApplicationCache`: new commands
+* [`ApplicationCache.enable`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#method-enable)
+* [`ApplicationCache.getApplicationCacheForFrame`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#method-getApplicationCacheForFrame)
+* [`ApplicationCache.getFramesWithManifests`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#method-getFramesWithManifests)
+* [`ApplicationCache.getManifestForFrame`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#method-getManifestForFrame)
+#### `ApplicationCache`: new events
+* [`ApplicationCache.applicationCacheStatusUpdated`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#event-applicationCacheStatusUpdated)
+* [`ApplicationCache.networkStateUpdated`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#event-networkStateUpdated)
+#### `ApplicationCache`: new types
+* [`ApplicationCache.ApplicationCacheResource`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#type-ApplicationCacheResource)
+* [`ApplicationCache.ApplicationCache`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#type-ApplicationCache)
+* [`ApplicationCache.FrameWithManifest`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#type-FrameWithManifest)
+
+
+## Roll protocol to r927069
+###### _2021-09-30 19:15:27_ | Diff: [6b5fb3f...75edf97](https://github.com/ChromeDevTools/devtools-protocol/compare/6b5fb3f...75edf97)
+#### `ApplicationCache`: removed domain
+* [`ApplicationCache.ApplicationCache`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#domain-ApplicationCache)
+
+
+## Roll protocol to r926768
+###### _2021-09-30 08:28:28_ | Diff: [2f92c4d...6b5fb3f](https://github.com/ChromeDevTools/devtools-protocol/compare/2f92c4d...6b5fb3f)
+#### `Debugger`: modified commands
+* [`Debugger.enable`](https://chromedevtools.github.io/devtools-protocol/tot/Debugger/#method-enable) - The `maxScriptsCacheSize` in the parameters had `description` _updated_.
+* [`Debugger.restartFrame`](https://chromedevtools.github.io/devtools-protocol/tot/Debugger/#method-restartFrame) - `deprecated` added.
+#### `HeapProfiler`: modified commands
+* [`HeapProfiler.stopTrackingHeapObjects`](https://chromedevtools.github.io/devtools-protocol/tot/HeapProfiler/#method-stopTrackingHeapObjects) - The parameters's `captureNumericValue` _added_.
+* [`HeapProfiler.takeHeapSnapshot`](https://chromedevtools.github.io/devtools-protocol/tot/HeapProfiler/#method-takeHeapSnapshot) - The `treatGlobalObjectsAsRoots` in the parameters had `description` _updated_. The parameters's `captureNumericValue` _added_.
+#### `Profiler`: removed commands
+* [`Profiler.enableCounters`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#method-enableCounters)
+* [`Profiler.disableCounters`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#method-disableCounters)
+* [`Profiler.getCounters`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#method-getCounters)
+* [`Profiler.enableRuntimeCallStats`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#method-enableRuntimeCallStats)
+* [`Profiler.disableRuntimeCallStats`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#method-disableRuntimeCallStats)
+* [`Profiler.getRuntimeCallStats`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#method-getRuntimeCallStats)
+#### `Profiler`: modified event
+* [`Profiler.preciseCoverageDeltaUpdate`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#event-preciseCoverageDeltaUpdate) - `description` updated. The `occassion` in the parameters had `name` _updated_.
+#### `Profiler`: removed types
+* [`Profiler.CounterInfo`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#type-CounterInfo)
+* [`Profiler.RuntimeCallCounterInfo`](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/#type-RuntimeCallCounterInfo)
+#### `Runtime`: modified commands
+* [`Runtime.callFunctionOn`](https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#method-callFunctionOn) - The parameters's `throwOnSideEffect` _added_.
+* [`Runtime.evaluate`](https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#method-evaluate) - The `uniqueContextId` in the parameters had `description` _updated_.
+* [`Runtime.getProperties`](https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#method-getProperties) - The parameters's `nonIndexedPropertiesOnly` _added_.
+* [`Runtime.addBinding`](https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#method-addBinding) - The `executionContextId` in the parameters had `description` _updated_. The parameters's `deprecated` _added_.
+#### `Runtime`: modified event
+* [`Runtime.inspectRequested`](https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#event-inspectRequested) - The parameters's `executionContextId` _added_.
+#### `Runtime`: modified types
+* [`Runtime.ExecutionContextDescription`](https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#type-ExecutionContextDescription) - The `uniqueId` in the properties had `description` _updated_.
+* [`Runtime.ExceptionDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#type-ExceptionDetails) - The properties's `exceptionMetaData` _added_.
+
+
+## Roll protocol to r926580
+###### _2021-09-29 21:15:20_ | Diff: [5cc536e...2f92c4d](https://github.com/ChromeDevTools/devtools-protocol/compare/5cc536e...2f92c4d)
+#### `ApplicationCache`: new domain
+* [`ApplicationCache.ApplicationCache`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#domain-ApplicationCache)
+#### `ApplicationCache`: new commands
+* [`ApplicationCache.enable`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#method-enable)
+* [`ApplicationCache.getApplicationCacheForFrame`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#method-getApplicationCacheForFrame)
+* [`ApplicationCache.getFramesWithManifests`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#method-getFramesWithManifests)
+* [`ApplicationCache.getManifestForFrame`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#method-getManifestForFrame)
+#### `ApplicationCache`: new events
+* [`ApplicationCache.applicationCacheStatusUpdated`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#event-applicationCacheStatusUpdated)
+* [`ApplicationCache.networkStateUpdated`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#event-networkStateUpdated)
+#### `ApplicationCache`: new types
+* [`ApplicationCache.ApplicationCacheResource`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#type-ApplicationCacheResource)
+* [`ApplicationCache.ApplicationCache`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#type-ApplicationCache)
+* [`ApplicationCache.FrameWithManifest`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#type-FrameWithManifest)
+
+
+## Roll protocol to r926578
+###### _2021-09-29 18:15:25_ | Diff: [5459753...5cc536e](https://github.com/ChromeDevTools/devtools-protocol/compare/5459753...5cc536e)
+#### `ApplicationCache`: removed domain
+* [`ApplicationCache.ApplicationCache`](https://chromedevtools.github.io/devtools-protocol/tot/ApplicationCache/#domain-ApplicationCache)
+
+
+## Roll protocol to r926181
+###### _2021-09-29 02:15:25_ | Diff: [929d048...5459753](https://github.com/ChromeDevTools/devtools-protocol/compare/929d048...5459753)
+#### `Overlay`: new command
+* [`Overlay.setShowIsolatedElements`](https://chromedevtools.github.io/devtools-protocol/tot/Overlay/#method-setShowIsolatedElements)
+#### `Overlay`: new types
+* [`Overlay.IsolatedElementHighlightConfig`](https://chromedevtools.github.io/devtools-protocol/tot/Overlay/#type-IsolatedElementHighlightConfig)
+* [`Overlay.IsolationModeHighlightConfig`](https://chromedevtools.github.io/devtools-protocol/tot/Overlay/#type-IsolationModeHighlightConfig)
+
+
+## Roll protocol to r925217
+###### _2021-09-27 04:15:29_ | Diff: [8157ba0...929d048](https://github.com/ChromeDevTools/devtools-protocol/compare/8157ba0...929d048)
+#### `Network`: modified type
+* [`Network.CorsError`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-CorsError) - The enum's `NoCorsRedirectModeNotFollow` _updated_. The enum's `NoCorsRedirectModeNotFollow` _added_.
+
+
+## Roll protocol to r924707
+###### _2021-09-24 03:15:21_ | Diff: [b32cbf9...8157ba0](https://github.com/ChromeDevTools/devtools-protocol/compare/b32cbf9...8157ba0)
+#### `Audits`: new types
+* [`Audits.GenericIssueErrorType`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-GenericIssueErrorType)
+* [`Audits.GenericIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-GenericIssueDetails)
+#### `Audits`: modified types
+* [`Audits.InspectorIssueCode`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueCode) - The enum's `GenericIssue` _added_.
+* [`Audits.InspectorIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueDetails) - The properties's `genericIssueDetails` _added_.
+
+
 ## Roll protocol to r924232
 ###### _2021-09-23 02:15:23_ | Diff: [f300e4d...b32cbf9](https://github.com/ChromeDevTools/devtools-protocol/compare/f300e4d...b32cbf9)
 #### `Page`: modified command
