@@ -240,6 +240,7 @@ export class Browser extends EventEmitter {
   private _defaultContext: BrowserContext;
   private _contexts: Map<string, BrowserContext>;
   private _screenshotTaskQueue: TaskQueue;
+  private _ignoredTargets = new Set<string>();
   /**
    * @internal
    * Used in Target.ts directly so cannot be marked private.
@@ -378,6 +379,7 @@ export class Browser extends EventEmitter {
 
     const shouldAttachToTarget = this._targetFilterCallback(targetInfo);
     if (!shouldAttachToTarget) {
+      this._ignoredTargets.add(targetInfo.targetId);
       return;
     }
 
@@ -404,6 +406,7 @@ export class Browser extends EventEmitter {
   }
 
   private async _targetDestroyed(event: { targetId: string }): Promise<void> {
+    if (this._ignoredTargets.has(event.targetId)) return;
     const target = this._targets.get(event.targetId);
     // @ts-expect-error TS2532
     target._initializedCallback(false);
@@ -423,6 +426,7 @@ export class Browser extends EventEmitter {
   private _targetInfoChanged(
     event: Protocol.Target.TargetInfoChangedEvent
   ): void {
+    if (this._ignoredTargets.has(event.targetInfo.targetId)) return;
     const target = this._targets.get(event.targetInfo.targetId);
     assert(target, 'target should exist before targetInfoChanged');
     const previousURL = target.url();

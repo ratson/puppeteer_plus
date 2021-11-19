@@ -17,7 +17,7 @@
 import { assert } from 'https://deno.land/std@0.108.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { ExecutionContext } from './ExecutionContext.ts';
-import { Page } from './Page.ts';
+import { Page, ScreenshotOptions } from './Page.ts';
 import { CDPSession } from './Connection.ts';
 import { KeyInput } from './USKeyboardLayout.ts';
 import { FrameManager, Frame } from './FrameManager.ts';
@@ -191,7 +191,7 @@ export class JSHandle<HandleObjectType = unknown> {
 
   /** Fetches a single property from the referenced object.
    */
-  async getProperty(propertyName: string): Promise<JSHandle | undefined> {
+  async getProperty(propertyName: string): Promise<JSHandle> {
     const objectHandle = await this.evaluateHandle(
       // @ts-expect-error TS2304
       (object: Element, propertyName: string) => {
@@ -203,9 +203,9 @@ export class JSHandle<HandleObjectType = unknown> {
       propertyName
     );
     const properties = await objectHandle.getProperties();
-    const result = properties.get(propertyName) || null;
+    const result = properties.get(propertyName);
+    assert(result instanceof JSHandle);
     await objectHandle.dispose();
-    // @ts-expect-error TS2322
     return result;
   }
 
@@ -834,7 +834,7 @@ export class ElementHandle<
    * If the element is detached from DOM, the method throws an error.
    */
   // @ts-expect-error TS2580
-  async screenshot(options = {}): Promise<string | Buffer> {
+  async screenshot(options: ScreenshotOptions = {}): Promise<string | Buffer> {
     let needsViewportReset = false;
 
     let boundingBox = await this.boundingBox();

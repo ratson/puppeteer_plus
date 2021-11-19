@@ -22,6 +22,7 @@ import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import { ProtocolMapping } from '../../../devtools-protocol/types/protocol-mapping.d.ts';
 import { ConnectionTransport } from './ConnectionTransport.ts';
 import { EventEmitter } from './EventEmitter.ts';
+import { ProtocolError } from './Errors.ts';
 
 /**
  * @public
@@ -34,7 +35,7 @@ export type { ConnectionTransport, ProtocolMapping };
 export interface ConnectionCallback {
   resolve: Function;
   reject: Function;
-  error: Error;
+  error: ProtocolError;
   method: string;
 }
 
@@ -99,7 +100,12 @@ export class Connection extends EventEmitter {
     const params = paramArgs.length ? paramArgs[0] : undefined;
     const id = this._rawSend({ method, params });
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, { resolve, reject, error: new Error(), method });
+      this._callbacks.set(id, {
+        resolve,
+        reject,
+        error: new ProtocolError(),
+        method,
+      });
     });
   }
 
@@ -209,7 +215,7 @@ export interface CDPSessionOnMessageObject {
   id?: number;
   method: string;
   params: Record<string, unknown>;
-  error: { message: string; data: any };
+  error: { message: string; data: any; code: number };
   result?: any;
 }
 
@@ -291,7 +297,12 @@ export class CDPSession extends EventEmitter {
     });
 
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, { resolve, reject, error: new Error(), method });
+      this._callbacks.set(id, {
+        resolve,
+        reject,
+        error: new ProtocolError(),
+        method,
+      });
     });
   }
 
@@ -346,6 +357,13 @@ export class CDPSession extends EventEmitter {
     this._connection = null;
     this.emit(CDPSessionEmittedEvents.Disconnected);
   }
+
+  /**
+   * @internal
+   */
+  id(): string {
+    return this._sessionId;
+  }
 }
 
 /**
@@ -355,13 +373,13 @@ export class CDPSession extends EventEmitter {
  * @returns {!Error}
  */
 function createProtocolError(
-  error: Error,
+  error: ProtocolError,
   method: string,
-  object: { error: { message: string; data: any } }
+  object: { error: { message: string; data: any; code: number } }
 ): Error {
   let message = `Protocol error (${method}): ${object.error.message}`;
   if ('data' in object.error) message += ` ${object.error.data}`;
-  return rewriteError(error, message);
+  return rewriteError(error, message, object.error.message);
 }
 
 /**
@@ -369,7 +387,13 @@ function createProtocolError(
  * @param {string} message
  * @returns {!Error}
  */
-function rewriteError(error: Error, message: string): Error {
+function rewriteError(
+  error: ProtocolError,
+  message: string,
+  originalMessage?: string
+): Error {
   error.message = message;
+  // @ts-expect-error TS2322
+  error.originalMessage = originalMessage;
   return error;
 }

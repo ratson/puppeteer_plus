@@ -280,7 +280,7 @@ function makePredicateString(
     if (!node) return waitForHidden;
     if (!waitForVisible && !waitForHidden) return node;
     const element =
-      // @ts-expect-error TS2552
+      // @ts-expect-error TS2304
       node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element);
 
     // @ts-expect-error TS2339
@@ -387,9 +387,9 @@ async function getReadableFromProtocolStream(
       const response = await client.send('IO.read', { handle, size });
       this.push(response.data, response.base64Encoded ? 'base64' : undefined);
       if (response.eof) {
-        this.push(null);
         eof = true;
         await client.send('IO.close', { handle });
+        this.push(null);
       }
     },
   });

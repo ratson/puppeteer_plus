@@ -37,6 +37,7 @@ import {
 } from './EvalTypes.ts';
 import { isNode } from '../environment.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
+import { CDPSession } from './Connection.ts';
 
 // predicateQueryHandler and checkWaitForOptions are declared here so that
 // TypeScript knows about them when used in the predicate function below.
@@ -76,6 +77,7 @@ export interface PageBinding {
  */
 export class DOMWorld {
   private _frameManager: FrameManager;
+  private _client: CDPSession;
   private _frame: Frame;
   private _timeoutSettings: TimeoutSettings;
   // @ts-expect-error TS2322
@@ -103,16 +105,20 @@ export class DOMWorld {
     `${name}_${contextId}`;
 
   constructor(
+    client: CDPSession,
     frameManager: FrameManager,
     frame: Frame,
     timeoutSettings: TimeoutSettings
   ) {
+    // Keep own reference to client because it might differ from the FrameManager's
+    // client for OOP iframes.
+    this._client = client;
     this._frameManager = frameManager;
     this._frame = frame;
     this._timeoutSettings = timeoutSettings;
     // @ts-expect-error TS2345
     this._setContext(null);
-    frameManager._client.on('Runtime.bindingCalled', (event) =>
+    this._client.on('Runtime.bindingCalled', (event) =>
       this._onBindingCalled(event)
     );
   }
@@ -123,8 +129,11 @@ export class DOMWorld {
 
   async _setContext(context?: ExecutionContext): Promise<void> {
     if (context) {
+      assert(
+        this._contextResolveCallback,
+        'Execution Context has already been set.'
+      );
       this._ctxBindings.clear();
-      // @ts-expect-error TS2532
       this._contextResolveCallback.call(null, context);
       // @ts-expect-error TS2322
       this._contextResolveCallback = null;
