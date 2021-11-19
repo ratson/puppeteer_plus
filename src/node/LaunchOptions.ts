@@ -36,10 +36,14 @@ export interface BrowserLaunchArgumentOptions {
   userDataDir?: string;
   /**
    * Whether to auto-open a DevTools panel for each tab. If this is set to
-   * `true`, then `headless` will be set to `false` automatically.
+   * `true`, then `headless` will be forced to `false`.
    * @defaultValue `false`
    */
   devtools?: boolean;
+  /**
+   *
+   */
+  debuggingPort?: number;
   /**
    * Additional command line arguments to pass to the browser instance.
    */

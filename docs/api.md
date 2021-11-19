@@ -195,6 +195,7 @@
   * [page.viewport()](#pageviewport)
   * [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
   * [page.waitForFileChooser([options])](#pagewaitforfilechooseroptions)
+  * [page.waitForFrame(urlOrPredicate[, options])](#pagewaitforframeurlorpredicate-options)
   * [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
   * [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
   * [page.waitForNetworkIdle([options])](#pagewaitfornetworkidleoptions)
@@ -269,6 +270,7 @@
   * [frame.goto(url[, options])](#framegotourl-options)
   * [frame.hover(selector)](#framehoverselector)
   * [frame.isDetached()](#frameisdetached)
+  * [frame.isOOPFrame()](#frameisoopframe)
   * [frame.name()](#framename)
   * [frame.parentFrame()](#frameparentframe)
   * [frame.select(selector, ...values)](#frameselectselector-values)
@@ -341,6 +343,7 @@
   * [httpRequest.finalizeInterceptions()](#httprequestfinalizeinterceptions)
   * [httpRequest.frame()](#httprequestframe)
   * [httpRequest.headers()](#httprequestheaders)
+  * [httpRequest.initiator()](#httprequestinitiator)
   * [httpRequest.isNavigationRequest()](#httprequestisnavigationrequest)
   * [httpRequest.method()](#httprequestmethod)
   * [httpRequest.postData()](#httprequestpostdata)
@@ -384,6 +387,7 @@
 - [class: CDPSession](#class-cdpsession)
   * [cdpSession.connection()](#cdpsessionconnection)
   * [cdpSession.detach()](#cdpsessiondetach)
+  * [cdpSession.id()](#cdpsessionid)
   * [cdpSession.send(method[, ...paramArgs])](#cdpsessionsendmethod-paramargs)
 - [class: Coverage](#class-coverage)
   * [coverage.startCSSCoverage([options])](#coveragestartcsscoverageoptions)
@@ -568,6 +572,7 @@ This methods attaches Puppeteer to an existing browser instance.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
   - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/user_data_dir.md).
   - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+  - `debuggingPort` <[number]> Specify custom debugging port. Pass `0` to discover a random port. Defaults to `0`.
 - returns: <[Array]<[string]>>
 
 The default flags that Chromium will be launched with.
@@ -648,6 +653,7 @@ try {
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/user_data_dir.md).
+  - `debuggingPort` <[number]> Specify custom debugging port. Pass `0` to discover a random port. Defaults to `0`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
@@ -1872,7 +1878,7 @@ await page.evaluateOnNewDocument(preloadFile);
 #### page.exposeFunction(name, puppeteerFunction)
 
 - `name` <[string]> Name of the function on the window object
-- `puppeteerFunction` <[function]> Callback function which will be called in Puppeteer's context.
+- `puppeteerFunction` <[function]> Callback function which will be called in Puppeteer's context. Can also be a module with a default export.
 - returns: <[Promise]>
 
 The method adds a function called `name` on the page's `window` object.
@@ -2765,6 +2771,19 @@ await fileChooser.accept(['/tmp/myfile.pdf']);
 > **NOTE** This must be called _before_ the file chooser is launched. It will not return a currently active file chooser.
 
 > **NOTE** “File picker” refers to the operating system’s file selection UI that lets you browse to a folder and select file(s) to be shared with the web app. It’s not the “Save file” dialog.
+
+#### page.waitForFrame(urlOrPredicate[, options])
+
+- `urlOrPredicate` <[string]|[Function]> A URL or predicate to wait for.
+- `options` <[Object]> Optional waiting parameters
+  - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+- returns: <[Promise]<[Frame]>> Promise which resolves to the matched frame.
+
+```js
+const frame = await page.waitForFrame(async (frame) => {
+  return frame.name() === 'Test';
+});
+```
 
 #### page.waitForFunction(pageFunction[, options[, ...args]])
 
@@ -3830,6 +3849,12 @@ If there's no element matching `selector`, the method throws an error.
 
 Returns `true` if the frame has been detached, or `false` otherwise.
 
+#### frame.isOOPFrame()
+
+- returns: <[boolean]>
+
+Returns `true` if the frame is an OOP frame, or `false` otherwise.
+
 #### frame.name()
 
 - returns: <[string]>
@@ -4707,7 +4732,7 @@ If request gets a 'redirect' response, the request is successfully finished with
   - `namenotresolved` - The host name could not be resolved.
   - `timedout` - An operation timed out.
   - `failed` - A generic failure occurred.
-- `priority` <[number]> - Optional intercept abort priority. If provided, intercept will be resolved using coopeative handling rules. Otherwise, intercept will be resovled immediately.
+- `priority` <[number]> - Optional intercept abort priority. If provided, intercept will be resolved using [cooperative](#cooperative-intercept-mode-and-legacy-intercept-mode) handling rules. Otherwise, intercept will be resovled immediately.
 - returns: <[Promise]>
 
 Aborts request. To use this, request interception should be enabled with `page.setRequestInterception`.
@@ -4789,6 +4814,14 @@ When in Cooperative Mode, awaits pending interception handlers and then decides 
 #### httpRequest.headers()
 
 - returns: <[Object]> An object with HTTP headers associated with the request. All header names are lower-case.
+
+#### httpRequest.initiator()
+
+- returns: <[Object]> An object describing the initiator of the request
+  - `type` <[string]> Type of this initiator. Possible values: `parser`, `script`, `preload`, `SignedExchange` and `other`.
+  - `stack` <?[Object]> JavaScript stack trace for the initiator, set for `script` only.
+  - `url` <?[string]> Initiator URL, set for `parser`, `script` and `SignedExchange` type.
+  - `lineNumber` <?[number]> 0 based initiator line number, set for `parser` and `script`.
 
 #### httpRequest.isNavigationRequest()
 
@@ -5076,6 +5109,12 @@ Returns the underlying connection associated with the session. Can be used to ob
 
 Detaches the cdpSession from the target. Once detached, the cdpSession object won't emit any events and can't be used
 to send messages.
+
+#### cdpSession.id()
+
+- returns: <[string]>
+
+Returns the session's id.
 
 #### cdpSession.send(method[, ...paramArgs])
 
