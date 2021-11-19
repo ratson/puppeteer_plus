@@ -26,8 +26,6 @@ export namespace ProtocolProxyApi {
 
         Animation: AnimationApi;
 
-        ApplicationCache: ApplicationCacheApi;
-
         Audits: AuditsApi;
 
         BackgroundService: BackgroundServiceApi;
@@ -43,6 +41,8 @@ export namespace ProtocolProxyApi {
         DOM: DOMApi;
 
         DOMDebugger: DOMDebuggerApi;
+
+        EventBreakpoints: EventBreakpointsApi;
 
         DOMSnapshot: DOMSnapshotApi;
 
@@ -422,36 +422,6 @@ export namespace ProtocolProxyApi {
          */
         takeTypeProfile(): Promise<Protocol.Profiler.TakeTypeProfileResponse>;
 
-        /**
-         * Enable counters collection.
-         */
-        enableCounters(): Promise<void>;
-
-        /**
-         * Disable counters collection.
-         */
-        disableCounters(): Promise<void>;
-
-        /**
-         * Retrieve counters.
-         */
-        getCounters(): Promise<Protocol.Profiler.GetCountersResponse>;
-
-        /**
-         * Enable run time call stats collection.
-         */
-        enableRuntimeCallStats(): Promise<void>;
-
-        /**
-         * Disable run time call stats collection.
-         */
-        disableRuntimeCallStats(): Promise<void>;
-
-        /**
-         * Retrieve run time call stats.
-         */
-        getRuntimeCallStats(): Promise<Protocol.Profiler.GetRuntimeCallStatsResponse>;
-
         on(event: 'consoleProfileFinished', listener: (params: Protocol.Profiler.ConsoleProfileFinishedEvent) => void): void;
 
         /**
@@ -463,7 +433,7 @@ export namespace ProtocolProxyApi {
          * Reports coverage delta since the last poll (either from an event like this, or from
          * `takePreciseCoverage` for the current isolate. May only be sent if precise code
          * coverage has been started. This event can be trigged by the embedder to, for example,
-         * trigger collection of coverage data immediatelly at a certain point in time.
+         * trigger collection of coverage data immediately at a certain point in time.
          */
         on(event: 'preciseCoverageDeltaUpdate', listener: (params: Protocol.Profiler.PreciseCoverageDeltaUpdateEvent) => void): void;
 
@@ -657,6 +627,18 @@ export namespace ProtocolProxyApi {
         getFullAXTree(params: Protocol.Accessibility.GetFullAXTreeRequest): Promise<Protocol.Accessibility.GetFullAXTreeResponse>;
 
         /**
+         * Fetches the root node.
+         * Requires `enable()` to have been called previously.
+         */
+        getRootAXNode(params: Protocol.Accessibility.GetRootAXNodeRequest): Promise<Protocol.Accessibility.GetRootAXNodeResponse>;
+
+        /**
+         * Fetches a node and all ancestors up to and including the root.
+         * Requires `enable()` to have been called previously.
+         */
+        getAXNodeAndAncestors(params: Protocol.Accessibility.GetAXNodeAndAncestorsRequest): Promise<Protocol.Accessibility.GetAXNodeAndAncestorsResponse>;
+
+        /**
          * Fetches a particular accessibility node by AXNodeId.
          * Requires `enable()` to have been called previously.
          */
@@ -670,6 +652,17 @@ export namespace ProtocolProxyApi {
          * `accessibleName` or `role` is specified, it returns all the accessibility nodes in the subtree.
          */
         queryAXTree(params: Protocol.Accessibility.QueryAXTreeRequest): Promise<Protocol.Accessibility.QueryAXTreeResponse>;
+
+        /**
+         * The loadComplete event mirrors the load complete event sent by the browser to assistive
+         * technology when the web page has finished loading.
+         */
+        on(event: 'loadComplete', listener: (params: Protocol.Accessibility.LoadCompleteEvent) => void): void;
+
+        /**
+         * The nodesUpdated event is sent every time a previously requested node has changed the in tree.
+         */
+        on(event: 'nodesUpdated', listener: (params: Protocol.Accessibility.NodesUpdatedEvent) => void): void;
 
     }
 
@@ -738,34 +731,6 @@ export namespace ProtocolProxyApi {
          * Event for animation that has been started.
          */
         on(event: 'animationStarted', listener: (params: Protocol.Animation.AnimationStartedEvent) => void): void;
-
-    }
-
-    export interface ApplicationCacheApi {
-        /**
-         * Enables application cache domain notifications.
-         */
-        enable(): Promise<void>;
-
-        /**
-         * Returns relevant application cache data for the document in given frame.
-         */
-        getApplicationCacheForFrame(params: Protocol.ApplicationCache.GetApplicationCacheForFrameRequest): Promise<Protocol.ApplicationCache.GetApplicationCacheForFrameResponse>;
-
-        /**
-         * Returns array of frame identifiers with manifest urls for each frame containing a document
-         * associated with some application cache.
-         */
-        getFramesWithManifests(): Promise<Protocol.ApplicationCache.GetFramesWithManifestsResponse>;
-
-        /**
-         * Returns manifest URL for document in the given frame.
-         */
-        getManifestForFrame(params: Protocol.ApplicationCache.GetManifestForFrameRequest): Promise<Protocol.ApplicationCache.GetManifestForFrameResponse>;
-
-        on(event: 'applicationCacheStatusUpdated', listener: (params: Protocol.ApplicationCache.ApplicationCacheStatusUpdatedEvent) => void): void;
-
-        on(event: 'networkStateUpdated', listener: (params: Protocol.ApplicationCache.NetworkStateUpdatedEvent) => void): void;
 
     }
 
@@ -1558,6 +1523,19 @@ export namespace ProtocolProxyApi {
          * Sets breakpoint on XMLHttpRequest.
          */
         setXHRBreakpoint(params: Protocol.DOMDebugger.SetXHRBreakpointRequest): Promise<void>;
+
+    }
+
+    export interface EventBreakpointsApi {
+        /**
+         * Sets breakpoint on particular native event.
+         */
+        setInstrumentationBreakpoint(params: Protocol.EventBreakpoints.SetInstrumentationBreakpointRequest): Promise<void>;
+
+        /**
+         * Removes breakpoint on particular native event.
+         */
+        removeInstrumentationBreakpoint(params: Protocol.EventBreakpoints.RemoveInstrumentationBreakpointRequest): Promise<void>;
 
     }
 
@@ -2584,6 +2562,11 @@ export namespace ProtocolProxyApi {
         setShowHinge(params: Protocol.Overlay.SetShowHingeRequest): Promise<void>;
 
         /**
+         * Show elements in isolation mode with overlays.
+         */
+        setShowIsolatedElements(params: Protocol.Overlay.SetShowIsolatedElementsRequest): Promise<void>;
+
+        /**
          * Fired when the node should be inspected. This happens after call to `setInspectMode` or when
          * user manually inspects an element.
          */
@@ -2862,18 +2845,9 @@ export namespace ProtocolProxyApi {
         stopScreencast(): Promise<void>;
 
         /**
-         * Forces compilation cache to be generated for every subresource script.
-         * See also: `Page.produceCompilationCache`.
-         */
-        setProduceCompilationCache(params: Protocol.Page.SetProduceCompilationCacheRequest): Promise<void>;
-
-        /**
          * Requests backend to produce compilation cache for the specified scripts.
-         * Unlike setProduceCompilationCache, this allows client to only produce cache
-         * for specific scripts. `scripts` are appeneded to the list of scripts
-         * for which the cache for would produced. Disabling compilation cache with
-         * `setProduceCompilationCache` would reset all pending cache requests.
-         * The list may also be reset during page navigation.
+         * `scripts` are appeneded to the list of scripts for which the cache
+         * would be produced. The list may be reset during page navigation.
          * When script with a matching URL is encountered, the cache is optionally
          * produced upon backend discretion, based on internal heuristics.
          * See also: `Page.compilationCacheProduced`.
@@ -2890,6 +2864,12 @@ export namespace ProtocolProxyApi {
          * Clears seeded compilation cache.
          */
         clearCompilationCache(): Promise<void>;
+
+        /**
+         * Sets the Secure Payment Confirmation transaction mode.
+         * https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
+         */
+        setSPCTransactionMode(params: Protocol.Page.SetSPCTransactionModeRequest): Promise<void>;
 
         /**
          * Generates a report for testing.
@@ -3126,7 +3106,7 @@ export namespace ProtocolProxyApi {
         on(event: 'visibleSecurityStateChanged', listener: (params: Protocol.Security.VisibleSecurityStateChangedEvent) => void): void;
 
         /**
-         * The security state of the page changed.
+         * The security state of the page changed. No longer being sent.
          */
         on(event: 'securityStateChanged', listener: (params: Protocol.Security.SecurityStateChangedEvent) => void): void;
 
