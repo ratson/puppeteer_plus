@@ -67,7 +67,6 @@ function archiveName(
   product: Product,
   platform: Platform,
   revision: string,
-  // @ts-expect-error patch(TS2366)
 ): string {
   if (product === "chrome") {
     if (platform === "linux") return "chrome-linux";
@@ -79,6 +78,7 @@ function archiveName(
   } else if (product === "firefox") {
     return platform;
   }
+  return platform;
 }
 
 /**
