@@ -68,7 +68,7 @@ export const debug = (prefix: string): ((...args: unknown[]) => void) => {
        * `foo`.
        */
       (debugLevel.endsWith('*')
-        ? prefix.startsWith(debugLevel)
+        ? prefix.startsWith(debugLevel.slice(0, -1))
         : prefix === debugLevel);
 
     if (!prefixMatchesDebugLevel) return;
