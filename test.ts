@@ -1,23 +1,4 @@
-import {
-  assert,
-  assertEquals,
-} from "https://deno.land/std@0.115.1/testing/asserts.ts";
-import { Browser, puppeteer } from "./mod.ts";
-
-function browserTest(
-  name: string,
-  fn: (browser: Browser) => void | Promise<void>,
-) {
-  Deno.test(name, async () => {
-    let browser: Browser | undefined = undefined;
-    try {
-      browser = await puppeteer.launch({});
-      await fn(browser!);
-    } finally {
-      if (browser) await browser.close();
-    }
-  });
-}
+import { assert, assertEquals, browserTest } from "./deps_dev.ts";
 
 browserTest("puppeteer", async (browser) => {
   const page = await browser.newPage();
