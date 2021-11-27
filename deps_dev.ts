@@ -10,15 +10,21 @@ export {
 export function browserTest(
   name: string,
   fn: (browser: Browser) => void | Promise<void>,
-  opts?: { launch?: PuppeteerNodeLaunchOptions },
+  { launch, ...opts }:
+    & { launch?: PuppeteerNodeLaunchOptions }
+    & Omit<Deno.TestDefinition, "name" | "fn"> = {},
 ) {
-  Deno.test(name, async () => {
-    let browser: Browser | undefined = undefined;
-    try {
-      browser = await puppeteer.launch(opts?.launch);
-      await fn(browser);
-    } finally {
-      await browser?.close();
-    }
+  Deno.test({
+    name,
+    async fn() {
+      let browser: Browser | undefined = undefined;
+      try {
+        browser = await puppeteer.launch(launch);
+        await fn(browser);
+      } finally {
+        await browser?.close();
+      }
+    },
+    ...opts,
   });
 }
