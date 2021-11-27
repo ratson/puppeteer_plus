@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Buffer } from 'https://deno.land/std@0.115.1/node/buffer.ts';
+import { Buffer } from 'https://deno.land/std@0.116.0/node/buffer.ts';
 import { CDPSession } from './Connection.ts';
 import { Frame } from './FrameManager.ts';
 import { HTTPResponse } from './HTTPResponse.ts';
-import { assert } from 'https://deno.land/std@0.115.1/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import { ProtocolError } from './Errors.ts';

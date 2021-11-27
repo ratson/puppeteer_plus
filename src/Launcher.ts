@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as os from "https://deno.land/std@0.115.1/node/os.ts";
-import * as path from "https://deno.land/std@0.115.1/node/path.ts";
-import * as fs from "https://deno.land/std@0.115.1/node/fs.ts";
+import * as os from "https://deno.land/std@0.116.0/node/os.ts";
+import * as path from "https://deno.land/std@0.116.0/node/path.ts";
+import * as fs from "https://deno.land/std@0.116.0/node/fs.ts";
 
 import { BrowserFetcher } from "./BrowserFetcher.ts";
 import { Browser } from "../vendor/puppeteer/src/common/Browser.ts";
 import { BrowserRunner } from "./BrowserRunner.ts";
-import { promisify } from "https://deno.land/std@0.115.1/node/util.ts";
+import { promisify } from "https://deno.land/std@0.116.0/node/util.ts";
 
 const mkdtempAsync = promisify(fs.mkdtemp);
 const writeFileAsync = promisify(fs.writeFile);

@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from './EventEmitter.ts';
-import { assert } from 'https://deno.land/std@0.115.1/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
 import { helper } from './helper.ts';
 import { ExecutionContext, EVALUATION_SCRIPT_URL } from './ExecutionContext.ts';
 import {

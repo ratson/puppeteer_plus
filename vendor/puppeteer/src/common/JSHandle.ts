@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.115.1/testing/asserts.ts';
+import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
 import { helper, debugError } from './helper.ts';
 import { ExecutionContext } from './ExecutionContext.ts';
 import { Page, ScreenshotOptions } from './Page.ts';
@@ -676,7 +676,7 @@ export class ElementHandle<
      This import is only needed for `uploadFile`, so keep it scoped here to
      avoid paying the cost unnecessarily.
     */
-    const path = await import('https://deno.land/std@0.115.1/node/path.ts');
+    const path = await import('https://deno.land/std@0.116.0/node/path.ts');
     const fs = await helper.importFSModule();
     // Locate all files and confirm that they exist.
     const files = await Promise.all(
