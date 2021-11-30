@@ -39,7 +39,7 @@ import { Product } from "../vendor/puppeteer/src/common/Product.ts";
  *
  * @remarks
  *
- * The most common method to use is {@link PuppeteerNode.launch | launch}, which
+ * The most common method to use is {@link PuppeteerDeno.launch | launch}, which
  * is used to launch and connect to a new browser instance.
  *
  * See {@link Puppeteer | the main Puppeteer class} for methods common to all
@@ -66,7 +66,7 @@ import { Product } from "../vendor/puppeteer/src/common/Product.ts";
  * @public
  */
 export class PuppeteerDeno extends Puppeteer {
-  // @ts-expect-error patch(TS2564)
+  // @ts-expect-error TS2564
   private _lazyLauncher: ProductLauncher;
   private _projectRoot: string;
   private __productName?: Product;
@@ -85,12 +85,8 @@ export class PuppeteerDeno extends Puppeteer {
       productName?: Product;
     } & CommonPuppeteerSettings,
   ) {
-    const {
-      projectRoot,
-      preferredRevision,
-      productName,
-      ...commonSettings
-    } = settings;
+    const { projectRoot, preferredRevision, productName, ...commonSettings } =
+      settings;
     super(commonSettings);
     this._projectRoot = projectRoot;
     this.__productName = productName;
@@ -114,7 +110,7 @@ export class PuppeteerDeno extends Puppeteer {
    * @internal
    */
   get _productName(): Product {
-    // @ts-expect-error patch(TS2322)
+    // @ts-expect-error TS2322
     return this.__productName;
   }
 
@@ -173,8 +169,8 @@ export class PuppeteerDeno extends Puppeteer {
    * The browser binary might not be there if the download was skipped with
    * the `PUPPETEER_SKIP_DOWNLOAD` environment variable.
    */
-  executablePath(): string {
-    return this._launcher.executablePath();
+  executablePath(channel?: string): string {
+    return this._launcher.executablePath(channel);
   }
 
   /**
@@ -218,7 +214,6 @@ export class PuppeteerDeno extends Puppeteer {
   }
 
   /**
-   *
    * @param options - Set of configurable options to set on the browser.
    * @returns The default flags that Chromium will be launched with.
    */
