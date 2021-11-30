@@ -1,5 +1,40 @@
 
 
+## Roll protocol to r945905
+###### _2021-11-29 03:15:22 -0800_ | Diff: [47ce494...76839dc](https://github.com/ChromeDevTools/devtools-protocol/compare/47ce494...76839dc)
+#### `Network`: modified type
+* [`Network.CorsError`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-CorsError) - The enum's `InvalidAllowMethodsPreflightResponse` _updated_. The enum's `InvalidAllowHeadersPreflightResponse` _updated_. The enum's `MethodDisallowedByPreflightResponse` _updated_. The enum's `HeaderDisallowedByPreflightResponse` _updated_. The enum's `RedirectContainsCredentials` _updated_. The enum's `InsecurePrivateNetwork` _updated_. The enum's `InvalidPrivateNetworkAccess` _updated_. The enum's `UnexpectedPrivateNetworkAccess` _updated_. The enum's `NoCorsRedirectModeNotFollow` _updated_. The enum's `UnexpectedPrivateNetworkAccess` _added_. The enum's `NoCorsRedirectModeNotFollow` _added_.
+
+
+## Roll protocol to r944179
+###### _2021-11-22 11:15:40 -0800_ | Diff: [15f524c...47ce494](https://github.com/ChromeDevTools/devtools-protocol/compare/15f524c...47ce494)
+#### `Target`: modified command
+* [`Target.createBrowserContext`](https://chromedevtools.github.io/devtools-protocol/tot/Target/#method-createBrowserContext) - The `originsWithUniversalNetworkAccess` in the parameters had `description` _updated_.
+
+
+## Roll protocol to r943687
+###### _2021-11-19 14:15:27 -0800_ | Diff: [946136a...15f524c](https://github.com/ChromeDevTools/devtools-protocol/compare/946136a...15f524c)
+#### `Target`: modified command
+* [`Target.createBrowserContext`](https://chromedevtools.github.io/devtools-protocol/tot/Target/#method-createBrowserContext) - The parameters's `originsWithUniversalNetworkAccess` _added_.
+
+
+## Roll protocol to r943452
+###### _2021-11-19 01:15:22 -0800_ | Diff: [bee0143...946136a](https://github.com/ChromeDevTools/devtools-protocol/compare/bee0143...946136a)
+#### `Network`: new event
+* [`Network.reportingApiEndpointsChangedForOrigin`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#event-reportingApiEndpointsChangedForOrigin)
+#### `Network`: new type
+* [`Network.ReportingApiEndpoint`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-ReportingApiEndpoint)
+
+
+## Roll protocol to r943026
+###### _2021-11-18 03:15:23 -0800_ | Diff: [22bc316...bee0143](https://github.com/ChromeDevTools/devtools-protocol/compare/22bc316...bee0143)
+#### `Network`: modified command
+* [`Network.setCookie`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#method-setCookie) - The parameters's `partitionKey` _added_.
+#### `Network`: modified types
+* [`Network.Cookie`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-Cookie) - The properties's `partitionKey` _added_. The properties's `partitionKeyOpaque` _added_.
+* [`Network.CookieParam`](https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-CookieParam) - The properties's `partitionKey` _added_.
+
+
 ## Roll protocol to r942138
 ###### _2021-11-16 06:15:29 -0800_ | Diff: [0308368...22bc316](https://github.com/ChromeDevTools/devtools-protocol/compare/0308368...22bc316)
 #### `Accessibility`: new events

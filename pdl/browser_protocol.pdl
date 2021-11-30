@@ -4908,8 +4908,14 @@ domain Network
       PreflightInvalidAllowOriginValue
       PreflightAllowOriginMismatch
       PreflightInvalidAllowCredentials
+      # TODO(https://crbug.com/1263483): Remove this once frontend code does
+      # not reference it anymore.
       PreflightMissingAllowExternal
+      # TODO(https://crbug.com/1263483): Remove this once frontend code does
+      # not reference it anymore.
       PreflightInvalidAllowExternal
+      PreflightMissingAllowPrivateNetwork
+      PreflightInvalidAllowPrivateNetwork
       InvalidAllowMethodsPreflightResponse
       InvalidAllowHeadersPreflightResponse
       MethodDisallowedByPreflightResponse
@@ -6203,6 +6209,19 @@ domain Network
   experimental event reportingApiReportUpdated
     parameters
       ReportingApiReport report
+
+  experimental type ReportingApiEndpoint extends object
+    properties
+      # The URL of the endpoint to which reports may be delivered.
+      string url
+      # Name of the endpoint group.
+      string groupName
+
+  experimental event reportingApiEndpointsChangedForOrigin
+    parameters
+      # Origin of the document(s) which configured the endpoints.
+      string origin
+      array of ReportingApiEndpoint endpoints
 
   # An object providing the result of a network resource load.
   experimental type LoadNetworkResourcePageResult extends object
@@ -8016,6 +8035,7 @@ domain Page
       ContentWebUSB
       ContentMediaSession
       ContentMediaSessionService
+      ContentScreenReader
 
       # See components/back_forward_cache/back_forward_cache_disable.h for explanations.
       EmbedderPopupBlockerTabHelper
@@ -8916,6 +8936,9 @@ domain Target
       optional string proxyServer
       # Proxy bypass list, similar to the one passed to --proxy-bypass-list
       optional string proxyBypassList
+      # An optional list of origins to grant unlimited cross-origin access to.
+      # Parts of the URL other than those constituting origin are ignored.
+      optional array of string originsWithUniversalNetworkAccess
 
     returns
       # The id of the context created.
