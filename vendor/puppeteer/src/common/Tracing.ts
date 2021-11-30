@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
+import { Buffer } from 'https://deno.land/std@0.116.0/node/buffer.ts';
 import { helper } from './helper.ts';
 import { CDPSession } from './Connection.ts';
 
@@ -107,12 +108,9 @@ export class Tracing {
    * Stops a trace started with the `start` method.
    * @returns Promise which resolves to buffer with trace data.
    */
-  // @ts-expect-error TS2580
   async stop(): Promise<Buffer> {
-    // @ts-expect-error TS2580
     let fulfill: (value: Buffer) => void;
     let reject: (err: Error) => void;
-    // @ts-expect-error TS2580
     const contentPromise = new Promise<Buffer>((x, y) => {
       fulfill = x;
       reject = y;

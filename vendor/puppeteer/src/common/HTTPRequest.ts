@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 import { Buffer } from 'https://deno.land/std@0.116.0/node/buffer.ts';
-import { CDPSession } from './Connection.ts';
+import { ProtocolMapping } from '../../../devtools-protocol/types/protocol-mapping.d.ts';
+
+import { EventEmitter } from './EventEmitter.ts';
 import { Frame } from './FrameManager.ts';
 import { HTTPResponse } from './HTTPResponse.ts';
 import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
@@ -56,6 +58,13 @@ export interface ResponseForRequest {
  * @public
  */
 export type ResourceType = Lowercase<Protocol.Network.ResourceType>;
+
+interface CDPSession extends EventEmitter {
+  send<T extends keyof ProtocolMapping.Commands>(
+    method: T,
+    ...paramArgs: ProtocolMapping.Commands[T]['paramsType']
+  ): Promise<ProtocolMapping.Commands[T]['returnType']>;
+}
 
 /**
  *

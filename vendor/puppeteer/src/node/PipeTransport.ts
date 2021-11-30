@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { Buffer } from 'https://deno.land/std@0.116.0/node/buffer.ts';
 import {
   helper,
   debugError,
@@ -58,7 +59,6 @@ export class PipeTransport implements ConnectionTransport {
     this._pipeWrite.write('\0');
   }
 
-  // @ts-expect-error TS2580
   _dispatch(buffer: Buffer): void {
     let end = buffer.indexOf('\0');
     if (end === -1) {

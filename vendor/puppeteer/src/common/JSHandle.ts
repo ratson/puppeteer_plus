@@ -15,6 +15,7 @@
  */
 
 import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
+import { Buffer } from 'https://deno.land/std@0.116.0/node/buffer.ts';
 import { helper, debugError } from './helper.ts';
 import { ExecutionContext } from './ExecutionContext.ts';
 import { Page, ScreenshotOptions } from './Page.ts';
@@ -833,7 +834,6 @@ export class ElementHandle<
    * {@link Page.screenshot} to take a screenshot of the element.
    * If the element is detached from DOM, the method throws an error.
    */
-  // @ts-expect-error TS2580
   async screenshot(options: ScreenshotOptions = {}): Promise<string | Buffer> {
     let needsViewportReset = false;
 

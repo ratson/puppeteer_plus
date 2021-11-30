@@ -182,9 +182,9 @@ export class BrowserRunner {
       // @ts-expect-error patch(TS2531)
       const { 3: pipeWrite, 4: pipeRead } = this.proc.stdio;
       const transport = new PipeTransport(
-        // @ts-expect-error patch(TS2503)
+        // @ts-expect-error TS2503
         pipeWrite as NodeJS.WritableStream,
-        // @ts-expect-error patch(TS2503)
+        // @ts-expect-error TS2503
         pipeRead as NodeJS.ReadableStream,
       );
       // @ts-expect-error patch(TS2322)

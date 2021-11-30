@@ -200,7 +200,7 @@ export class FrameManager extends EventEmitter {
     }
     watcher.dispose();
     if (error) throw error;
-    return watcher.navigationResponse();
+    return await watcher.navigationResponse();
 
     async function navigate(
       client: CDPSession,
@@ -244,7 +244,7 @@ export class FrameManager extends EventEmitter {
     ]);
     watcher.dispose();
     if (error) throw error;
-    return watcher.navigationResponse();
+    return await watcher.navigationResponse();
   }
 
   private async _onAttachedToTarget(
