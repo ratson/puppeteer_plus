@@ -417,6 +417,17 @@ describe('network', function () {
       const response = await page.goto(server.PREFIX + '/cool');
       expect(response.statusText()).toBe('cool!');
     });
+
+    it('handles missing status text', async () => {
+      const { page, server } = getTestState();
+
+      server.setRoute('/nostatus', (req, res) => {
+        res.writeHead(200, '');
+        res.end();
+      });
+      const response = await page.goto(server.PREFIX + '/nostatus');
+      expect(response.statusText()).toBe('');
+    });
   });
 
   describeFailsFirefox('Network Events', function () {
@@ -684,6 +695,79 @@ describe('network', function () {
       expect(responses.get('one-style.css').fromCache()).toBe(true);
       expect(responses.get('one-style.html').status()).toBe(304);
       expect(responses.get('one-style.html').fromCache()).toBe(false);
+    });
+  });
+
+  describeFailsFirefox('raw network headers', async () => {
+    it('Same-origin set-cookie navigation', async () => {
+      const { page, server } = getTestState();
+
+      const setCookieString = 'foo=bar';
+      server.setRoute('/empty.html', (req, res) => {
+        res.setHeader('set-cookie', setCookieString);
+        res.end('hello world');
+      });
+      const response = await page.goto(server.EMPTY_PAGE);
+      expect(response.headers()['set-cookie']).toBe(setCookieString);
+    });
+
+    it('Same-origin set-cookie subresource', async () => {
+      const { page, server } = getTestState();
+      await page.goto(server.EMPTY_PAGE);
+
+      const setCookieString = 'foo=bar';
+      server.setRoute('/foo', (req, res) => {
+        res.setHeader('set-cookie', setCookieString);
+        res.end('hello world');
+      });
+
+      const responsePromise = new Promise<HTTPResponse>((resolve) =>
+        page.on('response', (response) => resolve(response))
+      );
+      page.evaluate(() => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/foo');
+        xhr.send();
+      });
+      const subresourceResponse = await responsePromise;
+      expect(subresourceResponse.headers()['set-cookie']).toBe(setCookieString);
+    });
+
+    it('Cross-origin set-cookie', async () => {
+      const { httpsServer, puppeteer, defaultBrowserOptions } = getTestState();
+
+      const browser = await puppeteer.launch({
+        ...defaultBrowserOptions,
+        ignoreHTTPSErrors: true,
+      });
+
+      const page = await browser.newPage();
+
+      try {
+        await page.goto(httpsServer.PREFIX + '/empty.html');
+
+        const setCookieString = 'hello=world';
+        httpsServer.setRoute('/setcookie.html', (req, res) => {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('set-cookie', setCookieString);
+          res.end();
+        });
+        await page.goto(httpsServer.PREFIX + '/setcookie.html');
+
+        const response = await new Promise<HTTPResponse>((resolve) => {
+          page.on('response', resolve);
+          const url = httpsServer.CROSS_PROCESS_PREFIX + '/setcookie.html';
+          page.evaluate<(src: string) => void>((src) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', src);
+            xhr.send();
+          }, url);
+        });
+        expect(response.headers()['set-cookie']).toBe(setCookieString);
+      } finally {
+        await page.close();
+        await browser.close();
+      }
     });
   });
 });
