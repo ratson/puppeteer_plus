@@ -22,8 +22,7 @@ import {
 import { ConnectionTransport } from '../common/ConnectionTransport.ts';
 
 export class PipeTransport implements ConnectionTransport {
-  // @ts-expect-error TS2503
-  _pipeWrite: NodeJS.WritableStream;
+  _pipeWrite: any;
   _pendingMessage: string;
   _eventListeners: PuppeteerEventListener[];
 
@@ -31,10 +30,8 @@ export class PipeTransport implements ConnectionTransport {
   onmessage?: () => void;
 
   constructor(
-    // @ts-expect-error TS2503
-    pipeWrite: NodeJS.WritableStream,
-    // @ts-expect-error TS2503
-    pipeRead: NodeJS.ReadableStream
+    pipeWrite: any,
+    pipeRead: any
   ) {
     this._pipeWrite = pipeWrite;
     this._pendingMessage = '';

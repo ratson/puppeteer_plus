@@ -1,4 +1,4 @@
-import { readZip } from "https://deno.land/x/puppeteer@5.5.1/vendor/puppeteer-core/vendor/zip/mod.ts";
+import { readZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 
 export async function extractZip(
   zipPath: string,
