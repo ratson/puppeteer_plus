@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
+import { assert } from './assert.ts';
 import { helper } from './helper.ts';
 import { Target } from './Target.ts';
 import { EventEmitter } from './EventEmitter.ts';

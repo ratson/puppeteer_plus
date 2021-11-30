@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
+import { assert } from './assert.ts';
 import { helper, PuppeteerEventListener } from './helper.ts';
 import { TimeoutError } from './Errors.ts';
 import {

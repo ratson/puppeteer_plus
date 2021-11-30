@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
+import { assert } from './assert.ts';
 import { Buffer } from 'https://deno.land/std@0.116.0/node/buffer.ts';
 import { helper, debugError } from './helper.ts';
 import { ExecutionContext } from './ExecutionContext.ts';

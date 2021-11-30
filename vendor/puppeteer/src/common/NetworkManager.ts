@@ -17,7 +17,7 @@
 import { ProtocolMapping } from '../../../devtools-protocol/types/protocol-mapping.d.ts';
 import { EventEmitter } from './EventEmitter.ts';
 import { Frame } from './FrameManager.ts';
-import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
+import { assert } from './assert.ts';
 import { helper, debugError } from './helper.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import { HTTPRequest } from './HTTPRequest.ts';

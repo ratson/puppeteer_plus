@@ -22,7 +22,7 @@ import { debug } from './Debug.ts';
 import { CDPSession } from './Connection.ts';
 import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
 import { CommonEventEmitter } from './EventEmitter.ts';
-import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
+import { assert } from './assert.ts';
 import { isNode } from '../environment.ts';
 
 export const debugError = debug('puppeteer:error');

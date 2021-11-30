@@ -23,7 +23,7 @@ import * as readline from 'readline';
 import removeFolder from 'rimraf';
 import { promisify } from 'util';
 
-import { assert } from 'https://deno.land/std@0.116.0/testing/asserts.ts';
+import { assert } from '../common/assert.ts';
 import { helper, debugError } from '../common/helper.ts';
 import { LaunchOptions } from './LaunchOptions.ts';
 import { Connection } from '../common/Connection.ts';

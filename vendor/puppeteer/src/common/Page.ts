@@ -1648,7 +1648,6 @@ export class Page extends EventEmitter {
 
     const dialog = new Dialog(
       this._client,
-      // @ts-expect-error TS2345
       dialogType,
       event.message,
       event.defaultPrompt
