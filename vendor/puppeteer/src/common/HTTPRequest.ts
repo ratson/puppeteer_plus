@@ -38,6 +38,14 @@ export interface ContinueRequestOverrides {
 }
 
 /**
+ * @public
+ */
+export interface InterceptResolutionState {
+  action: InterceptResolutionAction;
+  priority?: number;
+}
+
+/**
  * Required response data to fulfill a request with.
  *
  * @public
@@ -58,6 +66,13 @@ export interface ResponseForRequest {
  * @public
  */
 export type ResourceType = Lowercase<Protocol.Network.ResourceType>;
+
+/**
+ * The default cooperative request interception resolution priority
+ *
+ * @public
+ */
+export const DEFAULT_INTERCEPT_RESOLUTION_PRIORITY = 0;
 
 interface CDPSession extends EventEmitter {
   send<T extends keyof ProtocolMapping.Commands>(
@@ -140,9 +155,8 @@ export class HTTPRequest {
   private _responseForRequest: Partial<ResponseForRequest>;
   // @ts-expect-error TS2564
   private _abortErrorReason: Protocol.Network.ErrorReason;
-  private _currentStrategy: InterceptResolutionStrategy;
-  private _currentPriority: number | undefined;
-  private _interceptActions: Array<() => void | PromiseLike<any>>;
+  private _interceptResolutionState: InterceptResolutionState;
+  private _interceptHandlers: Array<() => void | PromiseLike<any>>;
   private _initiator: Protocol.Network.Initiator;
 
   /**
@@ -170,9 +184,8 @@ export class HTTPRequest {
     this._frame = frame;
     this._redirectChain = redirectChain;
     this._continueRequestOverrides = {};
-    this._currentStrategy = 'none';
-    this._currentPriority = undefined;
-    this._interceptActions = [];
+    this._interceptResolutionState = { action: InterceptResolutionAction.None };
+    this._interceptHandlers = [];
     this._initiator = event.initiator;
 
     for (const key of Object.keys(event.request.headers))
@@ -214,14 +227,30 @@ export class HTTPRequest {
   }
 
   /**
-   * @returns An array of the current intercept resolution strategy and priority
-   * `[strategy,priority]`. Strategy is one of: `abort`, `respond`, `continue`,
+   * @returns An InterceptResolutionState object describing the current resolution
+   *  action and priority.
+   *
+   *  InterceptResolutionState contains:
+   *    action: InterceptResolutionAction
+   *    priority?: number
+   *
+   *  InterceptResolutionAction is one of: `abort`, `respond`, `continue`,
    *  `disabled`, `none`, or `already-handled`.
    */
-  private interceptResolution(): [InterceptResolutionStrategy, number?] {
-    if (!this._allowInterception) return ['disabled'];
-    if (this._interceptionHandled) return ['alreay-handled'];
-    return [this._currentStrategy, this._currentPriority];
+  interceptResolutionState(): InterceptResolutionState {
+    if (!this._allowInterception)
+      return { action: InterceptResolutionAction.Disabled };
+    if (this._interceptionHandled)
+      return { action: InterceptResolutionAction.AlreadyHandled };
+    return { ...this._interceptResolutionState };
+  }
+
+  /**
+   * @returns `true` if the intercept resolution has already been handled,
+   * `false` otherwise.
+   */
+  isInterceptResolutionHandled(): boolean {
+    return this._interceptionHandled;
   }
 
   /**
@@ -233,7 +262,7 @@ export class HTTPRequest {
   enqueueInterceptAction(
     pendingHandler: () => void | PromiseLike<unknown>
   ): void {
-    this._interceptActions.push(pendingHandler);
+    this._interceptHandlers.push(pendingHandler);
   }
 
   /**
@@ -241,12 +270,12 @@ export class HTTPRequest {
    * the request interception.
    */
   async finalizeInterceptions(): Promise<void> {
-    await this._interceptActions.reduce(
+    await this._interceptHandlers.reduce(
       (promiseChain, interceptAction) => promiseChain.then(interceptAction),
       Promise.resolve()
     );
-    const [resolution] = this.interceptResolution();
-    switch (resolution) {
+    const { action } = this.interceptResolutionState();
+    switch (action) {
       case 'abort':
         return this._abort(this._abortErrorReason);
       case 'respond':
@@ -416,21 +445,24 @@ export class HTTPRequest {
     this._continueRequestOverrides = overrides;
     if (
       // @ts-expect-error TS2532
-      priority > this._currentPriority ||
-      this._currentPriority === undefined
+      priority > this._interceptResolutionState.priority ||
+      this._interceptResolutionState.priority === undefined
     ) {
-      this._currentStrategy = 'continue';
-      this._currentPriority = priority;
+      this._interceptResolutionState = {
+        action: InterceptResolutionAction.Continue,
+        priority,
+      };
       return;
     }
-    if (priority === this._currentPriority) {
+    if (priority === this._interceptResolutionState.priority) {
       if (
-        this._currentStrategy === 'abort' ||
-        this._currentStrategy === 'respond'
+        this._interceptResolutionState.action === 'abort' ||
+        this._interceptResolutionState.action === 'respond'
       ) {
         return;
       }
-      this._currentStrategy = 'continue';
+      this._interceptResolutionState.action =
+        InterceptResolutionAction.Continue;
     }
     return;
   }
@@ -504,18 +536,20 @@ export class HTTPRequest {
     this._responseForRequest = response;
     if (
       // @ts-expect-error TS2532
-      priority > this._currentPriority ||
-      this._currentPriority === undefined
+      priority > this._interceptResolutionState.priority ||
+      this._interceptResolutionState.priority === undefined
     ) {
-      this._currentStrategy = 'respond';
-      this._currentPriority = priority;
+      this._interceptResolutionState = {
+        action: InterceptResolutionAction.Respond,
+        priority,
+      };
       return;
     }
-    if (priority === this._currentPriority) {
-      if (this._currentStrategy === 'abort') {
+    if (priority === this._interceptResolutionState.priority) {
+      if (this._interceptResolutionState.action === 'abort') {
         return;
       }
-      this._currentStrategy = 'respond';
+      this._interceptResolutionState.action = InterceptResolutionAction.Respond;
     }
   }
 
@@ -585,11 +619,13 @@ export class HTTPRequest {
     this._abortErrorReason = errorReason;
     if (
       // @ts-expect-error TS2532
-      priority >= this._currentPriority ||
-      this._currentPriority === undefined
+      priority >= this._interceptResolutionState.priority ||
+      this._interceptResolutionState.priority === undefined
     ) {
-      this._currentStrategy = 'abort';
-      this._currentPriority = priority;
+      this._interceptResolutionState = {
+        action: InterceptResolutionAction.Abort,
+        priority,
+      };
       return;
     }
   }
@@ -610,13 +646,21 @@ export class HTTPRequest {
 /**
  * @public
  */
-export type InterceptResolutionStrategy =
-  | 'abort'
-  | 'respond'
-  | 'continue'
-  | 'disabled'
-  | 'none'
-  | 'alreay-handled';
+export enum InterceptResolutionAction {
+  Abort = 'abort',
+  Respond = 'respond',
+  Continue = 'continue',
+  Disabled = 'disabled',
+  None = 'none',
+  AlreadyHandled = 'already-handled',
+}
+
+/**
+ * @public
+ *
+ * @deprecated please use {@link InterceptResolutionAction} instead.
+ */
+export type InterceptResolutionStrategy = InterceptResolutionAction;
 
 /**
  * @public
