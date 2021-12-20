@@ -1,5 +1,6 @@
 import { Product } from "../vendor/puppeteer/src/common/Product.ts";
 import { PUPPETEER_REVISIONS } from "../vendor/puppeteer/src/revisions.ts";
+import { downloadBrowser } from "./install.ts";
 import { PuppeteerDeno } from "./Puppeteer.ts";
 
 async function hasPermission(desc: Deno.PermissionDescriptor, noPrompt = true) {
@@ -25,8 +26,9 @@ export const initializePuppeteerDeno = async (
     productName = Deno.env.get("PUPPETEER_PRODUCT") as Product;
   }
 
-  let preferredRevision = PUPPETEER_REVISIONS.chromium;
-  if (productName == "firefox") preferredRevision = PUPPETEER_REVISIONS.firefox;
+  const preferredRevision = productName === "firefox"
+    ? PUPPETEER_REVISIONS.firefox
+    : PUPPETEER_REVISIONS.chromium;
 
   const puppeteer = new PuppeteerDeno({
     projectRoot: puppeteerRootDirectory,
@@ -34,6 +36,12 @@ export const initializePuppeteerDeno = async (
     isPuppeteerCore,
     productName,
   });
+
+  if (!isPuppeteerCore) {
+    if (!Deno.env.get("PUPPETEER_EXECUTABLE_PATH")) {
+      await downloadBrowser(puppeteer);
+    }
+  }
 
   return puppeteer;
 };
