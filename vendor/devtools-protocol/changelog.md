@@ -1,5 +1,39 @@
 
 
+## Roll protocol to r952091
+###### _2021-12-15 13:15:35 -0800_ | Diff: [e96cb74...12d9e69](https://github.com/ChromeDevTools/devtools-protocol/compare/e96cb74...12d9e69)
+#### `Audits`: new types
+* [`Audits.ClientHintIssueReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-ClientHintIssueReason)
+* [`Audits.ClientHintIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-ClientHintIssueDetails)
+#### `Audits`: modified types
+* [`Audits.InspectorIssueCode`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueCode) - The enum's `ClientHintIssue` _added_.
+* [`Audits.InspectorIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueDetails) - The properties's `clientHintIssueDetails` _added_.
+
+
+## Roll protocol to r948336
+###### _2021-12-04 09:15:26 -0800_ | Diff: [11ea32a...dc1b71a](https://github.com/ChromeDevTools/devtools-protocol/compare/11ea32a...dc1b71a)
+#### `Audits`: modified type
+* [`Audits.AttributionReportingIssueType`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-AttributionReportingIssueType) - The enum's `InvalidEventSourceTriggerData` _added_. The enum's `InvalidTriggerPriority` _added_. The enum's `InvalidTriggerDedupKey` _added_.
+
+
+## Roll protocol to r947303
+###### _2021-12-01 17:15:26 -0800_ | Diff: [2a18d25...11ea32a](https://github.com/ChromeDevTools/devtools-protocol/compare/2a18d25...11ea32a)
+#### `Audits`: modified type
+* [`Audits.AttributionReportingIssueType`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-AttributionReportingIssueType) - The enum's `InvalidAttributionSourceExpiry` _added_. The enum's `InvalidAttributionSourcePriority` _added_.
+
+
+## Roll protocol to r946693
+###### _2021-11-30 14:15:35 -0800_ | Diff: [baf4231...2a18d25](https://github.com/ChromeDevTools/devtools-protocol/compare/baf4231...2a18d25)
+#### `Cast`: new command
+* [`Cast.startDesktopMirroring`](https://chromedevtools.github.io/devtools-protocol/tot/Cast/#method-startDesktopMirroring)
+
+
+## Roll protocol to r946318
+###### _2021-11-29 20:15:44 -0800_ | Diff: [76839dc...baf4231](https://github.com/ChromeDevTools/devtools-protocol/compare/76839dc...baf4231)
+#### `Page`: modified type
+* [`Page.BackForwardCacheNotRestoredReason`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-BackForwardCacheNotRestoredReason) - The enum's `EmbedderPopupBlockerTabHelper` _updated_. The enum's `EmbedderSafeBrowsingTriggeredPopupBlocker` _updated_. The enum's `EmbedderSafeBrowsingThreatDetails` _updated_. The enum's `EmbedderAppBannerManager` _updated_. The enum's `EmbedderDomDistillerViewerSource` _updated_. The enum's `EmbedderDomDistillerSelfDeletingRequestDelegate` _updated_. The enum's `EmbedderOomInterventionTabHelper` _updated_. The enum's `EmbedderOfflinePage` _updated_. The enum's `EmbedderChromePasswordManagerClientBindCredentialManager` _updated_. The enum's `EmbedderPermissionRequestManager` _updated_. The enum's `EmbedderModalDialog` _updated_. The enum's `EmbedderExtensions` _updated_. The enum's `EmbedderExtensionMessaging` _updated_. The enum's `EmbedderExtensionMessagingForOpenPort` _updated_. The enum's `EmbedderExtensionSentMessageToCachedFrame` _updated_. The enum's `EmbedderExtensionSentMessageToCachedFrame` _added_.
+
+
 ## Roll protocol to r945905
 ###### _2021-11-29 03:15:22 -0800_ | Diff: [47ce494...76839dc](https://github.com/ChromeDevTools/devtools-protocol/compare/47ce494...76839dc)
 #### `Network`: modified type

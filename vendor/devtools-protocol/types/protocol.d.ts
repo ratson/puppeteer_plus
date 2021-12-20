@@ -3261,7 +3261,7 @@ export namespace Protocol {
             clientSecurityState?: Network.ClientSecurityState;
         }
 
-        export type AttributionReportingIssueType = ('PermissionPolicyDisabled' | 'InvalidAttributionSourceEventId' | 'InvalidAttributionData' | 'AttributionSourceUntrustworthyOrigin' | 'AttributionUntrustworthyOrigin' | 'AttributionTriggerDataTooLarge' | 'AttributionEventSourceTriggerDataTooLarge');
+        export type AttributionReportingIssueType = ('PermissionPolicyDisabled' | 'InvalidAttributionSourceEventId' | 'InvalidAttributionData' | 'AttributionSourceUntrustworthyOrigin' | 'AttributionUntrustworthyOrigin' | 'AttributionTriggerDataTooLarge' | 'AttributionEventSourceTriggerDataTooLarge' | 'InvalidAttributionSourceExpiry' | 'InvalidAttributionSourcePriority' | 'InvalidEventSourceTriggerData' | 'InvalidTriggerPriority' | 'InvalidTriggerDedupKey');
 
         /**
          * Details for issues around "Attribution Reporting API" usage.
@@ -3336,12 +3336,23 @@ export namespace Protocol {
             message?: string;
         }
 
+        export type ClientHintIssueReason = ('MetaTagAllowListInvalidOrigin' | 'MetaTagModifiedHTML');
+
+        /**
+         * This issue tracks client hints related issues. It's used to deprecate old
+         * features, encourage the use of new ones, and provide general guidance.
+         */
+        export interface ClientHintIssueDetails {
+            sourceCodeLocation: SourceCodeLocation;
+            clientHintIssueReason: ClientHintIssueReason;
+        }
+
         /**
          * A unique identifier for the type of issue. Each type may use one of the
          * optional fields in InspectorIssueDetails to convey more specific
          * information about the kind of issue.
          */
-        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'WasmCrossOriginModuleSharingIssue' | 'GenericIssue' | 'DeprecationIssue');
+        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'WasmCrossOriginModuleSharingIssue' | 'GenericIssue' | 'DeprecationIssue' | 'ClientHintIssue');
 
         /**
          * This struct holds a list of optional fields with additional information
@@ -3364,6 +3375,7 @@ export namespace Protocol {
             wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
             genericIssueDetails?: GenericIssueDetails;
             deprecationIssueDetails?: DeprecationIssueDetails;
+            clientHintIssueDetails?: ClientHintIssueDetails;
         }
 
         /**
@@ -4994,6 +5006,10 @@ export namespace Protocol {
             sinkName: string;
         }
 
+        export interface StartDesktopMirroringRequest {
+            sinkName: string;
+        }
+
         export interface StartTabMirroringRequest {
             sinkName: string;
         }
@@ -5059,7 +5075,7 @@ export namespace Protocol {
         /**
          * Pseudo element type.
          */
-        export type PseudoType = ('first-line' | 'first-letter' | 'before' | 'after' | 'marker' | 'backdrop' | 'selection' | 'target-text' | 'spelling-error' | 'grammar-error' | 'highlight' | 'first-line-inherited' | 'scrollbar' | 'scrollbar-thumb' | 'scrollbar-button' | 'scrollbar-track' | 'scrollbar-track-piece' | 'scrollbar-corner' | 'resizer' | 'input-list-button');
+        export type PseudoType = ('first-line' | 'first-letter' | 'before' | 'after' | 'marker' | 'backdrop' | 'selection' | 'target-text' | 'spelling-error' | 'grammar-error' | 'highlight' | 'first-line-inherited' | 'scrollbar' | 'scrollbar-thumb' | 'scrollbar-button' | 'scrollbar-track' | 'scrollbar-track-piece' | 'scrollbar-corner' | 'resizer' | 'input-list-button' | 'transition' | 'transition-container' | 'transition-old-content' | 'transition-new-content');
 
         /**
          * Shadow root type.
