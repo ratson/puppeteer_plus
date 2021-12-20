@@ -1,9 +1,19 @@
-import { readZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
+import * as subprocess from "https://deno.land/x/stdx@0.7.0/subprocess/mod.ts";
 
 export async function extractZip(
   zipPath: string,
   { dir }: { dir: string },
 ): Promise<void> {
-  const z = await readZip(zipPath);
-  await z.unzip(dir);
+  const cmd = Deno.build.os === "windows"
+    ? [
+      "PowerShell",
+      "Expand-Archive",
+      "-Path",
+      zipPath,
+      "-DestinationPath",
+      dir,
+    ]
+    : ["unzip", zipPath, "-d", dir];
+
+  await subprocess.run(cmd, { stdout: "null", stderr: "null" });
 }

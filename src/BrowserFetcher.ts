@@ -458,6 +458,8 @@ async function downloadFile(
     progressCallback?.(downloadedBytes, totalBytes);
     await writeAll(file, chunk);
   }
+
+  Deno.close(file.rid);
 }
 
 function install(archivePath: string, folderPath: string): Promise<unknown> {
