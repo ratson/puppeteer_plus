@@ -827,7 +827,8 @@ export class WaitTask {
   _reject: (x: Error) => void;
   _timeoutTimer?: number;
   _terminated = false;
-  _root: ElementHandle;
+  // @ts-expect-error TS2322
+  _root: ElementHandle = null;
 
   constructor(options: WaitTaskOptions) {
     if (helper.isString(options.polling))
@@ -903,26 +904,15 @@ export class WaitTask {
     }
     if (this._terminated || runCount !== this._runCount) return;
     try {
-      if (this._root) {
-        success = await this._root.evaluateHandle(
-          waitForPredicatePageFunction,
-          this._predicateBody,
-          this._predicateAcceptsContextElement,
-          this._polling,
-          this._timeout,
-          ...this._args
-        );
-      } else {
-        success = await context.evaluateHandle(
-          waitForPredicatePageFunction,
-          null,
-          this._predicateBody,
-          this._predicateAcceptsContextElement,
-          this._polling,
-          this._timeout,
-          ...this._args
-        );
-      }
+      success = await context.evaluateHandle(
+        waitForPredicatePageFunction,
+        this._root || null,
+        this._predicateBody,
+        this._predicateAcceptsContextElement,
+        this._polling,
+        this._timeout,
+        ...this._args
+      );
     } catch (error_) {
       error = error_;
     }
