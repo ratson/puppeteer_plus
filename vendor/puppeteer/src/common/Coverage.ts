@@ -274,6 +274,7 @@ export class JSCoverage {
     this._enabled = false;
 
     const result = await Promise.all<
+      // @ts-expect-error TS2558
       Protocol.Profiler.TakePreciseCoverageResponse,
       void,
       void,
@@ -288,6 +289,7 @@ export class JSCoverage {
     helper.removeEventListeners(this._eventListeners);
 
     const coverage = [];
+    // @ts-expect-error TS7053
     const profileResponse = result[0];
 
     for (const entry of profileResponse.result) {

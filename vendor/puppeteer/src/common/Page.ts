@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Readable } from 'https://deno.land/std@0.118.0/node/stream.ts';
+import type { Readable } from 'https://deno.land/std@0.119.0/node/stream.ts';
 
-import { Buffer } from 'https://deno.land/std@0.118.0/node/buffer.ts';
+import { Buffer } from 'https://deno.land/std@0.119.0/node/buffer.ts';
 import { EventEmitter, Handler } from './EventEmitter.ts';
 import {
   Connection,
@@ -1808,12 +1808,13 @@ export class Page extends EventEmitter {
    *   more than 2 network connections for at least `500` ms.
    */
   async reload(options?: WaitForOptions): Promise<HTTPResponse | null> {
+    // @ts-expect-error TS2558
     const result = await Promise.all<HTTPResponse, void>([
-      // @ts-expect-error TS2322
       this.waitForNavigation(options),
       this._client.send('Page.reload'),
     ]);
 
+    // @ts-expect-error TS7053
     return result[0];
   }
 

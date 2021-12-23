@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { Readable } from 'https://deno.land/std@0.118.0/node/stream.ts';
-import { Buffer } from 'https://deno.land/std@0.118.0/node/buffer.ts';
+import type { Readable } from 'https://deno.land/std@0.119.0/node/stream.ts';
+import { Buffer } from 'https://deno.land/std@0.119.0/node/buffer.ts';
 
 import { TimeoutError } from './Errors.ts';
 import { debug } from './Debug.ts';
@@ -339,7 +339,7 @@ async function getReadableAsBuffer(
   const fs = isNode ? await importFSModule() : null;
 
   // @ts-expect-error TS2694
-  let fileHandle: import('https://deno.land/std@0.118.0/node/fs.ts').promises.FileHandle;
+  let fileHandle: import('https://deno.land/std@0.119.0/node/fs.ts').promises.FileHandle;
 
   if (path) {
     // @ts-expect-error TS2531
@@ -374,7 +374,7 @@ async function getReadableFromProtocolStream(
     throw new Error('Cannot create a stream outside of Node.js environment.');
   }
 
-  const { Readable } = await import('https://deno.land/std@0.118.0/node/stream.ts');
+  const { Readable } = await import('https://deno.land/std@0.119.0/node/stream.ts');
 
   let eof = false;
   return new Readable({
@@ -404,14 +404,14 @@ async function getReadableFromProtocolStream(
  * See https://github.com/puppeteer/puppeteer/issues/6548 for more details.
  *
  * Once Node 10 is no longer supported (April 2021) we can remove this and use
- * `(await import('https://deno.land/std@0.118.0/node/fs.ts')).promises`.
+ * `(await import('https://deno.land/std@0.119.0/node/fs.ts')).promises`.
  */
-async function importFSModule(): Promise<typeof import('https://deno.land/std@0.118.0/node/fs.ts')> {
+async function importFSModule(): Promise<typeof import('https://deno.land/std@0.119.0/node/fs.ts')> {
   if (!isNode) {
     throw new Error('Cannot load the fs module API outside of Node.');
   }
 
-  const fs = await import('https://deno.land/std@0.118.0/node/fs.ts');
+  const fs = await import('https://deno.land/std@0.119.0/node/fs.ts');
   if (fs.promises) {
     return fs;
   }
