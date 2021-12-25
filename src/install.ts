@@ -1,22 +1,12 @@
 import ProgressBar from "https://deno.land/x/progress@v1.2.5/mod.ts";
 import { PUPPETEER_REVISIONS } from "../vendor/puppeteer/src/revisions.ts";
 import { PuppeteerDeno } from "./Puppeteer.ts";
+import { getProduct } from "./initialize-deno.ts";
 
 const supportedProducts = {
   chrome: "Chromium",
   firefox: "Firefox Nightly",
 } as const;
-
-function getProduct() {
-  const product = Deno.env.get("PUPPETEER_PRODUCT") || "chrome";
-  if (product !== "chrome" && product !== "firefox") {
-    if (product !== undefined) {
-      console.warn(`Unknown product '${product}', falling back to 'chrome'.`);
-    }
-    return "chrome";
-  }
-  return product;
-}
 
 async function getRevision(product: string) {
   switch (product) {

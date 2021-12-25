@@ -1,6 +1,5 @@
 import { Product } from "../vendor/puppeteer/src/common/Product.ts";
 import { PUPPETEER_REVISIONS } from "../vendor/puppeteer/src/revisions.ts";
-import { downloadBrowser } from "./install.ts";
 import { PuppeteerDeno } from "./Puppeteer.ts";
 
 async function hasPermission(desc: Deno.PermissionDescriptor, noPrompt = true) {
@@ -9,6 +8,17 @@ async function hasPermission(desc: Deno.PermissionDescriptor, noPrompt = true) {
     status = await Deno.permissions.request(desc);
   }
   return status.state === "granted";
+}
+
+export function getProduct(): Product {
+  const product = Deno.env.get("PUPPETEER_PRODUCT") || "chrome";
+  if (product !== "chrome" && product !== "firefox") {
+    if (product !== undefined) {
+      console.warn(`Unknown product '${product}', falling back to 'chrome'.`);
+    }
+    return "chrome";
+  }
+  return product;
 }
 
 export const initializePuppeteerDeno = async (
@@ -21,10 +31,7 @@ export const initializePuppeteerDeno = async (
       ? Deno.cwd()
       : "/tmp";
 
-  let productName: Product | undefined;
-  if (await hasPermission({ name: "env" }, isPuppeteerCore)) {
-    productName = Deno.env.get("PUPPETEER_PRODUCT") as Product;
-  }
+  const productName = isPuppeteerCore ? undefined : getProduct();
 
   const preferredRevision = productName === "firefox"
     ? PUPPETEER_REVISIONS.firefox
@@ -36,12 +43,6 @@ export const initializePuppeteerDeno = async (
     isPuppeteerCore,
     productName,
   });
-
-  if (!isPuppeteerCore) {
-    if (!Deno.env.get("PUPPETEER_EXECUTABLE_PATH")) {
-      await downloadBrowser(puppeteer);
-    }
-  }
 
   return puppeteer;
 };
