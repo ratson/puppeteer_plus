@@ -1,14 +1,5 @@
-import { Product } from "../vendor/puppeteer/src/common/Product.ts";
-import { PUPPETEER_REVISIONS } from "../vendor/puppeteer/src/revisions.ts";
+import { grantOrThrow, Product, PUPPETEER_REVISIONS } from "./deps.ts";
 import { PuppeteerDeno } from "./Puppeteer.ts";
-
-async function hasPermission(desc: Deno.PermissionDescriptor, noPrompt = true) {
-  let status = await Deno.permissions.query(desc);
-  if (!noPrompt && status.state !== "granted") {
-    status = await Deno.permissions.request(desc);
-  }
-  return status.state === "granted";
-}
 
 export function getProduct(): Product {
   const product = Deno.env.get("PUPPETEER_PRODUCT") || "chrome";
@@ -25,11 +16,17 @@ export const initializePuppeteerDeno = async (
   packageName: string,
 ): Promise<PuppeteerDeno> => {
   const isPuppeteerCore = packageName === "puppeteer-core";
+  const projectRoot = new URL("..", import.meta.url).pathname;
 
-  const puppeteerRootDirectory =
-    await hasPermission({ name: "read", "path": "." }, isPuppeteerCore)
-      ? Deno.cwd()
-      : "/tmp";
+  if (!isPuppeteerCore) {
+    await grantOrThrow([
+      { name: "env" },
+      { name: "read", path: projectRoot },
+      { name: "write", path: projectRoot },
+      { name: "net", host: "storage.googleapis.com" },
+      { name: "run", command: "unzip" },
+    ]);
+  }
 
   const productName = isPuppeteerCore ? undefined : getProduct();
 
@@ -38,7 +35,7 @@ export const initializePuppeteerDeno = async (
     : PUPPETEER_REVISIONS.chromium;
 
   const puppeteer = new PuppeteerDeno({
-    projectRoot: puppeteerRootDirectory,
+    projectRoot,
     preferredRevision,
     isPuppeteerCore,
     productName,
