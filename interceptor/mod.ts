@@ -1,10 +1,7 @@
-import { Protocol } from "../vendor/devtools-protocol/types/protocol.d.ts";
-import { debug as DEBUG } from "../vendor/puppeteer/src/common/Debug.ts";
-import { CDPSession, Page } from "../core.ts";
-import { pick } from "https://deno.land/x/stdx@0.6.0/collections/pick.ts";
+import { CDPSession, Debug, Page, pick, Protocol } from "./deps.ts";
 import * as Interceptor from "./interceptor.ts";
 
-const debug = DEBUG("puppeteer-interceptor");
+const debug = Debug("puppeteer-interceptor");
 
 export * from "./types.ts";
 export * from "./request-patterns.ts";
