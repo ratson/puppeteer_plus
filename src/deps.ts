@@ -1,4 +1,4 @@
-import { unzip } from "https://deno.land/x/stdx@0.8.0/archive/zip.ts";
+import { unzip } from "https://deno.land/x/yxz@0.9.0/archive/zip.ts";
 
 export { grantOrThrow } from "https://deno.land/std@0.119.0/permissions/mod.ts";
 
