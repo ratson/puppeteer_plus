@@ -17,12 +17,12 @@
 
 import { debug } from "../vendor/puppeteer/src/common/Debug.ts";
 
-import { copy } from "https://deno.land/std@0.119.0/streams/conversion.ts";
-import { readLines } from "https://deno.land/std@0.119.0/io/mod.ts";
+import { copy } from "https://deno.land/std@0.121.0/streams/conversion.ts";
+import { readLines } from "https://deno.land/std@0.121.0/io/mod.ts";
 
-import * as fs from "https://deno.land/std@0.119.0/node/fs.ts";
-import * as path from "https://deno.land/std@0.119.0/node/path.ts";
-import { promisify } from "https://deno.land/std@0.119.0/node/util.ts";
+import * as fs from "https://deno.land/std@0.121.0/node/fs.ts";
+import * as path from "https://deno.land/std@0.121.0/node/path.ts";
+import { promisify } from "https://deno.land/std@0.121.0/node/util.ts";
 
 import { assert } from "../vendor/puppeteer/src/common/assert.ts";
 import { debugError, helper } from "../vendor/puppeteer/src/common/helper.ts";
