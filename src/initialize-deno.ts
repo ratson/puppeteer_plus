@@ -22,7 +22,7 @@ export const initializePuppeteerDeno = async (
   packageName: string,
 ): Promise<PuppeteerDeno> => {
   const isPuppeteerCore = packageName === "puppeteer-core";
-  const projectRoot = dirname(fromFileUrl(import.meta.url));
+  const projectRoot = dirname(dirname(fromFileUrl(import.meta.url)));
 
   if (!isPuppeteerCore) {
     await grantOrThrow([
