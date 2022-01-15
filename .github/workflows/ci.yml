@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        deno: [v1.x]
+        os: [macOS-latest, ubuntu-latest, windows-latest, macOS-10.15, windows-2019]
+        include:
+        - os: ubuntu-latest
+          deno_dir: ~/.cache/deno
+        - os: macos-latest
+          deno_dir: ~/Library/Caches/deno
+        - os: windows-latest
+          deno_dir: ~\AppData\Local\deno
+        - os: macos-10.15
+          deno_dir: ~/Library/Caches/deno
+        - os: windows-2019
+          deno_dir: ~\AppData\Local\deno
+
+    steps:
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ matrix.deno_dir }}
+          key: ${{ runner.os }}-${{ matrix.deno }}-${{ hashFiles('**/*.ts') }}
+
+      - name: Clone repository
+        uses: actions/checkout@v2.4.0
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1.1.0
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: Run tests
+        run: |
+          deno test --unstable -A --coverage=./cov
+
+      - name: Print coverage
+        run: |
+          deno coverage ./cov/
