@@ -45,7 +45,7 @@ jobs:
 
       - name: Run tests
         run: |
-          deno test --unstable -A --coverage=./cov
+          deno test --unstable -A --coverage=./cov --ignore=vendor --doc
 
       - name: Print coverage
         run: |
