@@ -1,4 +1,4 @@
-# puppeteer_ts
+# puppeteer_plus
 
 <img src="https://user-images.githubusercontent.com/10379601/29446482-04f7036a-841f-11e7-9872-91d1fc2ea683.png" height="200" align="right">
 
@@ -11,13 +11,13 @@ A TypeScript port of [Puppeteer](https://github.com/puppeteer/puppeteer) running
 To use Puppeteer in your project,
 
 ```ts
-import puppeteer from "https://deno.land/x/puppeteer_ts/mod.ts";
+import puppeteer from "https://deno.land/x/puppeteer_plus/mod.ts";
 ```
 
 ### puppeteer-core
 
 ```ts
-import puppeteer from "https://deno.land/x/puppeteer_ts/core.ts";
+import puppeteer from "https://deno.land/x/puppeteer_plus/core.ts";
 ```
 
 `puppeteer-core` is intended to be a lightweight version of Puppeteer for launching an existing browser installation or for connecting to a remote one. Be sure that the version of puppeteer-core you install is compatible with the
@@ -32,7 +32,7 @@ Puppeteer will be familiar to people using other browser testing frameworks. You
 Save file as **example.js**
 
 ```ts
-import puppeteer from "https://deno.land/x/puppeteer_ts/mod.ts";
+import puppeteer from "https://deno.land/x/puppeteer_plus/mod.ts";
 
 const browser = await puppeteer.launch();
 const page = await browser.newPage();
@@ -55,7 +55,7 @@ Puppeteer sets an initial page size to 800×600px, which defines the screenshot 
 Save file as **hn.js**
 
 ```js
-import puppeteer from "https://deno.land/x/puppeteer_ts/mod.ts";
+import puppeteer from "https://deno.land/x/puppeteer_plus/mod.ts";
 
 const browser = await puppeteer.launch();
 const page = await browser.newPage();
@@ -80,7 +80,7 @@ See [`Page.pdf()`](https://github.com/puppeteer/puppeteer/blob/main/docs/api.md#
 Save file as **get-dimensions.js**
 
 ```js
-import puppeteer from "https://deno.land/x/puppeteer_ts/mod.ts";
+import puppeteer from "https://deno.land/x/puppeteer_plus/mod.ts";
 
 const browser = await puppeteer.launch();
 const page = await browser.newPage();
@@ -110,6 +110,6 @@ See [`Page.evaluate()`](https://github.com/puppeteer/puppeteer/blob/main/docs/ap
 
 ## Credits
 
-`puppeteer_ts` is heavily inspired by [deno-puppeteer](`https://github.com/lucacasonato/deno-puppeteer`), the key difference is `puppeteer_ts` imports TypeScript version while `deno-puppeteer` is using JavaScript with types.
+`puppeteer_plus` is heavily inspired by [`deno-puppeteer`](https://github.com/lucacasonato/deno-puppeteer), the key difference is `puppeteer_plus` imports TypeScript version while `deno-puppeteer` is using JavaScript with types.
 
 This project will definitely not exists without the great work of [Puppeteer](https://github.com/puppeteer/puppeteer) prject.

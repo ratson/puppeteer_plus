@@ -1,4 +1,4 @@
-import { unzip } from "https://deno.land/x/yxz@0.9.0/archive/zip.ts";
+import { unzip } from "https://deno.land/x/yxz@0.10.0/archive/zip.ts";
 
 export { isWindows } from "https://deno.land/std@0.121.0/_util/os.ts";
 export {
