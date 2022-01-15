@@ -1,5 +1,9 @@
 import { unzip } from "https://deno.land/x/yxz@0.9.0/archive/zip.ts";
 
+export {
+  dirname,
+  fromFileUrl,
+} from "https://deno.land/std@0.121.0/path/mod.ts";
 export { grantOrThrow } from "https://deno.land/std@0.121.0/permissions/mod.ts";
 
 export type { Product } from "../vendor/puppeteer/src/common/Product.ts";

@@ -1,4 +1,10 @@
-import { grantOrThrow, Product, PUPPETEER_REVISIONS } from "./deps.ts";
+import {
+  dirname,
+  fromFileUrl,
+  grantOrThrow,
+  Product,
+  PUPPETEER_REVISIONS,
+} from "./deps.ts";
 import { PuppeteerDeno } from "./Puppeteer.ts";
 
 export function getProduct(): Product {
@@ -16,7 +22,7 @@ export const initializePuppeteerDeno = async (
   packageName: string,
 ): Promise<PuppeteerDeno> => {
   const isPuppeteerCore = packageName === "puppeteer-core";
-  const projectRoot = new URL("..", import.meta.url).pathname;
+  const projectRoot = dirname(fromFileUrl(import.meta.url));
 
   if (!isPuppeteerCore) {
     await grantOrThrow([
