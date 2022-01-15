@@ -26,7 +26,7 @@ import { promisify } from "https://deno.land/std@0.121.0/node/util.ts";
 import { assert } from "https://deno.land/std@0.121.0/testing/asserts.ts";
 import { copy } from "https://deno.land/std@0.121.0/fs/copy.ts";
 import { copy as copyIO } from "https://deno.land/std@0.121.0/streams/conversion.ts";
-import { extractZip } from "./deps.ts";
+import { extractZip, isWindows } from "./deps.ts";
 
 const debugFetcher = debug(`puppeteer:fetcher`);
 
@@ -295,7 +295,9 @@ export class BrowserFetcher {
       if (await existsAsync(archivePath)) await unlinkAsync(archivePath);
     }
     const revisionInfo = this.revisionInfo(revision);
-    if (revisionInfo) await chmodAsync(revisionInfo.executablePath, 0o755);
+    if (revisionInfo && !isWindows) {
+      await chmodAsync(revisionInfo.executablePath, 0o755);
+    }
     return revisionInfo;
   }
 
