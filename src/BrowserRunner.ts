@@ -18,6 +18,10 @@
 import { debug } from "../vendor/puppeteer/src/common/Debug.ts";
 
 import { copy } from "https://deno.land/std@0.121.0/streams/conversion.ts";
+import {
+  deadline,
+  DeadlineError,
+} from "https://deno.land/std@0.121.0/async/deadline.ts";
 import { readLines } from "https://deno.land/std@0.121.0/io/mod.ts";
 
 import * as fs from "https://deno.land/std@0.121.0/node/fs.ts";
@@ -208,21 +212,27 @@ async function waitForWSEndpoint(
   timeout: number,
   preferredRevision: string,
 ): Promise<string> {
-  const timeId = setTimeout(() => {
-    throw new TimeoutError(
-      `Timed out after ${timeout} ms while trying to connect to the browser! Only Chrome at revision r${preferredRevision} is guaranteed to work.`,
+  try {
+    await deadline(
+      (async () => {
+        for await (const line of readLines(browserProcess.stderr!)) {
+          const match = line.match(/^DevTools listening on (ws:\/\/.*)$/);
+          if (match) {
+            return match[1];
+          }
+        }
+      })(),
+      timeout,
     );
-  }, timeout);
-
-  for await (const line of readLines(browserProcess.stderr!)) {
-    const match = line.match(/^DevTools listening on (ws:\/\/.*)$/);
-    if (match) {
-      clearTimeout(timeId);
-      return match[1];
+  } catch (err) {
+    if (err instanceof DeadlineError) {
+      throw new TimeoutError(
+        `Timed out after ${timeout} ms while trying to connect to the browser! Only Chrome at revision r${preferredRevision} is guaranteed to work.`,
+      );
     }
+    throw err
   }
 
-  clearTimeout(timeId);
   throw new Error(
     [
       "Failed to launch the browser process!" + "",
