@@ -213,7 +213,7 @@ async function waitForWSEndpoint(
   preferredRevision: string,
 ): Promise<string> {
   try {
-    await deadline(
+    const result = await deadline(
       (async () => {
         for await (const line of readLines(browserProcess.stderr!)) {
           const match = line.match(/^DevTools listening on (ws:\/\/.*)$/);
@@ -224,13 +224,14 @@ async function waitForWSEndpoint(
       })(),
       timeout,
     );
+    if (result !== undefined) return result;
   } catch (err) {
     if (err instanceof DeadlineError) {
       throw new TimeoutError(
         `Timed out after ${timeout} ms while trying to connect to the browser! Only Chrome at revision r${preferredRevision} is guaranteed to work.`,
       );
     }
-    throw err
+    throw err;
   }
 
   throw new Error(
