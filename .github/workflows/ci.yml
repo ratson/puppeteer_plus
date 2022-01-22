@@ -45,7 +45,7 @@ jobs:
 
       - name: Run tests
         run: |
-          deno test --unstable -A --coverage=./cov --import-map=test_import_map.json --ignore=vendor --doc
+          deno test --unstable -A --coverage=./cov --import-map=.github/import_map.json --ignore=vendor --doc
 
       - name: Print coverage
         run: |
