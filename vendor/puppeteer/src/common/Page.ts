@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Readable } from 'https://deno.land/std@0.121.0/node/stream.ts';
+import type { Readable } from 'https://deno.land/std@0.122.0/node/stream.ts';
 
-import { Buffer } from 'https://deno.land/std@0.121.0/node/buffer.ts';
+import { Buffer } from 'https://deno.land/std@0.122.0/node/buffer.ts';
 import { EventEmitter, Handler } from './EventEmitter.ts';
 import {
   Connection,
