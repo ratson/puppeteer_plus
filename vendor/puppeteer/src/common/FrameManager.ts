@@ -74,7 +74,6 @@ export class FrameManager extends EventEmitter {
   private _isolatedWorlds = new Set<string>();
   // @ts-expect-error TS2564
   private _mainFrame: Frame;
-  private _disconnectPromise?: Promise<Error>;
 
   constructor(
     client: CDPSession,
@@ -255,11 +254,12 @@ export class FrameManager extends EventEmitter {
     }
 
     const frame = this._frames.get(event.targetInfo.targetId);
+    // @ts-expect-error TS2532
     const session = Connection.fromSession(this._client).session(
       event.sessionId
     );
-    // @ts-expect-error TS2532
-    frame._updateClient(session);
+    // @ts-expect-error TS2345
+    if (frame) frame._updateClient(session);
     // @ts-expect-error TS2345
     this.setupEventListeners(session);
     // @ts-expect-error TS2345

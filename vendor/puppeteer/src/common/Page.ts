@@ -511,6 +511,7 @@ export class Page extends EventEmitter {
           return;
         }
         if (event.targetInfo.type === 'worker') {
+          // @ts-expect-error TS2532
           const session = Connection.fromSession(client).session(
             event.sessionId
           );

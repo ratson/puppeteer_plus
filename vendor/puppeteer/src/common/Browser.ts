@@ -268,8 +268,7 @@ export class Browser extends EventEmitter {
     this._closeCallback = closeCallback || function (): void {};
     this._targetFilterCallback = targetFilterCallback || ((): boolean => true);
 
-    // @ts-expect-error TS2345
-    this._defaultContext = new BrowserContext(this._connection, this, null);
+    this._defaultContext = new BrowserContext(this._connection, this);
     this._contexts = new Map();
     for (const contextId of contextIds)
       this._contexts.set(
@@ -297,8 +296,7 @@ export class Browser extends EventEmitter {
    * {@link Puppeteer.connect}.
    */
   process(): Deno.Process | null {
-    // @ts-expect-error TS2322
-    return this._process;
+    return this._process ?? null;
   }
 
   /**
@@ -359,11 +357,12 @@ export class Browser extends EventEmitter {
    * Used by BrowserContext directly so cannot be marked private.
    */
   async _disposeContext(contextId?: string): Promise<void> {
+    if (!contextId) {
+      return;
+    }
     await this._connection.send('Target.disposeBrowserContext', {
-      // @ts-expect-error TS2322
-      browserContextId: contextId || undefined,
+      browserContextId: contextId,
     });
-    // @ts-expect-error TS2345
     this._contexts.delete(contextId);
   }
 
@@ -377,6 +376,10 @@ export class Browser extends EventEmitter {
         ? this._contexts.get(browserContextId)
         : this._defaultContext;
 
+    if (!context) {
+      throw new Error('Missing browser context');
+    }
+
     const shouldAttachToTarget = this._targetFilterCallback(targetInfo);
     if (!shouldAttachToTarget) {
       this._ignoredTargets.add(targetInfo.targetId);
@@ -385,11 +388,10 @@ export class Browser extends EventEmitter {
 
     const target = new Target(
       targetInfo,
-      // @ts-expect-error TS2345
       context,
       () => this._connection.createSession(targetInfo),
       this._ignoreHTTPSErrors,
-      this._defaultViewport,
+      this._defaultViewport ?? null,
       this._screenshotTaskQueue
     );
     assert(
@@ -400,7 +402,6 @@ export class Browser extends EventEmitter {
 
     if (await target._initializedPromise) {
       this.emit(BrowserEmittedEvents.TargetCreated, target);
-      // @ts-expect-error TS2532
       context.emit(BrowserContextEmittedEvents.TargetCreated, target);
     }
   }
@@ -408,15 +409,16 @@ export class Browser extends EventEmitter {
   private async _targetDestroyed(event: { targetId: string }): Promise<void> {
     if (this._ignoredTargets.has(event.targetId)) return;
     const target = this._targets.get(event.targetId);
-    // @ts-expect-error TS2532
+    if (!target) {
+      throw new Error(
+        `Missing target in _targetDestroyed (id = ${event.targetId})`
+      );
+    }
     target._initializedCallback(false);
     this._targets.delete(event.targetId);
-    // @ts-expect-error TS2532
     target._closedCallback();
-    // @ts-expect-error TS2532
     if (await target._initializedPromise) {
       this.emit(BrowserEmittedEvents.TargetDestroyed, target);
-      // @ts-expect-error TS2532
       target
         .browserContext()
         .emit(BrowserContextEmittedEvents.TargetDestroyed, target);
@@ -428,7 +430,11 @@ export class Browser extends EventEmitter {
   ): void {
     if (this._ignoredTargets.has(event.targetInfo.targetId)) return;
     const target = this._targets.get(event.targetInfo.targetId);
-    assert(target, 'target should exist before targetInfoChanged');
+    if (!target) {
+      throw new Error(
+        `Missing target in targetInfoChanged (id = ${event.targetInfo.targetId})`
+      );
+    }
     const previousURL = target.url();
     const wasInitialized = target._isInitialized;
     target._targetInfoChanged(event.targetInfo);
@@ -479,14 +485,19 @@ export class Browser extends EventEmitter {
       browserContextId: contextId || undefined,
     });
     const target = this._targets.get(targetId);
-    assert(
-      // @ts-expect-error TS2532
-      await target._initializedPromise,
-      'Failed to create target for page'
-    );
-    // @ts-expect-error TS2532
+    if (!target) {
+      throw new Error(`Missing target for page (id = ${targetId})`);
+    }
+    const initialized = await target._initializedPromise;
+    if (!initialized) {
+      throw new Error(`Failed to create target for page (id = ${targetId})`);
+    }
     const page = await target.page();
-    // @ts-expect-error TS2322
+    if (!page) {
+      throw new Error(
+        `Failed to create a page for context (id = ${contextId})`
+      );
+    }
     return page;
   }
 
@@ -504,8 +515,13 @@ export class Browser extends EventEmitter {
    * The target associated with the browser.
    */
   target(): Target {
-    // @ts-expect-error TS2322
-    return this.targets().find((target) => target.type() === 'browser');
+    const browserTarget = this.targets().find(
+      (target) => target.type() === 'browser'
+    );
+    if (!browserTarget) {
+      throw new Error('Browser target is not found');
+    }
+    return browserTarget;
   }
 
   /**
@@ -742,8 +758,7 @@ export class BrowserContext extends EventEmitter {
         .filter((target) => target.type() === 'page')
         .map((target) => target.page())
     );
-    // @ts-expect-error TS2322
-    return pages.filter((page) => !!page);
+    return pages.filter((page): page is Page => !!page);
   }
 
   /**

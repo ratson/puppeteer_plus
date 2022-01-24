@@ -71,7 +71,7 @@ export class Connection extends EventEmitter {
     this._transport.onclose = this._onClose.bind(this);
   }
 
-  static fromSession(session: CDPSession): Connection {
+  static fromSession(session: CDPSession): Connection | undefined {
     return session._connection;
   }
 
@@ -170,10 +170,8 @@ export class Connection extends EventEmitter {
   _onClose(): void {
     if (this._closed) return;
     this._closed = true;
-    // @ts-expect-error TS2322
-    this._transport.onmessage = null;
-    // @ts-expect-error TS2322
-    this._transport.onclose = null;
+    this._transport.onmessage = undefined;
+    this._transport.onclose = undefined;
     for (const callback of this._callbacks.values())
       callback.reject(
         rewriteError(
@@ -203,8 +201,11 @@ export class Connection extends EventEmitter {
       targetId: targetInfo.targetId,
       flatten: true,
     });
-    // @ts-expect-error TS2322
-    return this._sessions.get(sessionId);
+    const session = this._sessions.get(sessionId);
+    if (!session) {
+      throw new Error('CDPSession creation failed.');
+    }
+    return session;
   }
 }
 
@@ -257,7 +258,7 @@ export class CDPSession extends EventEmitter {
   /**
    * @internal
    */
-  _connection: Connection;
+  _connection?: Connection;
   private _sessionId: string;
   private _targetType: string;
   private _callbacks: Map<number, ConnectionCallback> = new Map();
@@ -272,7 +273,7 @@ export class CDPSession extends EventEmitter {
     this._sessionId = sessionId;
   }
 
-  connection(): Connection {
+  connection(): Connection | undefined {
     return this._connection;
   }
 
@@ -310,16 +311,13 @@ export class CDPSession extends EventEmitter {
    * @internal
    */
   _onMessage(object: CDPSessionOnMessageObject): void {
-    if (object.id && this._callbacks.has(object.id)) {
-      const callback = this._callbacks.get(object.id);
+    const callback = object.id ? this._callbacks.get(object.id) : undefined;
+    if (object.id && callback) {
       this._callbacks.delete(object.id);
       if (object.error)
-        // @ts-expect-error TS2532
         callback.reject(
-          // @ts-expect-error TS2532
           createProtocolError(callback.error, callback.method, object)
         );
-      // @ts-expect-error TS2532
       else callback.resolve(object.result);
     } else {
       assert(!object.id);
@@ -353,8 +351,7 @@ export class CDPSession extends EventEmitter {
         )
       );
     this._callbacks.clear();
-    // @ts-expect-error TS2322
-    this._connection = null;
+    this._connection = undefined;
     this.emit(CDPSessionEmittedEvents.Disconnected);
   }
 
@@ -393,7 +390,6 @@ function rewriteError(
   originalMessage?: string
 ): Error {
   error.message = message;
-  // @ts-expect-error TS2322
-  error.originalMessage = originalMessage;
+  error.originalMessage = originalMessage ?? error.originalMessage;
   return error;
 }

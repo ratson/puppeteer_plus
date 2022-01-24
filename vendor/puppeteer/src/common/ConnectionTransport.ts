@@ -18,10 +18,8 @@
  * @public
  */
 export interface ConnectionTransport {
-  // @ts-expect-error TS7010
-  send(string);
-  // @ts-expect-error TS7010
-  close();
+  send(message: string): void;
+  close(): void;
   onmessage?: (message: string) => void;
   onclose?: () => void;
 }
