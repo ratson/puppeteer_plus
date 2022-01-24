@@ -1,5 +1,43 @@
 
 
+## Roll protocol to r961891
+###### _2022-01-21 06:15:27 -0800_ | Diff: [dac32a8...0abe20f](https://github.com/ChromeDevTools/devtools-protocol/compare/dac32a8...0abe20f)
+#### `Audits`: removed type
+* [`Audits.WasmCrossOriginModuleSharingIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-WasmCrossOriginModuleSharingIssueDetails)
+#### `Audits`: modified types
+* [`Audits.InspectorIssueCode`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueCode) - The enum's `ClientHintIssue` _removed_. The enum's `WasmCrossOriginModuleSharingIssue` _updated_. The enum's `GenericIssue` _updated_. The enum's `DeprecationIssue` _updated_.
+* [`Audits.InspectorIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueDetails) - The properties's `clientHintIssueDetails` _removed_. The `wasmCrossOriginModuleSharingIssue` in the properties had `name` _updated_. The `wasmCrossOriginModuleSharingIssue` in the properties had `$ref` _updated_. The `genericIssueDetails` in the properties had `name` _updated_. The `genericIssueDetails` in the properties had `$ref` _updated_. The `deprecationIssueDetails` in the properties had `name` _updated_. The `deprecationIssueDetails` in the properties had `$ref` _updated_.
+
+
+## Roll protocol to r960912
+###### _2022-01-19 05:15:30 -0800_ | Diff: [3e458bc...53c4a9a](https://github.com/ChromeDevTools/devtools-protocol/compare/3e458bc...53c4a9a)
+#### `Page`: modified type
+* [`Page.PermissionsPolicyBlockReason`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-PermissionsPolicyBlockReason) - The enum's `InFencedFrameTree` _added_.
+
+
+## Roll protocol to r960453
+###### _2022-01-18 09:15:26 -0800_ | Diff: [87addc3...7572c21](https://github.com/ChromeDevTools/devtools-protocol/compare/87addc3...7572c21)
+#### `Storage`: new commands
+* [`Storage.getInterestGroupDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#method-getInterestGroupDetails)
+* [`Storage.setInterestGroupTracking`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#method-setInterestGroupTracking)
+#### `Storage`: new event
+* [`Storage.interestGroupAccessed`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#event-interestGroupAccessed)
+#### `Storage`: new types
+* [`Storage.InterestGroupAccessType`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#type-InterestGroupAccessType)
+* [`Storage.InterestGroupAd`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#type-InterestGroupAd)
+* [`Storage.InterestGroupDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#type-InterestGroupDetails)
+#### `Storage`: modified type
+* [`Storage.StorageType`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#type-StorageType) - The enum's `all` _updated_. The enum's `other` _updated_. The enum's `other` _added_.
+
+
+## Roll protocol to r959523
+###### _2022-01-14 20:15:23 -0800_ | Diff: [f7a5f38...87addc3](https://github.com/ChromeDevTools/devtools-protocol/compare/f7a5f38...87addc3)
+#### `Page`: modified command
+* [`Page.setFontFamilies`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-setFontFamilies) - The parameters's `forScripts` _added_.
+#### `Page`: new type
+* [`Page.ScriptFontFamilies`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-ScriptFontFamilies)
+
+
 ## Roll protocol to r957544
 ###### _2022-01-11 06:15:23 -0800_ | Diff: [4f0ee26...a1608c5](https://github.com/ChromeDevTools/devtools-protocol/compare/4f0ee26...a1608c5)
 #### `Overlay`: modified command

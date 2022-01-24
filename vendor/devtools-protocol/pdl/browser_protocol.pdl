@@ -736,13 +736,6 @@ experimental domain Audits
       string url
       optional SourceCodeLocation location
 
-  type WasmCrossOriginModuleSharingIssueDetails extends object
-    properties
-      string wasmModuleUrl
-      string sourceOrigin
-      string targetOrigin
-      boolean isWarning
-
   type GenericIssueErrorType extends string
     enum
       CrossOriginPortalPostMessageError
@@ -804,7 +797,6 @@ experimental domain Audits
       AttributionReportingIssue
       QuirksModeIssue
       NavigatorUserAgentIssue
-      WasmCrossOriginModuleSharingIssue
       GenericIssue
       DeprecationIssue
       ClientHintIssue
@@ -826,7 +818,6 @@ experimental domain Audits
       optional AttributionReportingIssueDetails attributionReportingIssueDetails
       optional QuirksModeIssueDetails quirksModeIssueDetails
       optional NavigatorUserAgentIssueDetails navigatorUserAgentIssueDetails
-      optional WasmCrossOriginModuleSharingIssueDetails wasmCrossOriginModuleSharingIssue
       optional GenericIssueDetails genericIssueDetails
       optional DeprecationIssueDetails deprecationIssueDetails
       optional ClientHintIssueDetails clientHintIssueDetails
@@ -4083,7 +4074,7 @@ domain Input
       optional integer location
       # Editing commands to send with the key event (e.g., 'selectAll') (default: []).
       # These are related to but not equal the command names used in `document.execCommand` and NSStandardKeyBindingResponding.
-      # See https://source.chromium.org/chromium/chromium/src/+/master:third_party/blink/renderer/core/editing/commands/editor_command_names.h for valid command names.
+      # See https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/editing/commands/editor_command_names.h for valid command names.
       experimental optional array of string commands
 
   # This method emulates inserting text that doesn't come from a key press,
@@ -6899,6 +6890,8 @@ domain Page
       Header
       # Declaration in iframe attribute.
       IframeAttribute
+      # Inside fenced frame.
+      InFencedFrameTree
 
   experimental type PermissionsPolicyBlockLocator extends object
     properties
@@ -7176,6 +7169,14 @@ domain Page
       optional string fantasy
       # The pictograph font-family.
       optional string pictograph
+
+  # Font families collection for a script.
+  experimental type ScriptFontFamilies extends object
+    properties
+      # Name of the script which these font families are defined for.
+      string script
+      # Generic font families collection for the script.
+      FontFamilies fontFamilies
 
   # Default font sizes.
   experimental type FontSizes extends object
@@ -7637,6 +7638,8 @@ domain Page
     parameters
       # Specifies font families to set. If a font family is not specified, it won't be changed.
       FontFamilies fontFamilies
+      # Specifies font families to set for individual scripts.
+      optional array of ScriptFontFamilies forScripts
 
   # Set default font sizes.
   experimental command setFontSizes
@@ -8616,6 +8619,7 @@ experimental domain Storage
       websql
       service_workers
       cache_storage
+      interest_groups
       all
       other
 
@@ -8633,6 +8637,37 @@ experimental domain Storage
     properties
       string issuerOrigin
       number count
+
+  # Enum of interest group access types.
+  type InterestGroupAccessType extends string
+    enum
+      join
+      leave
+      update
+      bid
+      win
+
+  # Ad advertising element inside an interest group.
+  type InterestGroupAd extends object
+    properties
+      string renderUrl
+      optional string metadata
+
+  # The full details of an interest group.
+  type InterestGroupDetails extends object
+    properties
+      string ownerOrigin
+      string name
+      number expirationTime
+      string joiningOrigin
+      optional string biddingUrl
+      optional string biddingWasmHelperUrl
+      optional string updateUrl
+      optional string trustedBiddingSignalsUrl
+      array of string trustedBiddingSignalsKeys
+      optional string userBiddingSignals
+      array of InterestGroupAd ads
+      array of InterestGroupAd adComponents
 
   # Clears storage for origin.
   command clearDataForOrigin
@@ -8733,6 +8768,19 @@ experimental domain Storage
       # True if any tokens were deleted, false otherwise.
       boolean didDeleteTokens
 
+  # Gets details for a named interest group.
+  experimental command getInterestGroupDetails
+    parameters
+      string ownerOrigin
+      string name
+    returns
+      InterestGroupDetails details
+
+  # Enables/Disables issuing of interestGroupAccessed events.
+  experimental command setInterestGroupTracking
+    parameters
+      boolean enable
+
   # A cache's contents have been modified.
   event cacheStorageContentUpdated
     parameters
@@ -8762,6 +8810,13 @@ experimental domain Storage
     parameters
       # Origin to update.
       string origin
+
+  # One of the interest groups was accessed by the associated page.
+  event interestGroupAccessed
+    parameters
+      InterestGroupAccessType type
+      string ownerOrigin
+      string name
 
 # The SystemInfo domain defines methods and events for querying low-level system information.
 experimental domain SystemInfo

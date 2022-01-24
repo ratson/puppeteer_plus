@@ -3296,13 +3296,6 @@ export namespace Protocol {
             location?: SourceCodeLocation;
         }
 
-        export interface WasmCrossOriginModuleSharingIssueDetails {
-            wasmModuleUrl: string;
-            sourceOrigin: string;
-            targetOrigin: string;
-            isWarning: boolean;
-        }
-
         export type GenericIssueErrorType = ('CrossOriginPortalPostMessageError');
 
         /**
@@ -3353,7 +3346,7 @@ export namespace Protocol {
          * optional fields in InspectorIssueDetails to convey more specific
          * information about the kind of issue.
          */
-        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'WasmCrossOriginModuleSharingIssue' | 'GenericIssue' | 'DeprecationIssue' | 'ClientHintIssue');
+        export type InspectorIssueCode = ('SameSiteCookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'TrustedWebActivityIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'GenericIssue' | 'DeprecationIssue' | 'ClientHintIssue');
 
         /**
          * This struct holds a list of optional fields with additional information
@@ -3373,7 +3366,6 @@ export namespace Protocol {
             attributionReportingIssueDetails?: AttributionReportingIssueDetails;
             quirksModeIssueDetails?: QuirksModeIssueDetails;
             navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
-            wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
             genericIssueDetails?: GenericIssueDetails;
             deprecationIssueDetails?: DeprecationIssueDetails;
             clientHintIssueDetails?: ClientHintIssueDetails;
@@ -8076,7 +8068,7 @@ export namespace Protocol {
             /**
              * Editing commands to send with the key event (e.g., 'selectAll') (default: []).
              * These are related to but not equal the command names used in `document.execCommand` and NSStandardKeyBindingResponding.
-             * See https://source.chromium.org/chromium/chromium/src/+/master:third_party/blink/renderer/core/editing/commands/editor_command_names.h for valid command names.
+             * See https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/editing/commands/editor_command_names.h for valid command names.
              */
             commands?: string[];
         }
@@ -11890,7 +11882,7 @@ export namespace Protocol {
         /**
          * Reason for a permissions policy feature to be disabled.
          */
-        export type PermissionsPolicyBlockReason = ('Header' | 'IframeAttribute');
+        export type PermissionsPolicyBlockReason = ('Header' | 'IframeAttribute' | 'InFencedFrameTree');
 
         export interface PermissionsPolicyBlockLocator {
             frameId: FrameId;
@@ -12297,6 +12289,20 @@ export namespace Protocol {
              * The pictograph font-family.
              */
             pictograph?: string;
+        }
+
+        /**
+         * Font families collection for a script.
+         */
+        export interface ScriptFontFamilies {
+            /**
+             * Name of the script which these font families are defined for.
+             */
+            script: string;
+            /**
+             * Generic font families collection for the script.
+             */
+            fontFamilies: FontFamilies;
         }
 
         /**
@@ -12950,6 +12956,10 @@ export namespace Protocol {
              * Specifies font families to set. If a font family is not specified, it won't be changed.
              */
             fontFamilies: FontFamilies;
+            /**
+             * Specifies font families to set for individual scripts.
+             */
+            forScripts?: ScriptFontFamilies[];
         }
 
         export interface SetFontSizesRequest {
@@ -14047,7 +14057,7 @@ export namespace Protocol {
         /**
          * Enum of possible storage types.
          */
-        export type StorageType = ('appcache' | 'cookies' | 'file_systems' | 'indexeddb' | 'local_storage' | 'shader_cache' | 'websql' | 'service_workers' | 'cache_storage' | 'all' | 'other');
+        export type StorageType = ('appcache' | 'cookies' | 'file_systems' | 'indexeddb' | 'local_storage' | 'shader_cache' | 'websql' | 'service_workers' | 'cache_storage' | 'interest_groups' | 'all' | 'other');
 
         /**
          * Usage for a storage type.
@@ -14070,6 +14080,37 @@ export namespace Protocol {
         export interface TrustTokens {
             issuerOrigin: string;
             count: number;
+        }
+
+        /**
+         * Enum of interest group access types.
+         */
+        export type InterestGroupAccessType = ('join' | 'leave' | 'update' | 'bid' | 'win');
+
+        /**
+         * Ad advertising element inside an interest group.
+         */
+        export interface InterestGroupAd {
+            renderUrl: string;
+            metadata?: string;
+        }
+
+        /**
+         * The full details of an interest group.
+         */
+        export interface InterestGroupDetails {
+            ownerOrigin: string;
+            name: string;
+            expirationTime: number;
+            joiningOrigin: string;
+            biddingUrl?: string;
+            biddingWasmHelperUrl?: string;
+            updateUrl?: string;
+            trustedBiddingSignalsUrl?: string;
+            trustedBiddingSignalsKeys: string[];
+            userBiddingSignals?: string;
+            ads: InterestGroupAd[];
+            adComponents: InterestGroupAd[];
         }
 
         export interface ClearDataForOriginRequest {
@@ -14201,6 +14242,19 @@ export namespace Protocol {
             didDeleteTokens: boolean;
         }
 
+        export interface GetInterestGroupDetailsRequest {
+            ownerOrigin: string;
+            name: string;
+        }
+
+        export interface GetInterestGroupDetailsResponse {
+            details: InterestGroupDetails;
+        }
+
+        export interface SetInterestGroupTrackingRequest {
+            enable: boolean;
+        }
+
         /**
          * A cache's contents have been modified.
          */
@@ -14251,6 +14305,15 @@ export namespace Protocol {
              * Origin to update.
              */
             origin: string;
+        }
+
+        /**
+         * One of the interest groups was accessed by the associated page.
+         */
+        export interface InterestGroupAccessedEvent {
+            type: InterestGroupAccessType;
+            ownerOrigin: string;
+            name: string;
         }
     }
 
