@@ -1,4 +1,4 @@
-import { assert, assertEquals, browserTest } from "./deps_dev.ts";
+import { assert, assertEquals, browserTest, subprocess } from "./deps_dev.ts";
 
 browserTest("puppeteer", async (browser) => {
   const page = await browser.newPage();
@@ -7,4 +7,10 @@ browserTest("puppeteer", async (browser) => {
   assert(h1);
   // deno-lint-ignore no-explicit-any
   assertEquals(await h1.evaluate((e: any) => e.innerText), "Deno");
+});
+
+Deno.test("core", async () => {
+  await subprocess.run([Deno.execPath(), "run", "--unstable", "core.ts"], {
+    check: true,
+  });
 });

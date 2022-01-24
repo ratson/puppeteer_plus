@@ -12,11 +12,23 @@ export function getProduct(): Product {
   return product;
 }
 
+async function getProjectRoot(isPuppeteerCore: boolean) {
+  const status = await Deno.permissions.query({ name: "env" });
+  const canReadEnv = status.state === "granted";
+  if (canReadEnv) {
+    return denoDir();
+  }
+  if (isPuppeteerCore) return "/tmp";
+
+  await grantOrThrow([{ name: "env" }]);
+  return denoDir();
+}
+
 export const initializePuppeteerDeno = async (
   packageName: string,
 ): Promise<PuppeteerDeno> => {
   const isPuppeteerCore = packageName === "puppeteer-core";
-  const projectRoot = denoDir();
+  const projectRoot: string = await getProjectRoot(isPuppeteerCore);
 
   if (!isPuppeteerCore) {
     await grantOrThrow([

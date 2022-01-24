@@ -7,6 +7,8 @@ export {
   assertStrictEquals,
 } from "https://deno.land/std@0.122.0/testing/asserts.ts";
 
+export * as subprocess from "https://deno.land/x/yxz@0.14.0/subprocess/mod.ts"
+
 export function browserTest(
   name: string,
   fn: (browser: Browser) => void | Promise<void>,
