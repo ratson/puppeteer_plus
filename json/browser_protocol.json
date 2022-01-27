@@ -4844,7 +4844,20 @@
                 },
                 {
                     "name": "enable",
-                    "description": "Enables DOM agent for the given page."
+                    "description": "Enables DOM agent for the given page.",
+                    "parameters": [
+                        {
+                            "name": "includeWhitespace",
+                            "description": "Whether to include whitespaces in the children array of returned Nodes.",
+                            "experimental": true,
+                            "optional": true,
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "all"
+                            ]
+                        }
+                    ]
                 },
                 {
                     "name": "focus",
@@ -11757,7 +11770,8 @@
                         "SameOrigin",
                         "SameOriginAllowPopups",
                         "UnsafeNone",
-                        "SameOriginPlusCoep"
+                        "SameOriginPlusCoep",
+                        "SameOriginAllowPopupsPlusCoep"
                     ]
                 },
                 {
@@ -14705,6 +14719,7 @@
                         "ch-ua-platform",
                         "ch-ua-model",
                         "ch-ua-mobile",
+                        "ch-ua-full",
                         "ch-ua-full-version",
                         "ch-ua-full-version-list",
                         "ch-ua-platform-version",
@@ -15566,7 +15581,7 @@
                     "experimental": true,
                     "type": "string",
                     "enum": [
-                        "NotMainFrame",
+                        "NotPrimaryMainFrame",
                         "BackForwardCacheDisabled",
                         "RelatedActiveContentsExist",
                         "HTTPStatusNotOK",
@@ -18489,7 +18504,7 @@
                         },
                         {
                             "name": "expirationTime",
-                            "type": "number"
+                            "$ref": "Network.TimeSinceEpoch"
                         },
                         {
                             "name": "joiningOrigin",
@@ -18842,6 +18857,10 @@
                     "name": "interestGroupAccessed",
                     "description": "One of the interest groups was accessed by the associated page.",
                     "parameters": [
+                        {
+                            "name": "accessTime",
+                            "$ref": "Network.TimeSinceEpoch"
+                        },
                         {
                             "name": "type",
                             "$ref": "InterestGroupAccessType"

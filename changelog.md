@@ -1,5 +1,33 @@
 
 
+## Roll protocol to r963595
+###### _2022-01-26 10:15:28 -0800_ | Diff: [81838df...f687d75](https://github.com/ChromeDevTools/devtools-protocol/compare/81838df...f687d75)
+#### `Page`: modified type
+* [`Page.PermissionsPolicyFeature`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-PermissionsPolicyFeature) - The enum's `ch-ua-full-version` _updated_. The enum's `ch-ua-full-version-list` _updated_. The enum's `ch-ua-platform-version` _updated_. The enum's `ch-ua-reduced` _updated_. The enum's `ch-viewport-height` _updated_. The enum's `ch-viewport-width` _updated_. The enum's `ch-width` _updated_. The enum's `clipboard-read` _updated_. The enum's `clipboard-write` _updated_. The enum's `cross-origin-isolated` _updated_. The enum's `direct-sockets` _updated_. The enum's `display-capture` _updated_. The enum's `document-domain` _updated_. The enum's `encrypted-media` _updated_. The enum's `execution-while-out-of-viewport` _updated_. The enum's `execution-while-not-rendered` _updated_. The enum's `focus-without-user-activation` _updated_. The enum's `fullscreen` _updated_. The enum's `frobulate` _updated_. The enum's `gamepad` _updated_. The enum's `geolocation` _updated_. The enum's `gyroscope` _updated_. The enum's `hid` _updated_. The enum's `idle-detection` _updated_. The enum's `interest-cohort` _updated_. The enum's `join-ad-interest-group` _updated_. The enum's `keyboard-map` _updated_. The enum's `magnetometer` _updated_. The enum's `microphone` _updated_. The enum's `midi` _updated_. The enum's `otp-credentials` _updated_. The enum's `payment` _updated_. The enum's `picture-in-picture` _updated_. The enum's `publickey-credentials-get` _updated_. The enum's `run-ad-auction` _updated_. The enum's `screen-wake-lock` _updated_. The enum's `serial` _updated_. The enum's `shared-autofill` _updated_. The enum's `storage-access-api` _updated_. The enum's `sync-xhr` _updated_. The enum's `trust-token-redemption` _updated_. The enum's `usb` _updated_. The enum's `vertical-scroll` _updated_. The enum's `web-share` _updated_. The enum's `window-placement` _updated_. The enum's `xr-spatial-tracking` _updated_. The enum's `xr-spatial-tracking` _added_.
+
+
+## Roll protocol to r963409
+###### _2022-01-25 22:15:29 -0800_ | Diff: [4d3be9f...81838df](https://github.com/ChromeDevTools/devtools-protocol/compare/4d3be9f...81838df)
+#### `DOM`: modified command
+* [`DOM.enable`](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-enable)
+#### `Page`: modified type
+* [`Page.BackForwardCacheNotRestoredReason`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-BackForwardCacheNotRestoredReason) - The enum's `NotMainFrame` _updated_.
+
+
+## Roll protocol to r963043
+###### _2022-01-25 09:15:34 -0800_ | Diff: [398dc33...4d3be9f](https://github.com/ChromeDevTools/devtools-protocol/compare/398dc33...4d3be9f)
+#### `Storage`: modified event
+* [`Storage.interestGroupAccessed`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#event-interestGroupAccessed) - The `ownerOrigin` in the parameters had `type` _removed_. The `type` in the parameters had `name` _updated_. The `type` in the parameters had `$ref` _updated_. The `ownerOrigin` in the parameters had `name` _updated_. The `name` in the parameters had `name` _updated_. The parameters's `$ref` _added_. The parameters's `name` _added_.
+#### `Storage`: modified type
+* [`Storage.InterestGroupDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Storage/#type-InterestGroupDetails) - The `expirationTime` in the properties had `type` _removed_. The properties's `$ref` _added_.
+
+
+## Roll protocol to r962425
+###### _2022-01-24 03:15:20 -0800_ | Diff: [0abe20f...398dc33](https://github.com/ChromeDevTools/devtools-protocol/compare/0abe20f...398dc33)
+#### `Input`: modified command
+* [`Input.dispatchKeyEvent`](https://chromedevtools.github.io/devtools-protocol/tot/Input/#method-dispatchKeyEvent) - The `commands` in the parameters had `description` _updated_.
+
+
 ## Roll protocol to r961891
 ###### _2022-01-21 06:15:27 -0800_ | Diff: [dac32a8...0abe20f](https://github.com/ChromeDevTools/devtools-protocol/compare/dac32a8...0abe20f)
 #### `Audits`: removed type
