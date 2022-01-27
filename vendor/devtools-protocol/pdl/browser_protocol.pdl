@@ -2259,6 +2259,13 @@ domain DOM
 
   # Enables DOM agent for the given page.
   command enable
+    parameters
+      # Whether to include whitespaces in the children array of returned Nodes.
+      experimental optional enum includeWhitespace
+        # Strip whitespaces from child arrays (default).
+        none
+        # Return all children including block-level whitespace nodes.
+        all
 
   # Focuses the given element.
   command focus
@@ -6147,6 +6154,7 @@ domain Network
       SameOriginAllowPopups
       UnsafeNone
       SameOriginPlusCoep
+      SameOriginAllowPopupsPlusCoep
 
   experimental type CrossOriginOpenerPolicyStatus extends object
     properties
@@ -6836,6 +6844,7 @@ domain Page
       ch-ua-platform
       ch-ua-model
       ch-ua-mobile
+      ch-ua-full
       ch-ua-full-version
       ch-ua-full-version-list
       ch-ua-platform-version
@@ -7961,7 +7970,7 @@ domain Page
   # List of not restored reasons for back-forward cache.
   experimental type BackForwardCacheNotRestoredReason extends string
     enum
-      NotMainFrame
+      NotPrimaryMainFrame
       BackForwardCacheDisabled
       RelatedActiveContentsExist
       HTTPStatusNotOK
@@ -8658,7 +8667,7 @@ experimental domain Storage
     properties
       string ownerOrigin
       string name
-      number expirationTime
+      Network.TimeSinceEpoch expirationTime
       string joiningOrigin
       optional string biddingUrl
       optional string biddingWasmHelperUrl
@@ -8814,6 +8823,7 @@ experimental domain Storage
   # One of the interest groups was accessed by the associated page.
   event interestGroupAccessed
     parameters
+      Network.TimeSinceEpoch accessTime
       InterestGroupAccessType type
       string ownerOrigin
       string name
