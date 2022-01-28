@@ -15,7 +15,7 @@
  */
 
 import { assert } from './assert.ts';
-import { Buffer } from 'https://deno.land/std@0.122.0/node/buffer.ts';
+import { Buffer } from 'https://deno.land/std@0.123.0/node/buffer.ts';
 import { helper, debugError } from './helper.ts';
 import { ExecutionContext } from './ExecutionContext.ts';
 import { Page, ScreenshotOptions } from './Page.ts';
@@ -778,7 +778,7 @@ export class ElementHandle<
      This import is only needed for `uploadFile`, so keep it scoped here to
      avoid paying the cost unnecessarily.
     */
-    const path = await import('https://deno.land/std@0.122.0/node/path.ts');
+    const path = await import('https://deno.land/std@0.123.0/node/path.ts');
     const fs = await helper.importFSModule();
     // Locate all files and confirm that they exist.
     const files = await Promise.all(
