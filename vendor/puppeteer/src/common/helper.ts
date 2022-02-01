@@ -135,20 +135,19 @@ async function waitForEvent<T extends any>(
   timeout: number,
   abortPromise: Promise<Error>
 ): Promise<T> {
-  // @ts-expect-error TS7034
-  let eventTimeout, resolveCallback, rejectCallback;
+  let eventTimeout: number;
+  let resolveCallback: (value: T | PromiseLike<T>) => void;
+  let rejectCallback: (value: Error) => void;
   const promise = new Promise<T>((resolve, reject) => {
     resolveCallback = resolve;
     rejectCallback = reject;
   });
   const listener = addEventListener(emitter, eventName, async (event) => {
     if (!(await predicate(event))) return;
-    // @ts-expect-error TS7005
     resolveCallback(event);
   });
   if (timeout) {
     eventTimeout = setTimeout(() => {
-      // @ts-expect-error TS7005
       rejectCallback(
         new TimeoutError('Timeout exceeded while waiting for event')
       );
@@ -156,7 +155,6 @@ async function waitForEvent<T extends any>(
   }
   function cleanup(): void {
     removeEventListeners([listener]);
-    // @ts-expect-error TS7005
     clearTimeout(eventTimeout);
   }
   const result = await Promise.race([promise, abortPromise]).then(
@@ -197,8 +195,7 @@ function pageBindingInitString(type: string, name: string): string {
     const binding = win[bindingName];
 
     win[bindingName] = (...args: unknown[]): Promise<unknown> => {
-      // @ts-expect-error TS7053
-      const me = window[bindingName];
+      const me = (window as any)[bindingName];
       let callbacks = me.callbacks;
       if (!callbacks) {
         callbacks = new Map();
@@ -222,10 +219,8 @@ function pageBindingDeliverResultString(
   result: unknown
 ): string {
   function deliverResult(name: string, seq: number, result: unknown): void {
-    // @ts-expect-error TS7053
-    window[name].callbacks.get(seq).resolve(result);
-    // @ts-expect-error TS7053
-    window[name].callbacks.delete(seq);
+    (window as any)[name].callbacks.get(seq).resolve(result);
+    (window as any)[name].callbacks.delete(seq);
   }
   return evaluationString(deliverResult, name, seq, result);
 }
@@ -244,10 +239,8 @@ function pageBindingDeliverErrorString(
   ): void {
     const error = new Error(message);
     error.stack = stack;
-    // @ts-expect-error TS7053
-    window[name].callbacks.get(seq).reject(error);
-    // @ts-expect-error TS7053
-    window[name].callbacks.delete(seq);
+    (window as any)[name].callbacks.get(seq).reject(error);
+    (window as any)[name].callbacks.delete(seq);
   }
   return evaluationString(deliverError, name, seq, message, stack);
 }
@@ -258,10 +251,8 @@ function pageBindingDeliverErrorValueString(
   value: unknown
 ): string {
   function deliverErrorValue(name: string, seq: number, value: unknown): void {
-    // @ts-expect-error TS7053
-    window[name].callbacks.get(seq).reject(value);
-    // @ts-expect-error TS7053
-    window[name].callbacks.delete(seq);
+    (window as any)[name].callbacks.get(seq).reject(value);
+    (window as any)[name].callbacks.delete(seq);
   }
   return evaluationString(deliverErrorValue, name, seq, value);
 }
@@ -281,7 +272,11 @@ function makePredicateString(
     if (!waitForVisible && !waitForHidden) return node;
     const element =
       // @ts-expect-error TS2552
-      node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element);
+      node.nodeType === Node.TEXT_NODE
+        // @ts-expect-error TS2304
+        ? (node.parentElement as Element)
+        // @ts-expect-error TS2304
+        : (node as Element);
 
     // @ts-expect-error TS2339
     const style = window.getComputedStyle(element);
@@ -312,14 +307,12 @@ async function waitWithTimeout<T extends any>(
   taskName: string,
   timeout: number
 ): Promise<T> {
-  // @ts-expect-error TS7034
-  let reject;
+  let reject: (reason?: Error) => void;
   const timeoutError = new TimeoutError(
     `waiting for ${taskName} failed: timeout ${timeout}ms exceeded`
   );
   const timeoutPromise = new Promise<T>((resolve, x) => (reject = x));
   let timeoutTimer = null;
-  // @ts-expect-error TS7005
   if (timeout) timeoutTimer = setTimeout(() => reject(timeoutError), timeout);
   try {
     return await Promise.race([promise, timeoutPromise]);
@@ -331,7 +324,7 @@ async function waitWithTimeout<T extends any>(
 async function getReadableAsBuffer(
   readable: Readable,
   path?: string
-): Promise<Buffer> {
+): Promise<Buffer | null> {
   if (!isNode && path) {
     throw new Error('Cannot write to a path outside of Node.js environment.');
   }
@@ -339,7 +332,7 @@ async function getReadableAsBuffer(
   const fs = isNode ? await importFSModule() : null;
 
   // @ts-expect-error TS2694
-  let fileHandle: import('https://deno.land/std@0.123.0/node/fs.ts').promises.FileHandle;
+  let fileHandle: import('https://deno.land/std@0.123.0/node/fs.ts').promises.FileHandle | undefined;
 
   if (path) {
     // @ts-expect-error TS2531
@@ -348,18 +341,16 @@ async function getReadableAsBuffer(
   const buffers = [];
   for await (const chunk of readable) {
     buffers.push(chunk);
-    if (fileHandle) {
-      // @ts-expect-error TS2531
+    if (fileHandle && fs) {
       await fs.promises.writeFile(fileHandle, chunk);
     }
   }
 
-  if (path) fileHandle!.close();
+  if (path && fileHandle) fileHandle!.close();
   let resultBuffer = null;
   try {
     resultBuffer = Buffer.concat(buffers);
   } finally {
-    // @ts-expect-error TS2322
     return resultBuffer;
   }
 }
@@ -379,6 +370,9 @@ async function getReadableFromProtocolStream(
   let eof = false;
   return new Readable({
     async read() {
+      // TODO: use the advised size parameter to read function once
+      // crbug.com/1290727 is resolved.
+      // Also, see https://github.com/puppeteer/puppeteer/pull/7868.
       if (eof) {
         return null;
       }

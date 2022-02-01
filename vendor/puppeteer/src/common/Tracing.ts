@@ -122,6 +122,7 @@ export class Tracing {
           event.stream
         );
         const buffer = await helper.getReadableAsBuffer(readable, this._path);
+        // @ts-expect-error TS2345
         fulfill(buffer);
       } catch (error) {
         reject(error);

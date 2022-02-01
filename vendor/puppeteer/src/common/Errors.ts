@@ -43,8 +43,7 @@ export class TimeoutError extends CustomError {}
  */
 export class ProtocolError extends CustomError {
   public code?: number;
-  // @ts-expect-error TS2564
-  public originalMessage: string;
+  public originalMessage = '';
 }
 /**
  * @public

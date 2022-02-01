@@ -2933,6 +2933,7 @@ export class Page extends EventEmitter {
   async pdf(options: PDFOptions = {}): Promise<Buffer> {
     const { path = undefined } = options;
     const readable = await this.createPDFStream(options);
+    // @ts-expect-error TS2322
     return await helper.getReadableAsBuffer(readable, path);
   }
 
