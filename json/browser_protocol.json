@@ -1082,6 +1082,7 @@
                     "id": "MixedContentResourceType",
                     "type": "string",
                     "enum": [
+                        "AttributionSrc",
                         "Audio",
                         "Beacon",
                         "CSPReport",
@@ -1603,17 +1604,17 @@
                 },
                 {
                     "id": "FederatedAuthRequestIssueReason",
-                    "description": "Represents the failure reason when a federated authentication reason fails.\nShould be updated alongside RequestIdTokenStatus in\nthird_party/blink/public/mojom/webid/federated_auth_request.mojom to include\nall cases except for success.",
+                    "description": "Represents the failure reason when a federated authentication reason fails.\nShould be updated alongside RequestIdTokenStatus in\nthird_party/blink/public/mojom/devtools/inspector_issue.mojom to include\nall cases except for success.",
                     "type": "string",
                     "enum": [
                         "ApprovalDeclined",
                         "TooManyRequests",
-                        "WellKnownHttpNotFound",
-                        "WellKnownNoResponse",
-                        "WellKnownInvalidResponse",
-                        "ClientIdMetadataHttpNotFound",
-                        "ClientIdMetadataNoResponse",
-                        "ClientIdMetadataInvalidResponse",
+                        "ManifestHttpNotFound",
+                        "ManifestNoResponse",
+                        "ManifestInvalidResponse",
+                        "ClientMetadataHttpNotFound",
+                        "ClientMetadataNoResponse",
+                        "ClientMetadataInvalidResponse",
                         "ErrorFetchingSignin",
                         "InvalidSigninResponse",
                         "AccountsHttpNotFound",
@@ -2873,6 +2874,16 @@
                             "items": {
                                 "$ref": "CSSContainerQuery"
                             }
+                        },
+                        {
+                            "name": "supports",
+                            "description": "@supports CSS at-rule array.\nThe array enumerates @supports at-rules starting with the innermost one, going outwards.",
+                            "experimental": true,
+                            "optional": true,
+                            "type": "array",
+                            "items": {
+                                "$ref": "CSSSupports"
+                            }
                         }
                     ]
                 },
@@ -3194,6 +3205,31 @@
                             "description": "Optional name for the container.",
                             "optional": true,
                             "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "id": "CSSSupports",
+                    "description": "CSS Supports at-rule descriptor.",
+                    "experimental": true,
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "text",
+                            "description": "Supports rule text.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "range",
+                            "description": "The associated rule header range in the enclosing stylesheet (if\navailable).",
+                            "optional": true,
+                            "$ref": "SourceRange"
+                        },
+                        {
+                            "name": "styleSheetId",
+                            "description": "Identifier of the stylesheet containing this object (if exists).",
+                            "optional": true,
+                            "$ref": "StyleSheetId"
                         }
                     ]
                 },
@@ -3780,6 +3816,32 @@
                             "name": "containerQuery",
                             "description": "The resulting CSS container query rule after modification.",
                             "$ref": "CSSContainerQuery"
+                        }
+                    ]
+                },
+                {
+                    "name": "setSupportsText",
+                    "description": "Modifies the expression of a supports at-rule.",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "styleSheetId",
+                            "$ref": "StyleSheetId"
+                        },
+                        {
+                            "name": "range",
+                            "$ref": "SourceRange"
+                        },
+                        {
+                            "name": "text",
+                            "type": "string"
+                        }
+                    ],
+                    "returns": [
+                        {
+                            "name": "supports",
+                            "description": "The resulting CSS Supports rule after modification.",
+                            "$ref": "CSSSupports"
                         }
                     ]
                 },
@@ -7992,12 +8054,6 @@
                             "description": "If set this specifies the maximum number of tasks that can be run before virtual is forced\nforwards to prevent deadlock.",
                             "optional": true,
                             "type": "integer"
-                        },
-                        {
-                            "name": "waitForNavigation",
-                            "description": "If set the virtual time policy change should be deferred until any frame starts navigating.\nNote any previous deferred policy change is superseded.",
-                            "optional": true,
-                            "type": "boolean"
                         },
                         {
                             "name": "initialVirtualTime",
@@ -14770,6 +14826,7 @@
                         "ch-viewport-height",
                         "ch-viewport-width",
                         "ch-width",
+                        "ch-partitioned-cookies",
                         "clipboard-read",
                         "clipboard-write",
                         "cross-origin-isolated",
@@ -14787,7 +14844,6 @@
                         "gyroscope",
                         "hid",
                         "idle-detection",
-                        "interest-cohort",
                         "join-ad-interest-group",
                         "keyboard-map",
                         "magnetometer",
