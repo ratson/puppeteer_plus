@@ -52,12 +52,12 @@ export interface ProductLauncher {
  * @internal
  */
 class ChromeLauncher implements ProductLauncher {
-  _projectRoot: string;
+  _projectRoot: string | undefined;
   _preferredRevision: string;
   _isPuppeteerCore: boolean;
 
   constructor(
-    projectRoot: string,
+    projectRoot: string | undefined,
     preferredRevision: string,
     isPuppeteerCore: boolean
   ) {
@@ -146,15 +146,9 @@ class ChromeLauncher implements ProductLauncher {
 
       chromeExecutable = executablePathForChannel(channel);
     } else if (!executablePath) {
-      // Use Intel x86 builds on Apple M1 until native macOS arm64
-      // Chromium builds are available.
-      if (os.platform() !== 'darwin' && os.arch() === 'arm64') {
-        chromeExecutable = '/usr/bin/chromium-browser';
-      } else {
-        const { missingText, executablePath } = resolveExecutablePath(this);
-        if (missingText) throw new Error(missingText);
-        chromeExecutable = executablePath;
-      }
+      const { missingText, executablePath } = resolveExecutablePath(this);
+      if (missingText) throw new Error(missingText);
+      chromeExecutable = executablePath;
     }
 
     if (!chromeExecutable) {
@@ -276,12 +270,12 @@ class ChromeLauncher implements ProductLauncher {
  * @internal
  */
 class FirefoxLauncher implements ProductLauncher {
-  _projectRoot: string;
+  _projectRoot: string | undefined;
   _preferredRevision: string;
   _isPuppeteerCore: boolean;
 
   constructor(
-    projectRoot: string,
+    projectRoot: string | undefined,
     preferredRevision: string,
     isPuppeteerCore: boolean
   ) {
@@ -428,6 +422,11 @@ class FirefoxLauncher implements ProductLauncher {
   async _updateRevision(): Promise<void> {
     // replace 'latest' placeholder with actual downloaded revision
     if (this._preferredRevision === 'latest') {
+      if (!this._projectRoot) {
+        throw new Error(
+          '_projectRoot is undefined. Unable to create a BrowserFetcher.'
+        );
+      }
       const browserFetcher = new BrowserFetcher(this._projectRoot, {
         product: this.product,
       });
@@ -794,9 +793,11 @@ function resolveExecutablePath(launcher: ChromeLauncher | FirefoxLauncher): {
   executablePath: string;
   missingText?: string;
 } {
+  const { product, _isPuppeteerCore, _projectRoot, _preferredRevision } =
+    launcher;
   let downloadPath: string | undefined;
   // puppeteer-core doesn't take into account PUPPETEER_* env variables.
-  if (!launcher._isPuppeteerCore) {
+  if (!_isPuppeteerCore) {
     const executablePath =
       process.env.PUPPETEER_EXECUTABLE_PATH ||
       process.env.npm_config_puppeteer_executable_path ||
@@ -808,17 +809,31 @@ function resolveExecutablePath(launcher: ChromeLauncher | FirefoxLauncher): {
         : undefined;
       return { executablePath, missingText };
     }
+    const ubuntuChromiumPath = '/usr/bin/chromium-browser';
+    if (
+      product === 'chrome' &&
+      os.platform() !== 'darwin' &&
+      os.arch() === 'arm64' &&
+      fs.existsSync(ubuntuChromiumPath)
+    ) {
+      return { executablePath: ubuntuChromiumPath, missingText: undefined };
+    }
     downloadPath =
       process.env.PUPPETEER_DOWNLOAD_PATH ||
       process.env.npm_config_puppeteer_download_path ||
       process.env.npm_package_config_puppeteer_download_path;
   }
-  const browserFetcher = new BrowserFetcher(launcher._projectRoot, {
-    product: launcher.product,
+  if (!_projectRoot) {
+    throw new Error(
+      '_projectRoot is undefined. Unable to create a BrowserFetcher.'
+    );
+  }
+  const browserFetcher = new BrowserFetcher(_projectRoot, {
+    product: product,
     path: downloadPath,
   });
 
-  if (!launcher._isPuppeteerCore && launcher.product === 'chrome') {
+  if (!_isPuppeteerCore && product === 'chrome') {
     const revision = process.env['PUPPETEER_CHROMIUM_REVISION'];
     if (revision) {
       const revisionInfo = browserFetcher.revisionInfo(revision);
@@ -829,13 +844,13 @@ function resolveExecutablePath(launcher: ChromeLauncher | FirefoxLauncher): {
       return { executablePath: revisionInfo.executablePath, missingText };
     }
   }
-  const revisionInfo = browserFetcher.revisionInfo(launcher._preferredRevision);
+  const revisionInfo = browserFetcher.revisionInfo(_preferredRevision);
 
   const firefoxHelp = `Run \`PUPPETEER_PRODUCT=firefox npm install\` to download a supported Firefox browser binary.`;
   const chromeHelp = `Run \`npm install\` to download the correct Chromium revision (${launcher._preferredRevision}).`;
   const missingText = !revisionInfo.local
-    ? `Could not find expected browser (${launcher.product}) locally. ${
-        launcher.product === 'chrome' ? chromeHelp : firefoxHelp
+    ? `Could not find expected browser (${product}) locally. ${
+        product === 'chrome' ? chromeHelp : firefoxHelp
       }`
     : undefined;
   return { executablePath: revisionInfo.executablePath, missingText };
@@ -845,7 +860,7 @@ function resolveExecutablePath(launcher: ChromeLauncher | FirefoxLauncher): {
  * @internal
  */
 export default function Launcher(
-  projectRoot: string,
+  projectRoot: string | undefined,
   preferredRevision: string,
   isPuppeteerCore: boolean,
   product?: string
