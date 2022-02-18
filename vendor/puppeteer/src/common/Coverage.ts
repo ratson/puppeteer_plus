@@ -273,13 +273,7 @@ export class JSCoverage {
     assert(this._enabled, 'JSCoverage is not enabled');
     this._enabled = false;
 
-    const result = await Promise.all<
-      // @ts-expect-error TS2558
-      Protocol.Profiler.TakePreciseCoverageResponse,
-      void,
-      void,
-      void
-    >([
+    const result = await Promise.all([
       this._client.send('Profiler.takePreciseCoverage'),
       this._client.send('Profiler.stopPreciseCoverage'),
       this._client.send('Profiler.disable'),
@@ -289,7 +283,6 @@ export class JSCoverage {
     helper.removeEventListeners(this._eventListeners);
 
     const coverage = [];
-    // @ts-expect-error TS7053
     const profileResponse = result[0];
 
     for (const entry of profileResponse.result) {

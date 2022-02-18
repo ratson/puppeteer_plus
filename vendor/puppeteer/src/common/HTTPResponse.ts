@@ -59,6 +59,7 @@ export class HTTPResponse {
   private _fromServiceWorker: boolean;
   private _headers: Record<string, string> = {};
   private _securityDetails: SecurityDetails | null;
+  private _timing: Protocol.Network.ResourceTiming | null;
 
   /**
    * @internal
@@ -97,6 +98,8 @@ export class HTTPResponse {
     this._securityDetails = responsePayload.securityDetails
       ? new SecurityDetails(responsePayload.securityDetails)
       : null;
+    // @ts-expect-error TS2322
+    this._timing = responsePayload.timing;
   }
 
   /**
@@ -175,6 +178,13 @@ export class HTTPResponse {
    */
   securityDetails(): SecurityDetails | null {
     return this._securityDetails;
+  }
+
+  /**
+   * @returns Timing information related to the response.
+   */
+  timing(): Protocol.Network.ResourceTiming | null {
+    return this._timing;
   }
 
   /**

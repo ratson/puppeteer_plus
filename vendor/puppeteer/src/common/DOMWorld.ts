@@ -119,9 +119,8 @@ export class DOMWorld {
     this._timeoutSettings = timeoutSettings;
     // @ts-expect-error TS2345
     this._setContext(null);
-    this._client.on('Runtime.bindingCalled', (event) =>
-      this._onBindingCalled(event)
-    );
+    this._onBindingCalled = this._onBindingCalled.bind(this);
+    this._client.on('Runtime.bindingCalled', this._onBindingCalled);
   }
 
   frame(): Frame {
@@ -155,6 +154,7 @@ export class DOMWorld {
 
   _detach(): void {
     this._detached = true;
+    this._client.off('Runtime.bindingCalled', this._onBindingCalled);
     for (const waitTask of this._waitTasks)
       waitTask.terminate(
         new Error('waitForFunction failed: frame got detached.')

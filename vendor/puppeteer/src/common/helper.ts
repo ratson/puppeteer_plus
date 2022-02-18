@@ -128,7 +128,7 @@ function isNumber(obj: unknown): obj is number {
   return typeof obj === 'number' || obj instanceof Number;
 }
 
-async function waitForEvent<T extends any>(
+async function waitForEvent<T>(
   emitter: CommonEventEmitter,
   eventName: string | symbol,
   predicate: (event: T) => Promise<boolean> | boolean,
@@ -302,7 +302,7 @@ function makePredicateString(
     })() `;
 }
 
-async function waitWithTimeout<T extends any>(
+async function waitWithTimeout<T>(
   promise: Promise<T>,
   taskName: string,
   timeout: number

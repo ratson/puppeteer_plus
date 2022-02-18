@@ -16,12 +16,14 @@
 
 import { PuppeteerNode } from './node/Puppeteer.js';
 import { PUPPETEER_REVISIONS } from './revisions.js';
-import pkgDir from 'pkg-dir';
+import { sync } from 'pkg-dir';
+import { dirname } from 'path';
 import { Product } from './common/Product.js';
 
 export const initializePuppeteerNode = (packageName: string): PuppeteerNode => {
-  const puppeteerRootDirectory = pkgDir.sync(__dirname);
-
+  const puppeteerRootDirectory = sync(
+    dirname(require.resolve('./initialize-node'))
+  );
   let preferredRevision = PUPPETEER_REVISIONS.chromium;
   const isPuppeteerCore = packageName === 'puppeteer-core';
   // puppeteer-core ignores environment variables
@@ -33,10 +35,6 @@ export const initializePuppeteerNode = (packageName: string): PuppeteerNode => {
 
   if (!isPuppeteerCore && productName === 'firefox')
     preferredRevision = PUPPETEER_REVISIONS.firefox;
-
-  if (!puppeteerRootDirectory) {
-    throw new Error('puppeteerRootDirectory is not found.');
-  }
 
   return new PuppeteerNode({
     projectRoot: puppeteerRootDirectory,

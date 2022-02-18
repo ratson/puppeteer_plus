@@ -1809,13 +1809,11 @@ export class Page extends EventEmitter {
    *   more than 2 network connections for at least `500` ms.
    */
   async reload(options?: WaitForOptions): Promise<HTTPResponse | null> {
-    // @ts-expect-error TS2558
-    const result = await Promise.all<HTTPResponse, void>([
+    const result = await Promise.all([
       this.waitForNavigation(options),
       this._client.send('Page.reload'),
     ]);
 
-    // @ts-expect-error TS7053
     return result[0];
   }
 
