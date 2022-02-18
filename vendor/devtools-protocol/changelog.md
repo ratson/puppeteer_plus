@@ -1,5 +1,73 @@
 
 
+## Roll protocol to r971358
+###### _2022-02-15 11:15:32 -0800_ | Diff: [cfe04f6...b960aa4](https://github.com/ChromeDevTools/devtools-protocol/compare/cfe04f6...b960aa4)
+#### `Audits`: modified type
+* [`Audits.MixedContentResourceType`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-MixedContentResourceType) - The enum's `Audio` _updated_. The enum's `Beacon` _updated_. The enum's `CSPReport` _updated_. The enum's `Download` _updated_. The enum's `EventSource` _updated_. The enum's `Favicon` _updated_. The enum's `Font` _updated_. The enum's `Form` _updated_. The enum's `Frame` _updated_. The enum's `Image` _updated_. The enum's `Import` _updated_. The enum's `Manifest` _updated_. The enum's `Ping` _updated_. The enum's `PluginData` _updated_. The enum's `PluginResource` _updated_. The enum's `Prefetch` _updated_. The enum's `Resource` _updated_. The enum's `Script` _updated_. The enum's `ServiceWorker` _updated_. The enum's `SharedWorker` _updated_. The enum's `Stylesheet` _updated_. The enum's `Track` _updated_. The enum's `Video` _updated_. The enum's `Worker` _updated_. The enum's `XMLHttpRequest` _updated_. The enum's `XSLT` _updated_. The enum's `XSLT` _added_.
+
+
+## Roll protocol to r971103
+###### _2022-02-15 00:15:18 -0800_ | Diff: [84f7cd0...cfe04f6](https://github.com/ChromeDevTools/devtools-protocol/compare/84f7cd0...cfe04f6)
+#### `CSS`: new command
+* [`CSS.setSupportsText`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#method-setSupportsText)
+
+
+## Roll protocol to r970590
+###### _2022-02-14 05:15:13 -0800_ | Diff: [1b1e643...9a655fe](https://github.com/ChromeDevTools/devtools-protocol/compare/1b1e643...9a655fe)
+#### `CSS`: removed command
+* [`CSS.setSupportsText`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#method-setSupportsText)
+
+
+## Roll protocol to r970581
+###### _2022-02-14 04:15:16 -0800_ | Diff: [9f8c559...1b1e643](https://github.com/ChromeDevTools/devtools-protocol/compare/9f8c559...1b1e643)
+#### `CSS`: new command
+* [`CSS.setSupportsText`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#method-setSupportsText)
+
+
+## Roll protocol to r969999
+###### _2022-02-11 09:15:13 -0800_ | Diff: [22b098a...9f8c559](https://github.com/ChromeDevTools/devtools-protocol/compare/22b098a...9f8c559)
+#### `Audits`: modified type
+* [`Audits.FederatedAuthRequestIssueReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-FederatedAuthRequestIssueReason) - The enum's `WellKnownHttpNotFound` _updated_. The enum's `WellKnownNoResponse` _updated_. The enum's `WellKnownInvalidResponse` _updated_.
+
+
+## Roll protocol to r969947
+###### _2022-02-11 07:15:21 -0800_ | Diff: [4562919...22b098a](https://github.com/ChromeDevTools/devtools-protocol/compare/4562919...22b098a)
+#### `Audits`: modified type
+* [`Audits.FederatedAuthRequestIssueReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-FederatedAuthRequestIssueReason) - The enum's `ClientIdMetadataHttpNotFound` _updated_. The enum's `ClientIdMetadataNoResponse` _updated_. The enum's `ClientIdMetadataInvalidResponse` _updated_.
+
+
+## Roll protocol to r967529
+###### _2022-02-04 16:15:30 -0800_ | Diff: [72f90a8...5b91f46](https://github.com/ChromeDevTools/devtools-protocol/compare/72f90a8...5b91f46)
+#### `Page`: modified type
+* [`Page.PermissionsPolicyFeature`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-PermissionsPolicyFeature) - The enum's `xr-spatial-tracking` _removed_. The enum's `interest-cohort` _updated_. The enum's `join-ad-interest-group` _updated_. The enum's `keyboard-map` _updated_. The enum's `magnetometer` _updated_. The enum's `microphone` _updated_. The enum's `midi` _updated_. The enum's `otp-credentials` _updated_. The enum's `payment` _updated_. The enum's `picture-in-picture` _updated_. The enum's `publickey-credentials-get` _updated_. The enum's `run-ad-auction` _updated_. The enum's `screen-wake-lock` _updated_. The enum's `serial` _updated_. The enum's `shared-autofill` _updated_. The enum's `storage-access-api` _updated_. The enum's `sync-xhr` _updated_. The enum's `trust-token-redemption` _updated_. The enum's `usb` _updated_. The enum's `vertical-scroll` _updated_. The enum's `web-share` _updated_. The enum's `window-placement` _updated_.
+
+
+## Roll protocol to r966979
+###### _2022-02-03 15:15:30 -0800_ | Diff: [d15d202...72f90a8](https://github.com/ChromeDevTools/devtools-protocol/compare/d15d202...72f90a8)
+#### `Emulation`: modified command
+* [`Emulation.setVirtualTimePolicy`](https://chromedevtools.github.io/devtools-protocol/tot/Emulation/#method-setVirtualTimePolicy) - The parameters's `initialVirtualTime` _removed_. The `waitForNavigation` in the parameters had `type` _removed_. The `waitForNavigation` in the parameters had `name` _updated_. The `waitForNavigation` in the parameters had `description` _updated_. The parameters's `$ref` _added_.
+
+
+## Roll protocol to r966949
+###### _2022-02-03 14:15:32 -0800_ | Diff: [1d22b7b...d15d202](https://github.com/ChromeDevTools/devtools-protocol/compare/1d22b7b...d15d202)
+#### `Page`: modified type
+* [`Page.PermissionsPolicyFeature`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-PermissionsPolicyFeature) - The enum's `clipboard-read` _updated_. The enum's `clipboard-write` _updated_. The enum's `cross-origin-isolated` _updated_. The enum's `direct-sockets` _updated_. The enum's `display-capture` _updated_. The enum's `document-domain` _updated_. The enum's `encrypted-media` _updated_. The enum's `execution-while-out-of-viewport` _updated_. The enum's `execution-while-not-rendered` _updated_. The enum's `focus-without-user-activation` _updated_. The enum's `fullscreen` _updated_. The enum's `frobulate` _updated_. The enum's `gamepad` _updated_. The enum's `geolocation` _updated_. The enum's `gyroscope` _updated_. The enum's `hid` _updated_. The enum's `idle-detection` _updated_. The enum's `interest-cohort` _updated_. The enum's `join-ad-interest-group` _updated_. The enum's `keyboard-map` _updated_. The enum's `magnetometer` _updated_. The enum's `microphone` _updated_. The enum's `midi` _updated_. The enum's `otp-credentials` _updated_. The enum's `payment` _updated_. The enum's `picture-in-picture` _updated_. The enum's `publickey-credentials-get` _updated_. The enum's `run-ad-auction` _updated_. The enum's `screen-wake-lock` _updated_. The enum's `serial` _updated_. The enum's `shared-autofill` _updated_. The enum's `storage-access-api` _updated_. The enum's `sync-xhr` _updated_. The enum's `trust-token-redemption` _updated_. The enum's `usb` _updated_. The enum's `vertical-scroll` _updated_. The enum's `web-share` _updated_. The enum's `window-placement` _updated_. The enum's `xr-spatial-tracking` _updated_. The enum's `xr-spatial-tracking` _added_.
+
+
+## Roll protocol to r966116
+###### _2022-02-02 02:15:28 -0800_ | Diff: [1600334...1d22b7b](https://github.com/ChromeDevTools/devtools-protocol/compare/1600334...1d22b7b)
+#### `CSS`: new type
+* [`CSS.CSSSupports`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#type-CSSSupports)
+#### `CSS`: modified type
+* [`CSS.CSSRule`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#type-CSSRule) - The properties's `supports` _added_.
+
+
+## Roll protocol to r965299
+###### _2022-01-31 11:15:27 -0800_ | Diff: [8c4f892...1600334](https://github.com/ChromeDevTools/devtools-protocol/compare/8c4f892...1600334)
+#### `Page`: modified type
+* [`Page.PermissionsPolicyFeature`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-PermissionsPolicyFeature) - The enum's `ch-viewport-height` _updated_. The enum's `ch-viewport-width` _updated_. The enum's `ch-width` _updated_. The enum's `clipboard-read` _updated_. The enum's `clipboard-write` _updated_. The enum's `cross-origin-isolated` _updated_. The enum's `direct-sockets` _updated_. The enum's `display-capture` _updated_. The enum's `document-domain` _updated_. The enum's `encrypted-media` _updated_. The enum's `execution-while-out-of-viewport` _updated_. The enum's `execution-while-not-rendered` _updated_. The enum's `focus-without-user-activation` _updated_. The enum's `fullscreen` _updated_. The enum's `frobulate` _updated_. The enum's `gamepad` _updated_. The enum's `geolocation` _updated_. The enum's `gyroscope` _updated_. The enum's `hid` _updated_. The enum's `idle-detection` _updated_. The enum's `interest-cohort` _updated_. The enum's `join-ad-interest-group` _updated_. The enum's `keyboard-map` _updated_. The enum's `magnetometer` _updated_. The enum's `microphone` _updated_. The enum's `midi` _updated_. The enum's `otp-credentials` _updated_. The enum's `payment` _updated_. The enum's `picture-in-picture` _updated_. The enum's `publickey-credentials-get` _updated_. The enum's `run-ad-auction` _updated_. The enum's `screen-wake-lock` _updated_. The enum's `serial` _updated_. The enum's `shared-autofill` _updated_. The enum's `storage-access-api` _updated_. The enum's `sync-xhr` _updated_. The enum's `trust-token-redemption` _updated_. The enum's `usb` _updated_. The enum's `vertical-scroll` _updated_. The enum's `web-share` _updated_. The enum's `window-placement` _updated_. The enum's `xr-spatial-tracking` _updated_. The enum's `xr-spatial-tracking` _added_.
+
+
 ## Roll protocol to r964215
 ###### _2022-01-27 12:15:27 -0800_ | Diff: [f559f4a...57a4bb8](https://github.com/ChromeDevTools/devtools-protocol/compare/f559f4a...57a4bb8)
 #### `Audits`: new types

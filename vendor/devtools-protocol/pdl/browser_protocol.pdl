@@ -526,6 +526,7 @@ experimental domain Audits
 
   type MixedContentResourceType extends string
     enum
+      AttributionSrc
       Audio
       Beacon
       CSPReport
@@ -779,18 +780,18 @@ experimental domain Audits
 
   # Represents the failure reason when a federated authentication reason fails.
   # Should be updated alongside RequestIdTokenStatus in
-  # third_party/blink/public/mojom/webid/federated_auth_request.mojom to include
+  # third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
   # all cases except for success.
   type FederatedAuthRequestIssueReason extends string
     enum
       ApprovalDeclined
       TooManyRequests
-      WellKnownHttpNotFound
-      WellKnownNoResponse
-      WellKnownInvalidResponse
-      ClientIdMetadataHttpNotFound
-      ClientIdMetadataNoResponse
-      ClientIdMetadataInvalidResponse
+      ManifestHttpNotFound
+      ManifestNoResponse
+      ManifestInvalidResponse
+      ClientMetadataHttpNotFound
+      ClientMetadataNoResponse
+      ClientMetadataInvalidResponse
       ErrorFetchingSignin
       InvalidSigninResponse
       AccountsHttpNotFound
@@ -1386,6 +1387,9 @@ experimental domain CSS
       # Container query list array (for rules involving container queries).
       # The array enumerates container queries starting with the innermost one, going outwards.
       experimental optional array of CSSContainerQuery containerQueries
+      # @supports CSS at-rule array.
+      # The array enumerates @supports at-rules starting with the innermost one, going outwards.
+      experimental optional array of CSSSupports supports
 
   # CSS coverage information.
   type RuleUsage extends object
@@ -1521,6 +1525,17 @@ experimental domain CSS
       optional StyleSheetId styleSheetId
       # Optional name for the container.
       optional string name
+
+  # CSS Supports at-rule descriptor.
+  experimental type CSSSupports extends object
+    properties
+      # Supports rule text.
+      string text
+      # The associated rule header range in the enclosing stylesheet (if
+      # available).
+      optional SourceRange range
+      # Identifier of the stylesheet containing this object (if exists).
+      optional StyleSheetId styleSheetId
 
   # Information about amount of glyphs that were rendered with given font.
   type PlatformFontUsage extends object
@@ -1777,6 +1792,16 @@ experimental domain CSS
     returns
       # The resulting CSS container query rule after modification.
       CSSContainerQuery containerQuery
+
+  # Modifies the expression of a supports at-rule.
+  experimental command setSupportsText
+    parameters
+      StyleSheetId styleSheetId
+      SourceRange range
+      string text
+    returns
+      # The resulting CSS Supports rule after modification.
+      CSSSupports supports
 
   # Modifies the rule selector.
   command setRuleSelector
@@ -3642,9 +3667,6 @@ domain Emulation
       # If set this specifies the maximum number of tasks that can be run before virtual is forced
       # forwards to prevent deadlock.
       optional integer maxVirtualTimeTaskStarvationCount
-      # If set the virtual time policy change should be deferred until any frame starts navigating.
-      # Note any previous deferred policy change is superseded.
-      optional boolean waitForNavigation
       # If set, base::Time::Now will be overridden to initially return this value.
       optional Network.TimeSinceEpoch initialVirtualTime
     returns
@@ -6885,6 +6907,7 @@ domain Page
       ch-viewport-height
       ch-viewport-width
       ch-width
+      ch-partitioned-cookies
       clipboard-read
       clipboard-write
       cross-origin-isolated
@@ -6902,7 +6925,6 @@ domain Page
       gyroscope
       hid
       idle-detection
-      interest-cohort
       join-ad-interest-group
       keyboard-map
       magnetometer
