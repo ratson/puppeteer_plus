@@ -10,7 +10,13 @@ browserTest("puppeteer", async (browser) => {
 });
 
 Deno.test("core", async () => {
-  await subprocess.run([Deno.execPath(), "run", "--unstable", "core.ts"], {
+  await subprocess.run([
+    Deno.execPath(),
+    "run",
+    "--unstable",
+    "--allow-env=NODE_DEBUG",
+    "core.ts",
+  ], {
     check: true,
   });
 });

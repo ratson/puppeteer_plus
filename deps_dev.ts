@@ -5,9 +5,9 @@ export {
   assertArrayIncludes,
   assertEquals,
   assertStrictEquals,
-} from "https://deno.land/std@0.123.0/testing/asserts.ts";
+} from "https://deno.land/std@0.135.0/testing/asserts.ts";
 
-export * as subprocess from "https://deno.land/x/yxz@0.15.0/subprocess/mod.ts";
+export * as subprocess from "https://deno.land/x/yxz@0.17.0/subprocess/mod.ts";
 
 export function browserTest(
   name: string,

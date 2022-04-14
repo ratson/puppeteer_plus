@@ -17,16 +17,16 @@
 
 import { debug } from "../vendor/puppeteer/src/common/Debug.ts";
 
-import { copy } from "https://deno.land/std@0.123.0/streams/conversion.ts";
+import { copy } from "https://deno.land/std@0.135.0/streams/conversion.ts";
 import {
   deadline,
   DeadlineError,
-} from "https://deno.land/std@0.123.0/async/deadline.ts";
-import { readLines } from "https://deno.land/std@0.123.0/io/mod.ts";
+} from "https://deno.land/std@0.135.0/async/deadline.ts";
+import { readLines } from "https://deno.land/std@0.135.0/io/mod.ts";
 
-import * as fs from "https://deno.land/std@0.123.0/node/fs.ts";
-import * as path from "https://deno.land/std@0.123.0/node/path.ts";
-import { promisify } from "https://deno.land/std@0.123.0/node/util.ts";
+import * as fs from "https://deno.land/std@0.135.0/node/fs.ts";
+import * as path from "https://deno.land/std@0.135.0/node/path.ts";
+import { promisify } from "https://deno.land/std@0.135.0/node/util.ts";
 
 import { assert } from "../vendor/puppeteer/src/common/assert.ts";
 import { debugError, helper } from "../vendor/puppeteer/src/common/helper.ts";

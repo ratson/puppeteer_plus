@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Buffer } from 'https://deno.land/std@0.123.0/node/buffer.ts';
+import { Buffer } from 'https://deno.land/std@0.135.0/node/buffer.ts';
 import { ProtocolMapping } from '../../../devtools-protocol/types/protocol-mapping.d.ts';
 
 import { EventEmitter } from './EventEmitter.ts';

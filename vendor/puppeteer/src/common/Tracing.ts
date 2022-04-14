@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { assert } from './assert.ts';
-import { Buffer } from 'https://deno.land/std@0.123.0/node/buffer.ts';
+import { Buffer } from 'https://deno.land/std@0.135.0/node/buffer.ts';
 import { helper } from './helper.ts';
 import { CDPSession } from './Connection.ts';
 
