@@ -123,10 +123,6 @@ class ChromeLauncher implements ProductLauncher {
 
     if (userDataDirIndex !== -1) {
       userDataDir = chromeArguments[userDataDirIndex].split('=')[1];
-      if (!fs.existsSync(userDataDir)) {
-        throw new Error(`Chrome user data dir not found at '${userDataDir}'`);
-      }
-
       isTempUserDataDir = false;
     } else {
       userDataDir = await mkdtempAsync(
@@ -217,7 +213,7 @@ class ChromeLauncher implements ProductLauncher {
       '--disable-default-apps',
       '--disable-dev-shm-usage',
       '--disable-extensions',
-      '--disable-features=Translate',
+      '--disable-features=Translate,BackForwardCache',
       '--disable-hang-monitor',
       '--disable-ipc-flooding-protection',
       '--disable-popup-blocking',
