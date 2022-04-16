@@ -1,5 +1,113 @@
 
 
+## Roll protocol to r982238
+###### _2022-03-17 09:15:18_ | Diff: [e35b84a...052c603](https://github.com/ChromeDevTools/devtools-protocol/compare/e35b84a...052c603)
+#### `CSS`: modified type
+* [`CSS.CSSSupports`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#type-CSSSupports) - The `range` in the properties had `optional` _removed_. The `range` in the properties had `$ref` _removed_. The `range` in the properties had `name` _updated_. The `range` in the properties had `description` _updated_. The `styleSheetId` in the properties had `name` _updated_. The `styleSheetId` in the properties had `description` _updated_. The `styleSheetId` in the properties had `$ref` _updated_. The properties's `type` _added_. The properties's `styleSheetId` _added_.
+
+
+## Roll protocol to r981034
+###### _2022-03-15 03:15:13_ | Diff: [5dd0348...65adbf7](https://github.com/ChromeDevTools/devtools-protocol/compare/5dd0348...65adbf7)
+#### `Page`: modified type
+* [`Page.BackForwardCacheNotRestoredReason`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-BackForwardCacheNotRestoredReason) - The enum's `WebSocket` _updated_. The enum's `WebTransport` _updated_. The enum's `WebRTC` _updated_. The enum's `MainResourceHasCacheControlNoStore` _updated_. The enum's `MainResourceHasCacheControlNoCache` _updated_. The enum's `SubresourceHasCacheControlNoStore` _updated_. The enum's `SubresourceHasCacheControlNoCache` _updated_. The enum's `ContainsPlugins` _updated_. The enum's `DocumentLoaded` _updated_. The enum's `DedicatedWorkerOrWorklet` _updated_. The enum's `OutstandingNetworkRequestOthers` _updated_. The enum's `OutstandingIndexedDBTransaction` _updated_. The enum's `RequestedNotificationsPermission` _updated_. The enum's `RequestedMIDIPermission` _updated_. The enum's `RequestedAudioCapturePermission` _updated_. The enum's `RequestedVideoCapturePermission` _updated_. The enum's `RequestedBackForwardCacheBlockedSensors` _updated_. The enum's `RequestedBackgroundWorkPermission` _updated_. The enum's `BroadcastChannel` _updated_. The enum's `IndexedDBConnection` _updated_. The enum's `WebXR` _updated_. The enum's `SharedWorker` _updated_. The enum's `WebLocks` _updated_. The enum's `WebHID` _updated_. The enum's `WebShare` _updated_. The enum's `RequestedStorageAccessGrant` _updated_. The enum's `WebNfc` _updated_. The enum's `OutstandingNetworkRequestFetch` _updated_. The enum's `OutstandingNetworkRequestXHR` _updated_. The enum's `AppBanner` _updated_. The enum's `Printing` _updated_. The enum's `WebDatabase` _updated_. The enum's `PictureInPicture` _updated_. The enum's `Portal` _updated_. The enum's `SpeechRecognizer` _updated_. The enum's `IdleManager` _updated_. The enum's `PaymentManager` _updated_. The enum's `SpeechSynthesis` _updated_. The enum's `KeyboardLock` _updated_. The enum's `WebOTPService` _updated_. The enum's `OutstandingNetworkRequestDirectSocket` _updated_. The enum's `InjectedJavascript` _updated_. The enum's `InjectedStyleSheet` _updated_. The enum's `Dummy` _updated_. The enum's `ContentSecurityHandler` _updated_. The enum's `ContentWebAuthenticationAPI` _updated_. The enum's `ContentFileChooser` _updated_. The enum's `ContentSerial` _updated_. The enum's `ContentFileSystemAccess` _updated_. The enum's `ContentMediaDevicesDispatcherHost` _updated_. The enum's `ContentWebBluetooth` _updated_. The enum's `ContentWebUSB` _updated_. The enum's `ContentMediaSession` _updated_. The enum's `ContentMediaSessionService` _updated_. The enum's `ContentScreenReader` _updated_. The enum's `EmbedderPopupBlockerTabHelper` _updated_. The enum's `EmbedderSafeBrowsingTriggeredPopupBlocker` _updated_. The enum's `EmbedderSafeBrowsingThreatDetails` _updated_. The enum's `EmbedderAppBannerManager` _updated_. The enum's `EmbedderDomDistillerViewerSource` _updated_. The enum's `EmbedderDomDistillerSelfDeletingRequestDelegate` _updated_. The enum's `EmbedderOomInterventionTabHelper` _updated_. The enum's `EmbedderOfflinePage` _updated_. The enum's `EmbedderChromePasswordManagerClientBindCredentialManager` _updated_. The enum's `EmbedderPermissionRequestManager` _updated_. The enum's `EmbedderModalDialog` _updated_. The enum's `EmbedderExtensions` _updated_. The enum's `EmbedderExtensionMessaging` _updated_. The enum's `EmbedderExtensionMessagingForOpenPort` _updated_. The enum's `EmbedderExtensionSentMessageToCachedFrame` _updated_. The enum's `EmbedderExtensionSentMessageToCachedFrame` _added_.
+
+
+## Roll protocol to r979918
+###### _2022-03-10 12:15:19 -0800_ | Diff: [8b70878...5dd0348](https://github.com/ChromeDevTools/devtools-protocol/compare/8b70878...5dd0348)
+#### `Audits`: modified type
+* [`Audits.DeprecationIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-DeprecationIssueDetails) - The `message` in the properties had `description` _updated_. The properties's `description` _added_. The properties's `deprecated` _added_.
+
+
+## Roll protocol to r979353
+###### _2022-03-09 11:15:15 -0800_ | Diff: [3084cb9...8b70878](https://github.com/ChromeDevTools/devtools-protocol/compare/3084cb9...8b70878)
+#### `Audits`: modified type
+* [`Audits.FederatedAuthRequestIssueReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-FederatedAuthRequestIssueReason) - The enum's `ErrorFetchingSignin` _updated_. The enum's `InvalidSigninResponse` _updated_. The enum's `AccountsHttpNotFound` _updated_. The enum's `AccountsNoResponse` _updated_. The enum's `AccountsInvalidResponse` _updated_. The enum's `IdTokenHttpNotFound` _updated_. The enum's `IdTokenNoResponse` _updated_. The enum's `IdTokenInvalidResponse` _updated_. The enum's `IdTokenInvalidRequest` _updated_. The enum's `ErrorIdToken` _updated_. The enum's `Canceled` _updated_. The enum's `Canceled` _added_.
+
+
+## Roll protocol to r977795
+###### _2022-03-04 12:15:28 -0800_ | Diff: [2e0912d...a0800ab](https://github.com/ChromeDevTools/devtools-protocol/compare/2e0912d...a0800ab)
+#### `CSS`: modified command
+* [`CSS.getMatchedStylesForNode`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#method-getMatchedStylesForNode) - The `cssKeyframesRules` in the return value had `name` _updated_. The `cssKeyframesRules` in the return value had `description` _updated_. The `cssKeyframesRules` in the return value had `$ref` _updated_. The return value's `cssKeyframesRules` _added_.
+#### `CSS`: new type
+* [`CSS.InheritedPseudoElementMatches`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#type-InheritedPseudoElementMatches)
+
+
+## Roll protocol to r977469
+###### _2022-03-03 19:15:12 -0800_ | Diff: [d232328...2e0912d](https://github.com/ChromeDevTools/devtools-protocol/compare/d232328...2e0912d)
+#### `Audits`: modified type
+* [`Audits.FederatedAuthRequestIssueReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-FederatedAuthRequestIssueReason) - The enum's `ErrorFetchingSignin` _updated_. The enum's `InvalidSigninResponse` _updated_. The enum's `AccountsHttpNotFound` _updated_. The enum's `AccountsNoResponse` _updated_. The enum's `AccountsInvalidResponse` _updated_. The enum's `IdTokenHttpNotFound` _updated_. The enum's `IdTokenNoResponse` _updated_. The enum's `IdTokenInvalidResponse` _updated_. The enum's `IdTokenInvalidRequest` _updated_. The enum's `ErrorIdToken` _updated_. The enum's `Canceled` _updated_. The enum's `Canceled` _added_.
+
+
+## Roll protocol to r975963
+###### _2022-02-28 14:15:14 -0800_ | Diff: [a7bfbac...d232328](https://github.com/ChromeDevTools/devtools-protocol/compare/a7bfbac...d232328)
+#### `Audits`: modified type
+* [`Audits.CookieWarningReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-CookieWarningReason) - The enum's `WarnAttributeValueExceedsMaxSize` _added_.
+
+
+## Roll protocol to r975498
+###### _2022-02-26 12:15:19 -0800_ | Diff: [14c3fe0...a7bfbac](https://github.com/ChromeDevTools/devtools-protocol/compare/14c3fe0...a7bfbac)
+#### `Overlay`: modified type
+* [`Overlay.ColorFormat`](https://chromedevtools.github.io/devtools-protocol/tot/Overlay/#type-ColorFormat) - The enum's `hex` _updated_. The enum's `hex` _added_.
+
+
+## Roll protocol to r975298
+###### _2022-02-25 14:15:19 -0800_ | Diff: [51bf736...14c3fe0](https://github.com/ChromeDevTools/devtools-protocol/compare/51bf736...14c3fe0)
+#### `Audits`: new types
+* [`Audits.CookieExclusionReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-CookieExclusionReason)
+* [`Audits.CookieWarningReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-CookieWarningReason)
+* [`Audits.CookieOperation`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-CookieOperation)
+* [`Audits.CookieIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-CookieIssueDetails)
+#### `Audits`: removed types
+* [`Audits.SameSiteCookieExclusionReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-SameSiteCookieExclusionReason)
+* [`Audits.SameSiteCookieWarningReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-SameSiteCookieWarningReason)
+* [`Audits.SameSiteCookieOperation`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-SameSiteCookieOperation)
+* [`Audits.SameSiteCookieIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-SameSiteCookieIssueDetails)
+#### `Audits`: modified types
+* [`Audits.InspectorIssueCode`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueCode) - The enum's `SameSiteCookieIssue` _updated_.
+* [`Audits.InspectorIssueDetails`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-InspectorIssueDetails) - The `sameSiteCookieIssueDetails` in the properties had `name` _updated_. The `sameSiteCookieIssueDetails` in the properties had `$ref` _updated_.
+
+
+## Roll protocol to r974996
+###### _2022-02-24 20:15:23 -0800_ | Diff: [aebe16a...51bf736](https://github.com/ChromeDevTools/devtools-protocol/compare/aebe16a...51bf736)
+#### `Page`: modified type
+* [`Page.BackForwardCacheNotRestoredExplanation`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#type-BackForwardCacheNotRestoredExplanation) - The properties's `context` _added_.
+
+
+## Roll protocol to r974265
+###### _2022-02-23 11:15:15 -0800_ | Diff: [fe82e94...aebe16a](https://github.com/ChromeDevTools/devtools-protocol/compare/fe82e94...aebe16a)
+#### `CSS`: new command
+* [`CSS.getLayersForNode`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#method-getLayersForNode)
+#### `CSS`: new types
+* [`CSS.CSSLayer`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#type-CSSLayer)
+* [`CSS.CSSLayerData`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#type-CSSLayerData)
+#### `CSS`: modified type
+* [`CSS.CSSRule`](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#type-CSSRule) - The properties's `layers` _added_.
+
+
+## Roll protocol to r973690
+###### _2022-02-22 04:15:13 -0800_ | Diff: [df434f1...fe82e94](https://github.com/ChromeDevTools/devtools-protocol/compare/df434f1...fe82e94)
+#### `Emulation`: new command
+* [`Emulation.setAutomationOverride`](https://chromedevtools.github.io/devtools-protocol/tot/Emulation/#method-setAutomationOverride)
+
+
+## Roll protocol to r973088
+###### _2022-02-18 12:15:24 -0800_ | Diff: [1c7f0c1...df434f1](https://github.com/ChromeDevTools/devtools-protocol/compare/1c7f0c1...df434f1)
+#### `DOM`: modified type
+* [`DOM.PseudoType`](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#type-PseudoType) - The enum's `transition` _updated_. The enum's `transition-container` _updated_. The enum's `transition-old-content` _updated_. The enum's `transition-new-content` _updated_. The enum's `page-transition-incoming-image` _added_.
+
+
+## Roll protocol to r972883
+###### _2022-02-18 02:15:14 -0800_ | Diff: [474a6e6...1c7f0c1](https://github.com/ChromeDevTools/devtools-protocol/compare/474a6e6...1c7f0c1)
+#### `Accessibility`: modified command
+* [`Accessibility.getFullAXTree`](https://chromedevtools.github.io/devtools-protocol/tot/Accessibility/#method-getFullAXTree) - The parameters's `frameId` _removed_. The `max_depth` in the parameters had `deprecated` _removed_. The `max_depth` in the parameters had `type` _removed_. The `max_depth` in the parameters had `name` _updated_. The `max_depth` in the parameters had `description` _updated_. The parameters's `$ref` _added_.
+
+
+## Roll protocol to r972468
+###### _2022-02-17 08:15:22 -0800_ | Diff: [b960aa4...474a6e6](https://github.com/ChromeDevTools/devtools-protocol/compare/b960aa4...474a6e6)
+#### `Audits`: modified type
+* [`Audits.FederatedAuthRequestIssueReason`](https://chromedevtools.github.io/devtools-protocol/tot/Audits/#type-FederatedAuthRequestIssueReason) - `description` updated.
+
+
 ## Roll protocol to r971358
 ###### _2022-02-15 11:15:32 -0800_ | Diff: [cfe04f6...b960aa4](https://github.com/ChromeDevTools/devtools-protocol/compare/cfe04f6...b960aa4)
 #### `Audits`: modified type
