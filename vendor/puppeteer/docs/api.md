@@ -10,6 +10,7 @@
 
 <!-- GEN:versions-per-release -->
 - Releases per Chromium version:
+  * Chromium 100.0.4889.0 - [Puppeteer v13.5.0](https://github.com/puppeteer/puppeteer/blob/v13.5.0/docs/api.md)
   * Chromium 99.0.4844.16 - [Puppeteer v13.2.0](https://github.com/puppeteer/puppeteer/blob/v13.2.0/docs/api.md)
   * Chromium 98.0.4758.0 - [Puppeteer v13.1.0](https://github.com/puppeteer/puppeteer/blob/v13.1.0/docs/api.md)
   * Chromium 97.0.4692.0 - [Puppeteer v12.0.0](https://github.com/puppeteer/puppeteer/blob/v12.0.0/docs/api.md)
@@ -414,6 +415,7 @@
   * [eventEmitter.removeAllListeners([event])](#eventemitterremovealllistenersevent)
   * [eventEmitter.removeListener(event, handler)](#eventemitterremovelistenerevent-handler)
 - [interface: CustomQueryHandler](#interface-customqueryhandler)
+- [interface: Selector](#interface-selector)
 <!-- GEN:stop -->
 
 <!-- prettier-ignore-end -->
@@ -983,7 +985,7 @@ the method will return an array with all the targets in all browser contexts.
 
 #### browser.waitForTarget(predicate[, options])
 
-- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
+- `predicate` <[function]\([Target]\):[boolean]|[Promise<boolean>]> A function to be run for every target
 - `options` <[Object]>
   - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
 - returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
@@ -1135,7 +1137,7 @@ An array of all active targets inside the browser context.
 
 #### browserContext.waitForTarget(predicate[, options])
 
-- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
+- `predicate` <[function]\([Target]\):[boolean]|[Promise<boolean>]> A function to be run for every target
 - `options` <[Object]>
   - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
 - returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
@@ -2314,7 +2316,7 @@ This setting will change the default maximum time for the following methods and 
 - `enabled` <[boolean]>
 - returns: <[Promise]>
 
-Enables the Input.drag methods. This provides the capability to cpature drag events emitted on the page, which can then be used to simulate drag-and-drop.
+Enables the Input.drag methods. This provides the capability to capture drag events emitted on the page, which can then be used to simulate drag-and-drop.
 
 #### page.setExtraHTTPHeaders(headers)
 
@@ -5120,7 +5122,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 
 - `response` <[Object]> Response that will fulfill this request
   - `status` <[number]> Response status code, defaults to `200`.
-  - `headers` <[Object]> Optional response headers. Header values will be converted to a string.
+  - `headers` <[Object]> Optional response headers. Header values should be a string or a string array.
   - `contentType` <[string]> If set, equals to setting `Content-Type` response header
   - `body` <[string]|[Buffer]> Optional response body
 - `priority` <[number]> - Optional intercept abort priority. If provided, intercept will be resolved using coopeative handling rules. Otherwise, intercept will be resolved immediately.
@@ -5525,6 +5527,26 @@ This method is identical to `off` and maintained for compatibility with Node's E
 
 Contains two functions `queryOne` and `queryAll` that can be [registered](#puppeteerregistercustomqueryhandlername-queryhandler) as alternative querying strategies. The functions `queryOne` and `queryAll` are executed in the page context. `queryOne` should take an `Element` and a selector string as argument and return a single `Element` or `null` if no element is found. `queryAll` takes the same arguments but should instead return a `NodeList<Element>` or `Array<Element>` with all the elements that match the given query selector.
 
+### interface: Selector
+
+A selector is a [string] for querying elements in the page.
+The default behavior is to regard the string as a [CSS selector] and query using `querySelector` or `querySelectorAll`.
+If a selector string contains a forward slash `/` the selector is instead regarded as custom selector where everything before the slash is the [custom handler](#puppeteerregistercustomqueryhandlername-queryhandler) name and everything after is the selector: `<handler>/<selector>`.
+Puppeteer ships with two such custom handlers pre-registered:
+
+- `aria/`: Queries the accessibilty tree for computed accessibility properties.
+  The selectors consist of an accessible name to query for and optionally
+  further aria attributes on the form `[<attribute>=<value>]`.
+  Currently, we only support the `name` and `role` attribute.
+  The following examples showcase how the syntax works wrt. querying:
+
+  - `title[role="heading"]` queries for elements with name 'title' and role 'heading'.
+  - `[role="img"]` queries for elements with role 'img' and any name.
+  - `label` queries for elements with name 'label' and any role.
+  - `[name=""][role="button"]` queries for elements with no name and role 'button'.
+
+- `pierce`: Takes a [CSS selector] and queries the page using `querySelector` or `querySeletorAll` but pierces through shadow roots.
+
 [axnode]: #accessibilitysnapshotoptions 'AXNode'
 [accessibility]: #class-accessibility 'Accessibility'
 [array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array 'Array'
@@ -5569,7 +5591,8 @@ Contains two functions `queryOne` and `queryAll` that can be [registered](#puppe
 [iterator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols 'Iterator'
 [number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type 'Number'
 [origin]: https://developer.mozilla.org/en-US/docs/Glossary/Origin 'Origin'
-[selector]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors 'selector'
+[selector]: #interface-selector 'Selector'
+[css selector]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
 [stream.readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable 'stream.Readable'
 [string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type 'String'
 [symbol]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Symbol_type 'Symbol'

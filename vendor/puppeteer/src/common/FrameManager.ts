@@ -16,7 +16,7 @@
 
 import { EventEmitter } from './EventEmitter.ts';
 import { assert } from './assert.ts';
-import { helper } from './helper.ts';
+import { helper, debugError } from './helper.ts';
 import { ExecutionContext, EVALUATION_SCRIPT_URL } from './ExecutionContext.ts';
 import {
   LifecycleWatcher,
@@ -53,6 +53,7 @@ export const FrameManagerEmittedEvents = {
   FrameAttached: Symbol('FrameManager.FrameAttached'),
   FrameNavigated: Symbol('FrameManager.FrameNavigated'),
   FrameDetached: Symbol('FrameManager.FrameDetached'),
+  FrameSwapped: Symbol('FrameManager.FrameSwapped'),
   LifecycleEvent: Symbol('FrameManager.LifecycleEvent'),
   FrameNavigatedWithinDocument: Symbol(
     'FrameManager.FrameNavigatedWithinDocument'
@@ -403,11 +404,13 @@ export class FrameManager extends EventEmitter {
       this.frames()
         .filter((frame) => frame._client === session)
         .map((frame) =>
-          session.send('Page.createIsolatedWorld', {
-            frameId: frame._id,
-            worldName: name,
-            grantUniveralAccess: true,
-          })
+          session
+            .send('Page.createIsolatedWorld', {
+              frameId: frame._id,
+              worldName: name,
+              grantUniveralAccess: true,
+            })
+            .catch(debugError)
         )
     );
   }
@@ -430,6 +433,8 @@ export class FrameManager extends EventEmitter {
       // an actual removement of the frame.
       // For frames that become OOP iframes, the reason would be 'swap'.
       if (frame) this._removeFramesRecursively(frame);
+    } else if (reason === 'swap') {
+      this.emit(FrameManagerEmittedEvents.FrameSwapped, frame);
     }
   }
 
@@ -720,6 +725,11 @@ export class Frame {
     );
   }
 
+  /**
+   * @remarks
+   *
+   * @returns `true` if the frame is an OOP frame, or `false` otherwise.
+   */
   isOOPFrame(): boolean {
     return this._client !== this._frameManager._client;
   }
@@ -801,6 +811,13 @@ export class Frame {
     } = {}
   ): Promise<HTTPResponse | null> {
     return await this._frameManager.waitForFrameNavigation(this, options);
+  }
+
+  /**
+   * @internal
+   */
+  client(): CDPSession {
+    return this._client;
   }
 
   /**
@@ -886,7 +903,7 @@ export class Frame {
    *
    * @param selector - the selector to query for
    * @param pageFunction - the function to be evaluated in the frame's context
-   * @param args - additional arguments to pass to `pageFuncton`
+   * @param args - additional arguments to pass to `pageFunction`
    */
   async $eval<ReturnType>(
     selector: string,
@@ -917,7 +934,7 @@ export class Frame {
    *
    * @param selector - the selector to query for
    * @param pageFunction - the function to be evaluated in the frame's context
-   * @param args - additional arguments to pass to `pageFuncton`
+   * @param args - additional arguments to pass to `pageFunction`
    */
   async $$eval<ReturnType>(
     selector: string,

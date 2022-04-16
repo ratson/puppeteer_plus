@@ -86,6 +86,7 @@ export class LifecycleWatcher {
 
   _maximumTimer?: number;
   _hasSameDocumentNavigation?: boolean;
+  _swapped?: boolean;
 
   constructor(
     frameManager: FrameManager,
@@ -125,6 +126,11 @@ export class LifecycleWatcher {
         this._frameManager,
         FrameManagerEmittedEvents.FrameNavigatedWithinDocument,
         this._navigatedWithinDocument.bind(this)
+      ),
+      helper.addEventListener(
+        this._frameManager,
+        FrameManagerEmittedEvents.FrameSwapped,
+        this._frameSwapped.bind(this)
       ),
       helper.addEventListener(
         this._frameManager,
@@ -219,6 +225,12 @@ export class LifecycleWatcher {
     this._checkLifecycleComplete();
   }
 
+  _frameSwapped(frame: Frame): void {
+    if (frame !== this._frame) return;
+    this._swapped = true;
+    this._checkLifecycleComplete();
+  }
+
   _checkLifecycleComplete(): void {
     // We expect navigation to commit.
     if (!checkLifecycle(this._frame, this._expectedLifecycle)) return;
@@ -226,8 +238,13 @@ export class LifecycleWatcher {
     if (
       this._frame._loaderId === this._initialLoaderId &&
       !this._hasSameDocumentNavigation
-    )
+    ) {
+      if (this._swapped) {
+        this._swapped = false;
+        this._newDocumentNavigationCompleteCallback();
+      }
       return;
+    }
     if (this._hasSameDocumentNavigation)
       this._sameDocumentNavigationCompleteCallback();
     if (this._frame._loaderId !== this._initialLoaderId)
