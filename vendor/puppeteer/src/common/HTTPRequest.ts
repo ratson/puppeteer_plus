@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Buffer } from 'https://deno.land/std@0.135.0/node/buffer.ts';
-import { ProtocolMapping } from '../../../devtools-protocol/types/protocol-mapping.d.ts';
-
-import { EventEmitter } from './EventEmitter.ts';
-import { Frame } from './FrameManager.ts';
-import { HTTPResponse } from './HTTPResponse.ts';
-import { assert } from './assert.ts';
-import { helper, debugError } from './helper.ts';
-import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
-import { ProtocolError } from './Errors.ts';
+import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
+import {ProtocolMapping} from '../../../devtools-protocol/types/protocol-mapping.d.ts';
+import {assert} from './assert.ts';
+import {ProtocolError} from './Errors.ts';
+import {EventEmitter} from './EventEmitter.ts';
+import {Frame} from './FrameManager.ts';
+import {debugError, isString} from './util.ts';
+import {HTTPResponse} from './HTTPResponse.ts';
 
 /**
  * @public
@@ -121,11 +119,11 @@ export class HTTPRequest {
   /**
    * @internal
    */
-  _interceptionId: string;
+  _interceptionId: string | undefined;
   /**
    * @internal
    */
-  _failureText = null;
+  _failureText: string | null = null;
   /**
    * @internal
    */
@@ -139,64 +137,72 @@ export class HTTPRequest {
    */
   _redirectChain: HTTPRequest[];
 
-  private _client: CDPSession;
-  private _isNavigationRequest: boolean;
-  private _allowInterception: boolean;
-  private _interceptionHandled = false;
-  private _url: string;
-  private _resourceType: ResourceType;
+  #client: CDPSession;
+  #isNavigationRequest: boolean;
+  #allowInterception: boolean;
+  #interceptionHandled = false;
+  #url: string;
+  #resourceType: ResourceType;
 
-  private _method: string;
-  private _postData?: string;
-  private _headers: Record<string, string> = {};
-  private _frame: Frame;
-  private _continueRequestOverrides: ContinueRequestOverrides;
-  // @ts-expect-error TS2564
-  private _responseForRequest: Partial<ResponseForRequest>;
-  // @ts-expect-error TS2564
-  private _abortErrorReason: Protocol.Network.ErrorReason;
-  private _interceptResolutionState: InterceptResolutionState;
-  private _interceptHandlers: Array<() => void | PromiseLike<any>>;
-  private _initiator: Protocol.Network.Initiator;
+  #method: string;
+  #postData?: string;
+  #headers: Record<string, string> = {};
+  #frame: Frame | null;
+  #continueRequestOverrides: ContinueRequestOverrides;
+  #responseForRequest: Partial<ResponseForRequest> | null = null;
+  #abortErrorReason: Protocol.Network.ErrorReason | null = null;
+  #interceptResolutionState: InterceptResolutionState = {
+    action: InterceptResolutionAction.None,
+  };
+  #interceptHandlers: Array<() => void | PromiseLike<any>>;
+  #initiator: Protocol.Network.Initiator;
+
+  /**
+   * Warning! Using this client can break Puppeteer. Use with caution.
+   *
+   * @experimental
+   */
+  get client(): CDPSession {
+    return this.#client;
+  }
 
   /**
    * @internal
    */
   constructor(
     client: CDPSession,
-    frame: Frame,
-    interceptionId: string,
+    frame: Frame | null,
+    interceptionId: string | undefined,
     allowInterception: boolean,
     event: Protocol.Network.RequestWillBeSentEvent,
     redirectChain: HTTPRequest[]
   ) {
-    this._client = client;
+    this.#client = client;
     this._requestId = event.requestId;
-    this._isNavigationRequest =
+    this.#isNavigationRequest =
       event.requestId === event.loaderId && event.type === 'Document';
     this._interceptionId = interceptionId;
-    this._allowInterception = allowInterception;
-    this._url = event.request.url;
-    // @ts-expect-error TS2532
-    this._resourceType = event.type.toLowerCase() as ResourceType;
-    this._method = event.request.method;
-    this._postData = event.request.postData;
-    this._frame = frame;
+    this.#allowInterception = allowInterception;
+    this.#url = event.request.url;
+    this.#resourceType = (event.type || 'other').toLowerCase() as ResourceType;
+    this.#method = event.request.method;
+    this.#postData = event.request.postData;
+    this.#frame = frame;
     this._redirectChain = redirectChain;
-    this._continueRequestOverrides = {};
-    this._interceptResolutionState = { action: InterceptResolutionAction.None };
-    this._interceptHandlers = [];
-    this._initiator = event.initiator;
+    this.#continueRequestOverrides = {};
+    this.#interceptHandlers = [];
+    this.#initiator = event.initiator;
 
-    for (const key of Object.keys(event.request.headers))
-      this._headers[key.toLowerCase()] = event.request.headers[key];
+    for (const [key, value] of Object.entries(event.request.headers)) {
+      this.#headers[key.toLowerCase()] = value;
+    }
   }
 
   /**
    * @returns the URL of the request
    */
   url(): string {
-    return this._url;
+    return this.#url;
   }
 
   /**
@@ -205,25 +211,25 @@ export class HTTPRequest {
    * `respond()` aren't called).
    */
   continueRequestOverrides(): ContinueRequestOverrides {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    return this._continueRequestOverrides;
+    assert(this.#allowInterception, 'Request Interception is not enabled!');
+    return this.#continueRequestOverrides;
   }
 
   /**
    * @returns The `ResponseForRequest` that gets used if the
    * interception is allowed to respond (ie, `abort()` is not called).
    */
-  responseForRequest(): Partial<ResponseForRequest> {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    return this._responseForRequest;
+  responseForRequest(): Partial<ResponseForRequest> | null {
+    assert(this.#allowInterception, 'Request Interception is not enabled!');
+    return this.#responseForRequest;
   }
 
   /**
    * @returns the most recent reason for aborting the request
    */
-  abortErrorReason(): Protocol.Network.ErrorReason {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    return this._abortErrorReason;
+  abortErrorReason(): Protocol.Network.ErrorReason | null {
+    assert(this.#allowInterception, 'Request Interception is not enabled!');
+    return this.#abortErrorReason;
   }
 
   /**
@@ -238,11 +244,13 @@ export class HTTPRequest {
    *  `disabled`, `none`, or `already-handled`.
    */
   interceptResolutionState(): InterceptResolutionState {
-    if (!this._allowInterception)
-      return { action: InterceptResolutionAction.Disabled };
-    if (this._interceptionHandled)
-      return { action: InterceptResolutionAction.AlreadyHandled };
-    return { ...this._interceptResolutionState };
+    if (!this.#allowInterception) {
+      return {action: InterceptResolutionAction.Disabled};
+    }
+    if (this.#interceptionHandled) {
+      return {action: InterceptResolutionAction.AlreadyHandled};
+    }
+    return {...this.#interceptResolutionState};
   }
 
   /**
@@ -250,7 +258,7 @@ export class HTTPRequest {
    * `false` otherwise.
    */
   isInterceptResolutionHandled(): boolean {
-    return this._interceptionHandled;
+    return this.#interceptionHandled;
   }
 
   /**
@@ -262,7 +270,7 @@ export class HTTPRequest {
   enqueueInterceptAction(
     pendingHandler: () => void | PromiseLike<unknown>
   ): void {
-    this._interceptHandlers.push(pendingHandler);
+    this.#interceptHandlers.push(pendingHandler);
   }
 
   /**
@@ -270,18 +278,20 @@ export class HTTPRequest {
    * the request interception.
    */
   async finalizeInterceptions(): Promise<void> {
-    await this._interceptHandlers.reduce(
-      (promiseChain, interceptAction) => promiseChain.then(interceptAction),
-      Promise.resolve()
-    );
-    const { action } = this.interceptResolutionState();
+    await this.#interceptHandlers.reduce((promiseChain, interceptAction) => {
+      return promiseChain.then(interceptAction);
+    }, Promise.resolve());
+    const {action} = this.interceptResolutionState();
     switch (action) {
       case 'abort':
-        return this._abort(this._abortErrorReason);
+        return this.#abort(this.#abortErrorReason);
       case 'respond':
-        return this._respond(this._responseForRequest);
+        if (this.#responseForRequest === null) {
+          throw new Error('Response is missing for the interception');
+        }
+        return this.#respond(this.#responseForRequest);
       case 'continue':
-        return this._continue(this._continueRequestOverrides);
+        return this.#continue(this.#continueRequestOverrides);
     }
   }
 
@@ -290,21 +300,21 @@ export class HTTPRequest {
    * engine.
    */
   resourceType(): ResourceType {
-    return this._resourceType;
+    return this.#resourceType;
   }
 
   /**
    * @returns the method used (`GET`, `POST`, etc.)
    */
   method(): string {
-    return this._method;
+    return this.#method;
   }
 
   /**
    * @returns the request's post body, if any.
    */
   postData(): string | undefined {
-    return this._postData;
+    return this.#postData;
   }
 
   /**
@@ -312,7 +322,7 @@ export class HTTPRequest {
    * header names are lower-case.
    */
   headers(): Record<string, string> {
-    return this._headers;
+    return this.#headers;
   }
 
   /**
@@ -328,21 +338,21 @@ export class HTTPRequest {
    * error pages.
    */
   frame(): Frame | null {
-    return this._frame;
+    return this.#frame;
   }
 
   /**
    * @returns true if the request is the driver of the current frame's navigation.
    */
   isNavigationRequest(): boolean {
-    return this._isNavigationRequest;
+    return this.#isNavigationRequest;
   }
 
   /**
    * @returns the initiator of the request.
    */
   initiator(): Protocol.Network.Initiator {
-    return this._initiator;
+    return this.#initiator;
   }
 
   /**
@@ -354,7 +364,7 @@ export class HTTPRequest {
    * For example, if the website `http://example.com` has a single redirect to
    * `https://example.com`, then the chain will contain one request:
    *
-   * ```js
+   * ```ts
    * const response = await page.goto('http://example.com');
    * const chain = response.request().redirectChain();
    * console.log(chain.length); // 1
@@ -363,7 +373,7 @@ export class HTTPRequest {
    *
    * If the website `https://google.com` has no redirects, then the chain will be empty:
    *
-   * ```js
+   * ```ts
    * const response = await page.goto('https://google.com');
    * const chain = response.request().redirectChain();
    * console.log(chain.length); // 0
@@ -385,7 +395,7 @@ export class HTTPRequest {
    *
    * Example of logging all failed requests:
    *
-   * ```js
+   * ```ts
    * page.on('requestfailed', request => {
    *   console.log(request.url() + ' ' + request.failure().errorText);
    * });
@@ -396,8 +406,10 @@ export class HTTPRequest {
    * message, e.g. `net::ERR_FAILED`. It is not guaranteed that there will be
    * failure text if the request fails.
    */
-  failure(): { errorText: string } | null {
-    if (!this._failureText) return null;
+  failure(): {errorText: string} | null {
+    if (!this._failureText) {
+      return null;
+    }
     return {
       errorText: this._failureText,
     };
@@ -414,7 +426,7 @@ export class HTTPRequest {
    * Exception is immediately thrown if the request interception is not enabled.
    *
    * @example
-   * ```js
+   * ```ts
    * await page.setRequestInterception(true);
    * page.on('request', request => {
    *   // Override headers
@@ -436,48 +448,52 @@ export class HTTPRequest {
     priority?: number
   ): Promise<void> {
     // Request interception is not supported for data: urls.
-    if (this._url.startsWith('data:')) return;
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    if (priority === undefined) {
-      return this._continue(overrides);
+    if (this.#url.startsWith('data:')) {
+      return;
     }
-    this._continueRequestOverrides = overrides;
+    assert(this.#allowInterception, 'Request Interception is not enabled!');
+    assert(!this.#interceptionHandled, 'Request is already handled!');
+    if (priority === undefined) {
+      return this.#continue(overrides);
+    }
+    this.#continueRequestOverrides = overrides;
     if (
-      // @ts-expect-error TS2532
-      priority > this._interceptResolutionState.priority ||
-      this._interceptResolutionState.priority === undefined
+      this.#interceptResolutionState.priority === undefined ||
+      priority > this.#interceptResolutionState.priority
     ) {
-      this._interceptResolutionState = {
+      this.#interceptResolutionState = {
         action: InterceptResolutionAction.Continue,
         priority,
       };
       return;
     }
-    if (priority === this._interceptResolutionState.priority) {
+    if (priority === this.#interceptResolutionState.priority) {
       if (
-        this._interceptResolutionState.action === 'abort' ||
-        this._interceptResolutionState.action === 'respond'
+        this.#interceptResolutionState.action === 'abort' ||
+        this.#interceptResolutionState.action === 'respond'
       ) {
         return;
       }
-      this._interceptResolutionState.action =
+      this.#interceptResolutionState.action =
         InterceptResolutionAction.Continue;
     }
     return;
   }
 
-  private async _continue(
-    overrides: ContinueRequestOverrides = {}
-  ): Promise<void> {
-    const { url, method, postData, headers } = overrides;
-    this._interceptionHandled = true;
+  async #continue(overrides: ContinueRequestOverrides = {}): Promise<void> {
+    const {url, method, postData, headers} = overrides;
+    this.#interceptionHandled = true;
 
     const postDataBinaryBase64 = postData
       ? Buffer.from(postData).toString('base64')
       : undefined;
 
-    await this._client
+    if (this._interceptionId === undefined) {
+      throw new Error(
+        'HTTPRequest is missing _interceptionId needed for Fetch.continueRequest'
+      );
+    }
+    await this.#client
       .send('Fetch.continueRequest', {
         requestId: this._interceptionId,
         url,
@@ -485,8 +501,8 @@ export class HTTPRequest {
         postData: postDataBinaryBase64,
         headers: headers ? headersArray(headers) : undefined,
       })
-      .catch((error) => {
-        this._interceptionHandled = false;
+      .catch(error => {
+        this.#interceptionHandled = false;
         return handleError(error);
       });
   }
@@ -503,7 +519,7 @@ export class HTTPRequest {
    *
    * @example
    * An example of fulfilling all requests with 404 responses:
-   * ```js
+   * ```ts
    * await page.setRequestInterception(true);
    * page.on('request', request => {
    *   request.respond({
@@ -527,37 +543,38 @@ export class HTTPRequest {
     priority?: number
   ): Promise<void> {
     // Mocking responses for dataURL requests is not currently supported.
-    if (this._url.startsWith('data:')) return;
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    if (priority === undefined) {
-      return this._respond(response);
+    if (this.#url.startsWith('data:')) {
+      return;
     }
-    this._responseForRequest = response;
+    assert(this.#allowInterception, 'Request Interception is not enabled!');
+    assert(!this.#interceptionHandled, 'Request is already handled!');
+    if (priority === undefined) {
+      return this.#respond(response);
+    }
+    this.#responseForRequest = response;
     if (
-      // @ts-expect-error TS2532
-      priority > this._interceptResolutionState.priority ||
-      this._interceptResolutionState.priority === undefined
+      this.#interceptResolutionState.priority === undefined ||
+      priority > this.#interceptResolutionState.priority
     ) {
-      this._interceptResolutionState = {
+      this.#interceptResolutionState = {
         action: InterceptResolutionAction.Respond,
         priority,
       };
       return;
     }
-    if (priority === this._interceptResolutionState.priority) {
-      if (this._interceptResolutionState.action === 'abort') {
+    if (priority === this.#interceptResolutionState.priority) {
+      if (this.#interceptResolutionState.action === 'abort') {
         return;
       }
-      this._interceptResolutionState.action = InterceptResolutionAction.Respond;
+      this.#interceptResolutionState.action = InterceptResolutionAction.Respond;
     }
   }
 
-  private async _respond(response: Partial<ResponseForRequest>): Promise<void> {
-    this._interceptionHandled = true;
+  async #respond(response: Partial<ResponseForRequest>): Promise<void> {
+    this.#interceptionHandled = true;
 
     const responseBody: Buffer | null =
-      response.body && helper.isString(response.body)
+      response.body && isString(response.body)
         ? Buffer.from(response.body)
         : (response.body as Buffer) || null;
 
@@ -567,28 +584,37 @@ export class HTTPRequest {
         const value = response.headers[header];
 
         responseHeaders[header.toLowerCase()] = Array.isArray(value)
-          ? value.map((item) => String(item))
+          ? value.map(item => {
+              return String(item);
+            })
           : String(value);
       }
     }
-    if (response.contentType)
+    if (response.contentType) {
       responseHeaders['content-type'] = response.contentType;
-    if (responseBody && !('content-length' in responseHeaders))
+    }
+    if (responseBody && !('content-length' in responseHeaders)) {
       responseHeaders['content-length'] = String(
         Buffer.byteLength(responseBody)
       );
+    }
 
-    await this._client
+    const status = response.status || 200;
+    if (this._interceptionId === undefined) {
+      throw new Error(
+        'HTTPRequest is missing _interceptionId needed for Fetch.fulfillRequest'
+      );
+    }
+    await this.#client
       .send('Fetch.fulfillRequest', {
         requestId: this._interceptionId,
-        responseCode: response.status || 200,
-        // @ts-expect-error TS7053
-        responsePhrase: STATUS_TEXTS[response.status || 200],
+        responseCode: status,
+        responsePhrase: STATUS_TEXTS[status],
         responseHeaders: headersArray(responseHeaders),
         body: responseBody ? responseBody.toString('base64') : undefined,
       })
-      .catch((error) => {
-        this._interceptionHandled = false;
+      .catch(error => {
+        this.#interceptionHandled = false;
         return handleError(error);
       });
   }
@@ -611,21 +637,22 @@ export class HTTPRequest {
     priority?: number
   ): Promise<void> {
     // Request interception is not supported for data: urls.
-    if (this._url.startsWith('data:')) return;
+    if (this.#url.startsWith('data:')) {
+      return;
+    }
     const errorReason = errorReasons[errorCode];
     assert(errorReason, 'Unknown error code: ' + errorCode);
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
+    assert(this.#allowInterception, 'Request Interception is not enabled!');
+    assert(!this.#interceptionHandled, 'Request is already handled!');
     if (priority === undefined) {
-      return this._abort(errorReason);
+      return this.#abort(errorReason);
     }
-    this._abortErrorReason = errorReason;
+    this.#abortErrorReason = errorReason;
     if (
-      // @ts-expect-error TS2532
-      priority >= this._interceptResolutionState.priority ||
-      this._interceptResolutionState.priority === undefined
+      this.#interceptResolutionState.priority === undefined ||
+      priority >= this.#interceptResolutionState.priority
     ) {
-      this._interceptResolutionState = {
+      this.#interceptResolutionState = {
         action: InterceptResolutionAction.Abort,
         priority,
       };
@@ -633,14 +660,19 @@ export class HTTPRequest {
     }
   }
 
-  private async _abort(
-    errorReason: Protocol.Network.ErrorReason
+  async #abort(
+    errorReason: Protocol.Network.ErrorReason | null
   ): Promise<void> {
-    this._interceptionHandled = true;
-    await this._client
+    this.#interceptionHandled = true;
+    if (this._interceptionId === undefined) {
+      throw new Error(
+        'HTTPRequest is missing _interceptionId needed for Fetch.failRequest'
+      );
+    }
+    await this.#client
       .send('Fetch.failRequest', {
         requestId: this._interceptionId,
-        errorReason,
+        errorReason: errorReason || 'Failed',
       })
       .catch(handleError);
   }
@@ -708,7 +740,7 @@ export type ActionResult = 'continue' | 'abort' | 'respond';
 
 function headersArray(
   headers: Record<string, string | string[]>
-): Array<{ name: string; value: string }> {
+): Array<{name: string; value: string}> {
   const result = [];
   for (const name in headers) {
     const value = headers[name];
@@ -716,7 +748,11 @@ function headersArray(
     if (!Object.is(value, undefined)) {
       const values = Array.isArray(value) ? value : [value];
 
-      result.push(...values.map((value) => ({ name, value: value + '' })));
+      result.push(
+        ...values.map(value => {
+          return {name, value: value + ''};
+        })
+      );
     }
   }
   return result;
@@ -735,7 +771,7 @@ async function handleError(error: ProtocolError) {
 // List taken from
 // https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
 // with extra 306 and 418 codes.
-const STATUS_TEXTS = {
+const STATUS_TEXTS: {[key: string]: string | undefined} = {
   '100': 'Continue',
   '101': 'Switching Protocols',
   '102': 'Processing',

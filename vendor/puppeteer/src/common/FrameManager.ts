@@ -14,34 +14,23 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from './EventEmitter.ts';
-import { assert } from './assert.ts';
-import { helper, debugError } from './helper.ts';
-import { ExecutionContext, EVALUATION_SCRIPT_URL } from './ExecutionContext.ts';
-import {
-  LifecycleWatcher,
-  PuppeteerLifeCycleEvent,
-} from './LifecycleWatcher.ts';
-import { DOMWorld, WaitForSelectorOptions } from './DOMWorld.ts';
-import { NetworkManager } from './NetworkManager.ts';
-import { TimeoutSettings } from './TimeoutSettings.ts';
-import { Connection, CDPSession } from './Connection.ts';
-import { JSHandle, ElementHandle } from './JSHandle.ts';
-import { MouseButton } from './Input.ts';
-import { Page } from './Page.ts';
-import { HTTPResponse } from './HTTPResponse.ts';
-import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
-import {
-  SerializableOrJSHandle,
-  EvaluateHandleFn,
-  WrapElementHandle,
-  EvaluateFn,
-  EvaluateFnReturnType,
-  UnwrapPromiseLike,
-} from './EvalTypes.ts';
+import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
+import {assert} from './assert.ts';
+import {CDPSession, Connection} from './Connection.ts';
+import {DOMWorld, WaitForSelectorOptions} from './DOMWorld.ts';
+import {ElementHandle} from './ElementHandle.ts';
+import {EventEmitter} from './EventEmitter.ts';
+import {EVALUATION_SCRIPT_URL, ExecutionContext} from './ExecutionContext.ts';
+import {HTTPResponse} from './HTTPResponse.ts';
+import {MouseButton} from './Input.ts';
+import {LifecycleWatcher, PuppeteerLifeCycleEvent} from './LifecycleWatcher.ts';
+import {NetworkManager} from './NetworkManager.ts';
+import {Page} from './Page.ts';
+import {TimeoutSettings} from './TimeoutSettings.ts';
+import {EvaluateFunc, HandleFor, NodeFor} from './types.ts';
+import {debugError, isErrorLike} from './util.ts';
 
 const UTILITY_WORLD_NAME = '__puppeteer_utility_world__';
-const xPathPattern = /^\(\/\/[^\)]+\)|^\/\//;
 
 /**
  * We use symbols to prevent external parties listening to these events.
@@ -66,15 +55,28 @@ export const FrameManagerEmittedEvents = {
  * @internal
  */
 export class FrameManager extends EventEmitter {
-  _client: CDPSession;
-  private _page: Page;
-  private _networkManager: NetworkManager;
-  _timeoutSettings: TimeoutSettings;
-  private _frames = new Map<string, Frame>();
-  private _contextIdToContext = new Map<string, ExecutionContext>();
-  private _isolatedWorlds = new Set<string>();
-  // @ts-expect-error TS2564
-  private _mainFrame: Frame;
+  #page: Page;
+  #networkManager: NetworkManager;
+  #timeoutSettings: TimeoutSettings;
+  #frames = new Map<string, Frame>();
+  #contextIdToContext = new Map<string, ExecutionContext>();
+  #isolatedWorlds = new Set<string>();
+  #mainFrame?: Frame;
+  #client: CDPSession;
+
+  /**
+   * @internal
+   */
+  get _timeoutSettings(): TimeoutSettings {
+    return this.#timeoutSettings;
+  }
+
+  /**
+   * @internal
+   */
+  get _client(): CDPSession {
+    return this.#client;
+  }
 
   constructor(
     client: CDPSession,
@@ -83,79 +85,90 @@ export class FrameManager extends EventEmitter {
     timeoutSettings: TimeoutSettings
   ) {
     super();
-    this._client = client;
-    this._page = page;
-    this._networkManager = new NetworkManager(client, ignoreHTTPSErrors, this);
-    this._timeoutSettings = timeoutSettings;
-    this.setupEventListeners(this._client);
+    this.#client = client;
+    this.#page = page;
+    this.#networkManager = new NetworkManager(client, ignoreHTTPSErrors, this);
+    this.#timeoutSettings = timeoutSettings;
+    this.setupEventListeners(this.#client);
   }
 
   private setupEventListeners(session: CDPSession) {
-    session.on('Page.frameAttached', (event) => {
-      this._onFrameAttached(session, event.frameId, event.parentFrameId);
+    session.on('Page.frameAttached', event => {
+      this.#onFrameAttached(session, event.frameId, event.parentFrameId);
     });
-    session.on('Page.frameNavigated', (event) => {
-      this._onFrameNavigated(event.frame);
+    session.on('Page.frameNavigated', event => {
+      this.#onFrameNavigated(event.frame);
     });
-    session.on('Page.navigatedWithinDocument', (event) => {
-      this._onFrameNavigatedWithinDocument(event.frameId, event.url);
+    session.on('Page.navigatedWithinDocument', event => {
+      this.#onFrameNavigatedWithinDocument(event.frameId, event.url);
     });
     session.on(
       'Page.frameDetached',
       (event: Protocol.Page.FrameDetachedEvent) => {
-        this._onFrameDetached(
+        this.#onFrameDetached(
           event.frameId,
           event.reason as Protocol.Page.FrameDetachedEventReason
         );
       }
     );
-    session.on('Page.frameStoppedLoading', (event) => {
-      this._onFrameStoppedLoading(event.frameId);
+    session.on('Page.frameStartedLoading', event => {
+      this.#onFrameStartedLoading(event.frameId);
     });
-    session.on('Runtime.executionContextCreated', (event) => {
-      this._onExecutionContextCreated(event.context, session);
+    session.on('Page.frameStoppedLoading', event => {
+      this.#onFrameStoppedLoading(event.frameId);
     });
-    session.on('Runtime.executionContextDestroyed', (event) => {
-      this._onExecutionContextDestroyed(event.executionContextId, session);
+    session.on('Runtime.executionContextCreated', event => {
+      this.#onExecutionContextCreated(event.context, session);
+    });
+    session.on('Runtime.executionContextDestroyed', event => {
+      this.#onExecutionContextDestroyed(event.executionContextId, session);
     });
     session.on('Runtime.executionContextsCleared', () => {
-      this._onExecutionContextsCleared(session);
+      this.#onExecutionContextsCleared(session);
     });
-    session.on('Page.lifecycleEvent', (event) => {
-      this._onLifecycleEvent(event);
+    session.on('Page.lifecycleEvent', event => {
+      this.#onLifecycleEvent(event);
     });
-    session.on('Target.attachedToTarget', async (event) => {
-      this._onAttachedToTarget(event);
+    session.on('Target.attachedToTarget', async event => {
+      this.#onAttachedToTarget(event);
     });
-    session.on('Target.detachedFromTarget', async (event) => {
-      this._onDetachedFromTarget(event);
+    session.on('Target.detachedFromTarget', async event => {
+      this.#onDetachedFromTarget(event);
     });
   }
 
-  async initialize(client: CDPSession = this._client): Promise<void> {
+  async initialize(client: CDPSession = this.#client): Promise<void> {
     try {
       const result = await Promise.all([
         client.send('Page.enable'),
         client.send('Page.getFrameTree'),
+        client !== this.#client
+          ? client.send('Target.setAutoAttach', {
+              autoAttach: true,
+              waitForDebuggerOnStart: false,
+              flatten: true,
+            })
+          : Promise.resolve(),
       ]);
 
-      const { frameTree } = result[1];
-      this._handleFrameTree(client, frameTree);
+      const {frameTree} = result[1];
+      this.#handleFrameTree(client, frameTree);
       await Promise.all([
-        client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
-        client
-          .send('Runtime.enable')
-          .then(() => this._ensureIsolatedWorld(client, UTILITY_WORLD_NAME)),
+        client.send('Page.setLifecycleEventsEnabled', {enabled: true}),
+        client.send('Runtime.enable').then(() => {
+          return this._ensureIsolatedWorld(client, UTILITY_WORLD_NAME);
+        }),
         // TODO: Network manager is not aware of OOP iframes yet.
-        client === this._client
-          ? this._networkManager.initialize()
+        client === this.#client
+          ? this.#networkManager.initialize()
           : Promise.resolve(),
       ]);
     } catch (error) {
       // The target might have been closed before the initialization finished.
       if (
-        error.message.includes('Target closed') ||
-        error.message.includes('Session closed')
+        isErrorLike(error) &&
+        (error.message.includes('Target closed') ||
+          error.message.includes('Session closed'))
       ) {
         return;
       }
@@ -165,7 +178,7 @@ export class FrameManager extends EventEmitter {
   }
 
   networkManager(): NetworkManager {
-    return this._networkManager;
+    return this.#networkManager;
   }
 
   async navigateFrame(
@@ -179,33 +192,33 @@ export class FrameManager extends EventEmitter {
   ): Promise<HTTPResponse | null> {
     assertNoLegacyNavigationOptions(options);
     const {
-      referer = this._networkManager.extraHTTPHeaders()['referer'],
+      referer = this.#networkManager.extraHTTPHeaders()['referer'],
       waitUntil = ['load'],
-      timeout = this._timeoutSettings.navigationTimeout(),
+      timeout = this.#timeoutSettings.navigationTimeout(),
     } = options;
 
     const watcher = new LifecycleWatcher(this, frame, waitUntil, timeout);
-    let ensureNewDocumentNavigation = false;
     let error = await Promise.race([
-      navigate(this._client, url, referer, frame._id),
+      navigate(this.#client, url, referer, frame._id),
       watcher.timeoutOrTerminationPromise(),
     ]);
     if (!error) {
       error = await Promise.race([
         watcher.timeoutOrTerminationPromise(),
-        ensureNewDocumentNavigation
-          ? watcher.newDocumentNavigationPromise()
-          : watcher.sameDocumentNavigationPromise(),
+        watcher.newDocumentNavigationPromise(),
+        watcher.sameDocumentNavigationPromise(),
       ]);
     }
     watcher.dispose();
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
     return await watcher.navigationResponse();
 
     async function navigate(
       client: CDPSession,
       url: string,
-      referrer: string,
+      referrer: string | undefined,
       frameId: string
     ): Promise<Error | null> {
       try {
@@ -214,12 +227,14 @@ export class FrameManager extends EventEmitter {
           referrer,
           frameId,
         });
-        ensureNewDocumentNavigation = !!response.loaderId;
         return response.errorText
           ? new Error(`${response.errorText} at ${url}`)
           : null;
       } catch (error) {
-        return error;
+        if (isErrorLike(error)) {
+          return error;
+        }
+        throw error;
       }
     }
   }
@@ -234,7 +249,7 @@ export class FrameManager extends EventEmitter {
     assertNoLegacyNavigationOptions(options);
     const {
       waitUntil = ['load'],
-      timeout = this._timeoutSettings.navigationTimeout(),
+      timeout = this.#timeoutSettings.navigationTimeout(),
     } = options;
     const watcher = new LifecycleWatcher(this, frame, waitUntil, timeout);
     const error = await Promise.race([
@@ -243,121 +258,133 @@ export class FrameManager extends EventEmitter {
       watcher.newDocumentNavigationPromise(),
     ]);
     watcher.dispose();
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
     return await watcher.navigationResponse();
   }
 
-  private async _onAttachedToTarget(
-    event: Protocol.Target.AttachedToTargetEvent
-  ) {
+  async #onAttachedToTarget(event: Protocol.Target.AttachedToTargetEvent) {
     if (event.targetInfo.type !== 'iframe') {
       return;
     }
 
-    const frame = this._frames.get(event.targetInfo.targetId);
-    // @ts-expect-error TS2532
-    const session = Connection.fromSession(this._client).session(
-      event.sessionId
-    );
-    // @ts-expect-error TS2345
-    if (frame) frame._updateClient(session);
-    // @ts-expect-error TS2345
+    const frame = this.#frames.get(event.targetInfo.targetId);
+    const connection = Connection.fromSession(this.#client);
+    assert(connection);
+    const session = connection.session(event.sessionId);
+    assert(session);
+    if (frame) {
+      frame._updateClient(session);
+    }
     this.setupEventListeners(session);
-    // @ts-expect-error TS2345
     await this.initialize(session);
   }
 
-  private async _onDetachedFromTarget(
-    event: Protocol.Target.DetachedFromTargetEvent
-  ) {
-    // @ts-expect-error TS2345
-    const frame = this._frames.get(event.targetId);
+  async #onDetachedFromTarget(event: Protocol.Target.DetachedFromTargetEvent) {
+    if (!event.targetId) {
+      return;
+    }
+    const frame = this.#frames.get(event.targetId);
     if (frame && frame.isOOPFrame()) {
       // When an OOP iframe is removed from the page, it
       // will only get a Target.detachedFromTarget event.
-      this._removeFramesRecursively(frame);
+      this.#removeFramesRecursively(frame);
     }
   }
 
-  _onLifecycleEvent(event: Protocol.Page.LifecycleEventEvent): void {
-    const frame = this._frames.get(event.frameId);
-    if (!frame) return;
+  #onLifecycleEvent(event: Protocol.Page.LifecycleEventEvent): void {
+    const frame = this.#frames.get(event.frameId);
+    if (!frame) {
+      return;
+    }
     frame._onLifecycleEvent(event.loaderId, event.name);
     this.emit(FrameManagerEmittedEvents.LifecycleEvent, frame);
   }
 
-  _onFrameStoppedLoading(frameId: string): void {
-    const frame = this._frames.get(frameId);
-    if (!frame) return;
+  #onFrameStartedLoading(frameId: string): void {
+    const frame = this.#frames.get(frameId);
+    if (!frame) {
+      return;
+    }
+    frame._onLoadingStarted();
+  }
+
+  #onFrameStoppedLoading(frameId: string): void {
+    const frame = this.#frames.get(frameId);
+    if (!frame) {
+      return;
+    }
     frame._onLoadingStopped();
     this.emit(FrameManagerEmittedEvents.LifecycleEvent, frame);
   }
 
-  _handleFrameTree(
+  #handleFrameTree(
     session: CDPSession,
     frameTree: Protocol.Page.FrameTree
   ): void {
     if (frameTree.frame.parentId) {
-      this._onFrameAttached(
+      this.#onFrameAttached(
         session,
         frameTree.frame.id,
         frameTree.frame.parentId
       );
     }
-    this._onFrameNavigated(frameTree.frame);
-    if (!frameTree.childFrames) return;
+    this.#onFrameNavigated(frameTree.frame);
+    if (!frameTree.childFrames) {
+      return;
+    }
 
     for (const child of frameTree.childFrames) {
-      this._handleFrameTree(session, child);
+      this.#handleFrameTree(session, child);
     }
   }
 
   page(): Page {
-    return this._page;
+    return this.#page;
   }
 
   mainFrame(): Frame {
-    return this._mainFrame;
+    assert(this.#mainFrame, 'Requesting main frame too early!');
+    return this.#mainFrame;
   }
 
   frames(): Frame[] {
-    return Array.from(this._frames.values());
+    return Array.from(this.#frames.values());
   }
 
   frame(frameId: string): Frame | null {
-    return this._frames.get(frameId) || null;
+    return this.#frames.get(frameId) || null;
   }
 
-  _onFrameAttached(
+  #onFrameAttached(
     session: CDPSession,
     frameId: string,
     parentFrameId?: string
   ): void {
-    if (this._frames.has(frameId)) {
-      const frame = this._frames.get(frameId);
-      // @ts-expect-error TS2532
+    if (this.#frames.has(frameId)) {
+      const frame = this.#frames.get(frameId)!;
       if (session && frame.isOOPFrame()) {
         // If an OOP iframes becomes a normal iframe again
         // it is first attached to the parent page before
         // the target is removed.
-        // @ts-expect-error TS2532
         frame._updateClient(session);
       }
       return;
     }
     assert(parentFrameId);
-    const parentFrame = this._frames.get(parentFrameId);
-    // @ts-expect-error TS2345
+    const parentFrame = this.#frames.get(parentFrameId);
+    assert(parentFrame);
     const frame = new Frame(this, parentFrame, frameId, session);
-    this._frames.set(frame._id, frame);
+    this.#frames.set(frame._id, frame);
     this.emit(FrameManagerEmittedEvents.FrameAttached, frame);
   }
 
-  _onFrameNavigated(framePayload: Protocol.Page.Frame): void {
+  #onFrameNavigated(framePayload: Protocol.Page.Frame): void {
     const isMainFrame = !framePayload.parentId;
     let frame = isMainFrame
-      ? this._mainFrame
-      : this._frames.get(framePayload.id);
+      ? this.#mainFrame
+      : this.#frames.get(framePayload.id);
     assert(
       isMainFrame || frame,
       'We either navigate top level or have old version of the navigated frame'
@@ -365,26 +392,27 @@ export class FrameManager extends EventEmitter {
 
     // Detach all child frames first.
     if (frame) {
-      for (const child of frame.childFrames())
-        this._removeFramesRecursively(child);
+      for (const child of frame.childFrames()) {
+        this.#removeFramesRecursively(child);
+      }
     }
 
     // Update or create main frame.
     if (isMainFrame) {
       if (frame) {
         // Update frame id to retain frame identity on cross-process navigation.
-        this._frames.delete(frame._id);
+        this.#frames.delete(frame._id);
         frame._id = framePayload.id;
       } else {
         // Initial main frame navigation.
-        frame = new Frame(this, null, framePayload.id, this._client);
+        frame = new Frame(this, null, framePayload.id, this.#client);
       }
-      this._frames.set(framePayload.id, frame);
-      this._mainFrame = frame;
+      this.#frames.set(framePayload.id, frame);
+      this.#mainFrame = frame;
     }
 
     // Update frame payload.
-    // @ts-expect-error TS2532
+    assert(frame);
     frame._navigated(framePayload);
 
     this.emit(FrameManagerEmittedEvents.FrameNavigated, frame);
@@ -392,8 +420,10 @@ export class FrameManager extends EventEmitter {
 
   async _ensureIsolatedWorld(session: CDPSession, name: string): Promise<void> {
     const key = `${session.id()}:${name}`;
-    if (this._isolatedWorlds.has(key)) return;
-    this._isolatedWorlds.add(key);
+    if (this.#isolatedWorlds.has(key)) {
+      return;
+    }
+    this.#isolatedWorlds.add(key);
 
     await session.send('Page.addScriptToEvaluateOnNewDocument', {
       source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`,
@@ -402,54 +432,62 @@ export class FrameManager extends EventEmitter {
     // Frames might be removed before we send this.
     await Promise.all(
       this.frames()
-        .filter((frame) => frame._client === session)
-        .map((frame) =>
-          session
+        .filter(frame => {
+          return frame._client() === session;
+        })
+        .map(frame => {
+          return session
             .send('Page.createIsolatedWorld', {
               frameId: frame._id,
               worldName: name,
               grantUniveralAccess: true,
             })
-            .catch(debugError)
-        )
+            .catch(debugError);
+        })
     );
   }
 
-  _onFrameNavigatedWithinDocument(frameId: string, url: string): void {
-    const frame = this._frames.get(frameId);
-    if (!frame) return;
+  #onFrameNavigatedWithinDocument(frameId: string, url: string): void {
+    const frame = this.#frames.get(frameId);
+    if (!frame) {
+      return;
+    }
     frame._navigatedWithinDocument(url);
     this.emit(FrameManagerEmittedEvents.FrameNavigatedWithinDocument, frame);
     this.emit(FrameManagerEmittedEvents.FrameNavigated, frame);
   }
 
-  _onFrameDetached(
+  #onFrameDetached(
     frameId: string,
     reason: Protocol.Page.FrameDetachedEventReason
   ): void {
-    const frame = this._frames.get(frameId);
+    const frame = this.#frames.get(frameId);
     if (reason === 'remove') {
       // Only remove the frame if the reason for the detached event is
       // an actual removement of the frame.
       // For frames that become OOP iframes, the reason would be 'swap'.
-      if (frame) this._removeFramesRecursively(frame);
+      if (frame) {
+        this.#removeFramesRecursively(frame);
+      }
     } else if (reason === 'swap') {
       this.emit(FrameManagerEmittedEvents.FrameSwapped, frame);
     }
   }
 
-  _onExecutionContextCreated(
+  #onExecutionContextCreated(
     contextPayload: Protocol.Runtime.ExecutionContextDescription,
     session: CDPSession
   ): void {
-    const auxData = contextPayload.auxData as { frameId?: string };
-    const frameId = auxData ? auxData.frameId : null;
-    // @ts-expect-error TS2345
-    const frame = this._frames.get(frameId) || null;
-    let world = null;
+    const auxData = contextPayload.auxData as {frameId?: string} | undefined;
+    const frameId = auxData && auxData.frameId;
+    const frame =
+      typeof frameId === 'string' ? this.#frames.get(frameId) : undefined;
+    let world: DOMWorld | undefined;
     if (frame) {
       // Only care about execution contexts created for the current session.
-      if (frame._client !== session) return;
+      if (frame._client() !== session) {
+        return;
+      }
 
       if (contextPayload.auxData && !!contextPayload.auxData['isDefault']) {
         world = frame._mainWorld;
@@ -464,54 +502,62 @@ export class FrameManager extends EventEmitter {
       }
     }
     const context = new ExecutionContext(
-      frame?._client || this._client,
+      frame?._client() || this.#client,
       contextPayload,
-      // @ts-expect-error TS2345
       world
     );
-    if (world) world._setContext(context);
+    if (world) {
+      world._setContext(context);
+    }
     const key = `${session.id()}:${contextPayload.id}`;
-    this._contextIdToContext.set(key, context);
+    this.#contextIdToContext.set(key, context);
   }
 
-  private _onExecutionContextDestroyed(
+  #onExecutionContextDestroyed(
     executionContextId: number,
     session: CDPSession
   ): void {
     const key = `${session.id()}:${executionContextId}`;
-    const context = this._contextIdToContext.get(key);
-    if (!context) return;
-    this._contextIdToContext.delete(key);
-    // @ts-expect-error TS2345
-    if (context._world) context._world._setContext(null);
+    const context = this.#contextIdToContext.get(key);
+    if (!context) {
+      return;
+    }
+    this.#contextIdToContext.delete(key);
+    if (context._world) {
+      context._world._setContext(null);
+    }
   }
 
-  private _onExecutionContextsCleared(session: CDPSession): void {
-    for (const [key, context] of this._contextIdToContext.entries()) {
+  #onExecutionContextsCleared(session: CDPSession): void {
+    for (const [key, context] of this.#contextIdToContext.entries()) {
       // Make sure to only clear execution contexts that belong
       // to the current session.
-      if (context._client !== session) continue;
-      // @ts-expect-error TS2345
-      if (context._world) context._world._setContext(null);
-      this._contextIdToContext.delete(key);
+      if (context._client !== session) {
+        continue;
+      }
+      if (context._world) {
+        context._world._setContext(null);
+      }
+      this.#contextIdToContext.delete(key);
     }
   }
 
   executionContextById(
     contextId: number,
-    session: CDPSession = this._client
+    session: CDPSession = this.#client
   ): ExecutionContext {
     const key = `${session.id()}:${contextId}`;
-    const context = this._contextIdToContext.get(key);
+    const context = this.#contextIdToContext.get(key);
     assert(context, 'INTERNAL ERROR: missing context with id = ' + contextId);
     return context;
   }
 
-  private _removeFramesRecursively(frame: Frame): void {
-    for (const child of frame.childFrames())
-      this._removeFramesRecursively(child);
+  #removeFramesRecursively(frame: Frame): void {
+    for (const child of frame.childFrames()) {
+      this.#removeFramesRecursively(child);
+    }
     frame._detach();
-    this._frames.delete(frame._id);
+    this.#frames.delete(frame._id);
     this.emit(FrameManagerEmittedEvents.FrameDetached, frame);
   }
 }
@@ -606,7 +652,7 @@ export interface FrameAddStyleTagOptions {
  * @Example
  * An example of dumping frame tree:
  *
- * ```js
+ * ```ts
  * const puppeteer = require('puppeteer');
  *
  * (async () => {
@@ -628,7 +674,7 @@ export interface FrameAddStyleTagOptions {
  * @Example
  * An example of getting text from an iframe element:
  *
- * ```js
+ * ```ts
  * const frame = page.frames().find(frame => frame.name() === 'myframe');
  * const text = await frame.$eval('.selector', element => element.textContent);
  * console.log(text);
@@ -637,18 +683,19 @@ export interface FrameAddStyleTagOptions {
  * @public
  */
 export class Frame {
+  #parentFrame: Frame | null;
+  #url = '';
+  #detached = false;
+  #client!: CDPSession;
+
   /**
    * @internal
    */
   _frameManager: FrameManager;
-  private _parentFrame?: Frame;
   /**
    * @internal
    */
   _id: string;
-
-  private _url = '';
-  private _detached = false;
   /**
    * @internal
    */
@@ -657,7 +704,10 @@ export class Frame {
    * @internal
    */
   _name?: string;
-
+  /**
+   * @internal
+   */
+  _hasStartedLoading = false;
   /**
    * @internal
    */
@@ -665,22 +715,15 @@ export class Frame {
   /**
    * @internal
    */
-  // @ts-expect-error TS2564
-  _mainWorld: DOMWorld;
+  _mainWorld!: DOMWorld;
   /**
    * @internal
    */
-  // @ts-expect-error TS2564
-  _secondaryWorld: DOMWorld;
+  _secondaryWorld!: DOMWorld;
   /**
    * @internal
    */
   _childFrames: Set<Frame>;
-  /**
-   * @internal
-   */
-  // @ts-expect-error TS2564
-  _client: CDPSession;
 
   /**
    * @internal
@@ -692,16 +735,17 @@ export class Frame {
     client: CDPSession
   ) {
     this._frameManager = frameManager;
-    // @ts-expect-error TS2322
-    this._parentFrame = parentFrame;
-    this._url = '';
+    this.#parentFrame = parentFrame ?? null;
+    this.#url = '';
     this._id = frameId;
-    this._detached = false;
+    this.#detached = false;
 
     this._loaderId = '';
 
     this._childFrames = new Set();
-    if (this._parentFrame) this._parentFrame._childFrames.add(this);
+    if (this.#parentFrame) {
+      this.#parentFrame._childFrames.add(this);
+    }
 
     this._updateClient(client);
   }
@@ -710,19 +754,26 @@ export class Frame {
    * @internal
    */
   _updateClient(client: CDPSession): void {
-    this._client = client;
+    this.#client = client;
     this._mainWorld = new DOMWorld(
-      this._client,
+      this.#client,
       this._frameManager,
       this,
       this._frameManager._timeoutSettings
     );
     this._secondaryWorld = new DOMWorld(
-      this._client,
+      this.#client,
       this._frameManager,
       this,
       this._frameManager._timeoutSettings
     );
+  }
+
+  /**
+   * @returns a page associated with the frame.
+   */
+  page(): Page {
+    return this._frameManager.page();
   }
 
   /**
@@ -731,7 +782,7 @@ export class Frame {
    * @returns `true` if the frame is an OOP frame, or `false` otherwise.
    */
   isOOPFrame(): boolean {
-    return this._client !== this._frameManager._client;
+    return this.#client !== this._frameManager._client;
   }
 
   /**
@@ -790,7 +841,7 @@ export class Frame {
    * you run code which will indirectly cause the frame to navigate. Consider
    * this example:
    *
-   * ```js
+   * ```ts
    * const [response] = await Promise.all([
    *   // The navigation promise resolves after navigation has finished
    *   frame.waitForNavigation(),
@@ -816,8 +867,8 @@ export class Frame {
   /**
    * @internal
    */
-  client(): CDPSession {
-    return this._client;
+  _client(): CDPSession {
+    return this.#client;
   }
 
   /**
@@ -840,11 +891,14 @@ export class Frame {
    * @param pageFunction - a function that is run within the frame
    * @param args - arguments to be passed to the pageFunction
    */
-  async evaluateHandle<HandlerType extends JSHandle = JSHandle>(
-    pageFunction: EvaluateHandleFn,
-    ...args: SerializableOrJSHandle[]
-  ): Promise<HandlerType> {
-    return this._mainWorld.evaluateHandle<HandlerType>(pageFunction, ...args);
+  async evaluateHandle<
+    Params extends unknown[],
+    Func extends EvaluateFunc<Params> = EvaluateFunc<Params>
+  >(
+    pageFunction: Func | string,
+    ...args: Params
+  ): Promise<HandleFor<Awaited<ReturnType<Func>>>> {
+    return this._mainWorld.evaluateHandle(pageFunction, ...args);
   }
 
   /**
@@ -856,11 +910,14 @@ export class Frame {
    * @param pageFunction - a function that is run within the frame
    * @param args - arguments to be passed to the pageFunction
    */
-  async evaluate<T extends EvaluateFn>(
-    pageFunction: T,
-    ...args: SerializableOrJSHandle[]
-  ): Promise<UnwrapPromiseLike<EvaluateFnReturnType<T>>> {
-    return this._mainWorld.evaluate<T>(pageFunction, ...args);
+  async evaluate<
+    Params extends unknown[],
+    Func extends EvaluateFunc<Params> = EvaluateFunc<Params>
+  >(
+    pageFunction: Func | string,
+    ...args: Params
+  ): Promise<Awaited<ReturnType<Func>>> {
+    return this._mainWorld.evaluate(pageFunction, ...args);
   }
 
   /**
@@ -870,11 +927,22 @@ export class Frame {
    * @returns A promise which resolves to an `ElementHandle` pointing at the
    * element, or `null` if it was not found.
    */
-  // @ts-expect-error TS2304
-  async $<T extends Element = Element>(
-    selector: string
-  ): Promise<ElementHandle<T> | null> {
-    return this._mainWorld.$<T>(selector);
+  async $<Selector extends string>(
+    selector: Selector
+  ): Promise<ElementHandle<NodeFor<Selector>> | null> {
+    return this._mainWorld.$(selector);
+  }
+
+  /**
+   * This runs `document.querySelectorAll` in the frame and returns the result.
+   *
+   * @param selector - a selector to search for
+   * @returns An array of element handles pointing to the found frame elements.
+   */
+  async $$<Selector extends string>(
+    selector: Selector
+  ): Promise<Array<ElementHandle<NodeFor<Selector>>>> {
+    return this._mainWorld.$$(selector);
   }
 
   /**
@@ -882,7 +950,7 @@ export class Frame {
    *
    * @param expression - the XPath expression to evaluate.
    */
-  async $x(expression: string): Promise<ElementHandle[]> {
+  async $x(expression: string): Promise<Array<ElementHandle<Node>>> {
     return this._mainWorld.$x(expression);
   }
 
@@ -897,7 +965,7 @@ export class Frame {
    *
    * @example
    *
-   * ```js
+   * ```ts
    * const searchValue = await frame.$eval('#search', el => el.value);
    * ```
    *
@@ -905,16 +973,18 @@ export class Frame {
    * @param pageFunction - the function to be evaluated in the frame's context
    * @param args - additional arguments to pass to `pageFunction`
    */
-  async $eval<ReturnType>(
-    selector: string,
-    pageFunction: (
-      // @ts-expect-error TS2304
-      element: Element,
-      ...args: unknown[]
-    ) => ReturnType | Promise<ReturnType>,
-    ...args: SerializableOrJSHandle[]
-  ): Promise<WrapElementHandle<ReturnType>> {
-    return this._mainWorld.$eval<ReturnType>(selector, pageFunction, ...args);
+  async $eval<
+    Selector extends string,
+    Params extends unknown[],
+    Func extends EvaluateFunc<
+      [ElementHandle<NodeFor<Selector>>, ...Params]
+    > = EvaluateFunc<[ElementHandle<NodeFor<Selector>>, ...Params]>
+  >(
+    selector: Selector,
+    pageFunction: Func | string,
+    ...args: Params
+  ): Promise<Awaited<ReturnType<Func>>> {
+    return this._mainWorld.$eval(selector, pageFunction, ...args);
   }
 
   /**
@@ -928,7 +998,7 @@ export class Frame {
    *
    * @example
    *
-   * ```js
+   * ```ts
    * const divsCounts = await frame.$$eval('div', divs => divs.length);
    * ```
    *
@@ -936,29 +1006,18 @@ export class Frame {
    * @param pageFunction - the function to be evaluated in the frame's context
    * @param args - additional arguments to pass to `pageFunction`
    */
-  async $$eval<ReturnType>(
-    selector: string,
-    pageFunction: (
-      // @ts-expect-error TS2304
-      elements: Element[],
-      ...args: unknown[]
-    ) => ReturnType | Promise<ReturnType>,
-    ...args: SerializableOrJSHandle[]
-  ): Promise<WrapElementHandle<ReturnType>> {
-    return this._mainWorld.$$eval<ReturnType>(selector, pageFunction, ...args);
-  }
-
-  /**
-   * This runs `document.querySelectorAll` in the frame and returns the result.
-   *
-   * @param selector - a selector to search for
-   * @returns An array of element handles pointing to the found frame elements.
-   */
-  // @ts-expect-error TS2304
-  async $$<T extends Element = Element>(
-    selector: string
-  ): Promise<Array<ElementHandle<T>>> {
-    return this._mainWorld.$$<T>(selector);
+  async $$eval<
+    Selector extends string,
+    Params extends unknown[],
+    Func extends EvaluateFunc<
+      [Array<NodeFor<Selector>>, ...Params]
+    > = EvaluateFunc<[Array<NodeFor<Selector>>, ...Params]>
+  >(
+    selector: Selector,
+    pageFunction: Func | string,
+    ...args: Params
+  ): Promise<Awaited<ReturnType<Func>>> {
+    return this._mainWorld.$$eval(selector, pageFunction, ...args);
   }
 
   /**
@@ -1003,15 +1062,14 @@ export class Frame {
    * @returns the frame's URL.
    */
   url(): string {
-    return this._url;
+    return this.#url;
   }
 
   /**
    * @returns the parent `Frame`, if any. Detached and main frames return `null`.
    */
   parentFrame(): Frame | null {
-    // @ts-expect-error TS2322
-    return this._parentFrame;
+    return this.#parentFrame;
   }
 
   /**
@@ -1025,7 +1083,7 @@ export class Frame {
    * @returns `true` if the frame has been detached, or `false` otherwise.
    */
   isDetached(): boolean {
-    return this._detached;
+    return this.#detached;
   }
 
   /**
@@ -1039,7 +1097,7 @@ export class Frame {
    */
   async addScriptTag(
     options: FrameAddScriptTagOptions
-  ): Promise<ElementHandle> {
+  ): Promise<ElementHandle<HTMLScriptElement>> {
     return this._mainWorld.addScriptTag(options);
   }
 
@@ -1053,7 +1111,9 @@ export class Frame {
    * `onload` event fires or when the CSS content was injected into the
    * frame.
    */
-  async addStyleTag(options: FrameAddStyleTagOptions): Promise<ElementHandle> {
+  async addStyleTag(
+    options: FrameAddStyleTagOptions
+  ): Promise<ElementHandle<Node>> {
     return this._mainWorld.addStyleTag(options);
   }
 
@@ -1130,7 +1190,7 @@ export class Frame {
    * method throws an error.
    *
    * @example
-   * ```js
+   * ```ts
    * frame.select('select#colors', 'blue'); // single selection
    * frame.select('select#colors', 'red', 'green', 'blue'); // multiple selections
    * ```
@@ -1170,7 +1230,7 @@ export class Frame {
    * {@link Keyboard.press}.
    *
    * @example
-   * ```js
+   * ```ts
    * await frame.type('#mytextarea', 'Hello'); // Types instantly
    * await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
    * ```
@@ -1186,65 +1246,9 @@ export class Frame {
   async type(
     selector: string,
     text: string,
-    options?: { delay: number }
+    options?: {delay: number}
   ): Promise<void> {
     return this._mainWorld.type(selector, text, options);
-  }
-
-  /**
-   * @remarks
-   *
-   * This method behaves differently depending on the first parameter. If it's a
-   * `string`, it will be treated as a `selector` or `xpath` (if the string
-   * starts with `//`). This method then is a shortcut for
-   * {@link Frame.waitForSelector} or {@link Frame.waitForXPath}.
-   *
-   * If the first argument is a function this method is a shortcut for
-   * {@link Frame.waitForFunction}.
-   *
-   * If the first argument is a `number`, it's treated as a timeout in
-   * milliseconds and the method returns a promise which resolves after the
-   * timeout.
-   *
-   * @param selectorOrFunctionOrTimeout - a selector, predicate or timeout to
-   * wait for.
-   * @param options - optional waiting parameters.
-   * @param args - arguments to pass to `pageFunction`.
-   *
-   * @deprecated Don't use this method directly. Instead use the more explicit
-   * methods available: {@link Frame.waitForSelector},
-   * {@link Frame.waitForXPath}, {@link Frame.waitForFunction} or
-   * {@link Frame.waitForTimeout}.
-   */
-  waitFor(
-    selectorOrFunctionOrTimeout: string | number | Function,
-    options: Record<string, unknown> = {},
-    ...args: SerializableOrJSHandle[]
-  ): Promise<JSHandle | null> {
-    console.warn(
-      'waitFor is deprecated and will be removed in a future release. See https://github.com/puppeteer/puppeteer/issues/6214 for details and how to migrate your code.'
-    );
-
-    if (helper.isString(selectorOrFunctionOrTimeout)) {
-      const string = selectorOrFunctionOrTimeout;
-      if (xPathPattern.test(string)) return this.waitForXPath(string, options);
-      return this.waitForSelector(string, options);
-    }
-    if (helper.isNumber(selectorOrFunctionOrTimeout))
-      return new Promise((fulfill) =>
-        setTimeout(fulfill, selectorOrFunctionOrTimeout)
-      );
-    if (typeof selectorOrFunctionOrTimeout === 'function')
-      return this.waitForFunction(
-        selectorOrFunctionOrTimeout,
-        options,
-        ...args
-      );
-    return Promise.reject(
-      new Error(
-        'Unsupported target type: ' + typeof selectorOrFunctionOrTimeout
-      )
-    );
   }
 
   /**
@@ -1266,7 +1270,7 @@ export class Frame {
    * @param milliseconds - the number of milliseconds to wait.
    */
   waitForTimeout(milliseconds: number): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(resolve, milliseconds);
     });
   }
@@ -1283,7 +1287,7 @@ export class Frame {
    * This method works across navigations.
    *
    * @example
-   * ```js
+   * ```ts
    * const puppeteer = require('puppeteer');
    *
    * (async () => {
@@ -1306,15 +1310,17 @@ export class Frame {
    * @returns a promise which resolves when an element matching the selector
    * string is added to the DOM.
    */
-  async waitForSelector(
-    selector: string,
+  async waitForSelector<Selector extends string>(
+    selector: Selector,
     options: WaitForSelectorOptions = {}
-  ): Promise<ElementHandle | null> {
+  ): Promise<ElementHandle<NodeFor<Selector>> | null> {
     const handle = await this._secondaryWorld.waitForSelector(
       selector,
       options
     );
-    if (!handle) return null;
+    if (!handle) {
+      return null;
+    }
     const mainExecutionContext = await this._mainWorld.executionContext();
     const result = await mainExecutionContext._adoptElementHandle(handle);
     await handle.dispose();
@@ -1339,9 +1345,11 @@ export class Frame {
   async waitForXPath(
     xpath: string,
     options: WaitForSelectorOptions = {}
-  ): Promise<ElementHandle | null> {
+  ): Promise<ElementHandle<Node> | null> {
     const handle = await this._secondaryWorld.waitForXPath(xpath, options);
-    if (!handle) return null;
+    if (!handle) {
+      return null;
+    }
     const mainExecutionContext = await this._mainWorld.executionContext();
     const result = await mainExecutionContext._adoptElementHandle(handle);
     await handle.dispose();
@@ -1354,7 +1362,7 @@ export class Frame {
    * @example
    *
    * The `waitForFunction` can be used to observe viewport size change:
-   * ```js
+   * ```ts
    * const puppeteer = require('puppeteer');
    *
    * (async () => {
@@ -1369,7 +1377,7 @@ export class Frame {
    *
    * To pass arguments from Node.js to the predicate of `page.waitForFunction` function:
    *
-   * ```js
+   * ```ts
    * const selector = '.foo';
    * await frame.waitForFunction(
    *   selector => !!document.querySelector(selector),
@@ -1383,12 +1391,20 @@ export class Frame {
    * @param args - arguments to pass to the `pageFunction`.
    * @returns the promise which resolve when the `pageFunction` returns a truthy value.
    */
-  waitForFunction(
-    pageFunction: Function | string,
+  waitForFunction<
+    Params extends unknown[],
+    Func extends EvaluateFunc<Params> = EvaluateFunc<Params>
+  >(
+    pageFunction: Func | string,
     options: FrameWaitForFunctionOptions = {},
-    ...args: SerializableOrJSHandle[]
-  ): Promise<JSHandle> {
-    return this._mainWorld.waitForFunction(pageFunction, options, ...args);
+    ...args: Params
+  ): Promise<HandleFor<Awaited<ReturnType<Func>>>> {
+    // TODO: Fix when NodeHandle has been added.
+    return this._mainWorld.waitForFunction(
+      pageFunction,
+      options,
+      ...args
+    ) as Promise<HandleFor<Awaited<ReturnType<Func>>>>;
   }
 
   /**
@@ -1403,14 +1419,14 @@ export class Frame {
    */
   _navigated(framePayload: Protocol.Page.Frame): void {
     this._name = framePayload.name;
-    this._url = `${framePayload.url}${framePayload.urlFragment || ''}`;
+    this.#url = `${framePayload.url}${framePayload.urlFragment || ''}`;
   }
 
   /**
    * @internal
    */
   _navigatedWithinDocument(url: string): void {
-    this._url = url;
+    this.#url = url;
   }
 
   /**
@@ -1435,13 +1451,21 @@ export class Frame {
   /**
    * @internal
    */
+  _onLoadingStarted(): void {
+    this._hasStartedLoading = true;
+  }
+
+  /**
+   * @internal
+   */
   _detach(): void {
-    this._detached = true;
+    this.#detached = true;
     this._mainWorld._detach();
     this._secondaryWorld._detach();
-    if (this._parentFrame) this._parentFrame._childFrames.delete(this);
-    // @ts-expect-error TS2322
-    this._parentFrame = null;
+    if (this.#parentFrame) {
+      this.#parentFrame._childFrames.delete(this);
+    }
+    this.#parentFrame = null;
   }
 }
 
@@ -1457,7 +1481,7 @@ function assertNoLegacyNavigationOptions(options: {
     'ERROR: networkIdleInflight option is no longer supported.'
   );
   assert(
-    options.waitUntil !== 'networkidle',
+    options['waitUntil'] !== 'networkidle',
     'ERROR: "networkidle" option is no longer supported. Use "networkidle2" instead'
   );
 }

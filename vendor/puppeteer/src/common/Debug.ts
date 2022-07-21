@@ -14,19 +14,34 @@
  * limitations under the License.
  */
 
-declare const __PUPPETEER_DEBUG: string;
+import {isNode} from '../environment.ts';
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __PUPPETEER_DEBUG: string;
+}
+
+/**
+ * @internal
+ */
+let debugModule: typeof import('https://deno.land/x/debuglog@v1.0.0/debug.ts') | null = null;
+/**
+ * @internal
+ */
+export async function importDebug(): Promise<typeof import('https://deno.land/x/debuglog@v1.0.0/debug.ts')> {
+  if (!debugModule) {
+    debugModule = (await import('https://deno.land/x/debuglog@v1.0.0/debug.ts')).default;
+  }
+  return debugModule;
+}
 
 /**
  * A debug function that can be used in any environment.
  *
  * @remarks
- *
  * If used in Node, it falls back to the
  * {@link https://www.npmjs.com/package/debug | debug module}. In the browser it
  * uses `console.log`.
- *
- * @param prefix - this will be prefixed to each log.
- * @returns a function that can be called to log to that debug channel.
  *
  * In Node, use the `DEBUG` environment variable to control logging:
  *
@@ -51,12 +66,24 @@ declare const __PUPPETEER_DEBUG: string;
  * log('new page created')
  * // logs "Page: new page created"
  * ```
+ *
+ * @param prefix - this will be prefixed to each log.
+ * @returns a function that can be called to log to that debug channel.
+ *
+ * @internal
  */
 export const debug = (prefix: string): ((...args: unknown[]) => void) => {
+  if (isNode) {
+    return async (...logArgs: unknown[]) => {
+      (await importDebug())(prefix)(logArgs);
+    };
+  }
 
   return (...logArgs: unknown[]): void => {
-    const debugLevel = typeof __PUPPETEER_DEBUG !== 'undefined' && __PUPPETEER_DEBUG;
-    if (!debugLevel) return;
+    const debugLevel = (globalThis as any).__PUPPETEER_DEBUG;
+    if (!debugLevel) {
+      return;
+    }
 
     const everythingShouldBeLogged = debugLevel === '*';
 
@@ -68,10 +95,12 @@ export const debug = (prefix: string): ((...args: unknown[]) => void) => {
        * `foo`.
        */
       (debugLevel.endsWith('*')
-        ? prefix.startsWith(debugLevel.slice(0, -1))
+        ? prefix.startsWith(debugLevel)
         : prefix === debugLevel);
 
-    if (!prefixMatchesDebugLevel) return;
+    if (!prefixMatchesDebugLevel) {
+      return;
+    }
 
     // eslint-disable-next-line no-console
     console.log(`${prefix}:`, ...logArgs);

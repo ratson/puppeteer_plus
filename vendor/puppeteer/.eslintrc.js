@@ -1,3 +1,12 @@
+// TODO: Enable this at some point.
+// const RESTRICTED_UNDERSCORED_IDENTIFIERS = [
+//   'PropertyDefinition > Identifier[name=/^_[a-z].*$/]',
+// ].map((selector) => ({
+//   selector,
+//   message:
+//     'Use private fields (fields prefixed with #) and an appropriate getter/setter.',
+// }));
+
 module.exports = {
   root: true,
   env: {
@@ -7,22 +16,18 @@ module.exports = {
 
   parser: '@typescript-eslint/parser',
 
-  plugins: ['mocha', '@typescript-eslint', 'unicorn', 'import'],
+  plugins: ['mocha', '@typescript-eslint', 'import'],
 
   extends: ['plugin:prettier/recommended'],
 
   rules: {
+    // Brackets keep code readable.
+    curly: [2, 'all'],
+    // Brackets keep code readable and `return` intentions clear.
+    'arrow-body-style': ['error', 'always'],
     // Error if files are not formatted with Prettier correctly.
     'prettier/prettier': 2,
     // syntax preferences
-    quotes: [
-      2,
-      'single',
-      {
-        avoidEscape: true,
-        allowTemplateLiterals: true,
-      },
-    ],
     'spaced-comment': [
       2,
       'always',
@@ -99,9 +104,6 @@ module.exports = {
     // ensure we don't have any it.only or describe.only in prod
     'mocha/no-exclusive-tests': 'error',
 
-    // enforce the variable in a catch block is named error
-    'unicorn/catch-error-name': 'error',
-
     'no-restricted-imports': [
       'error',
       {
@@ -116,6 +118,12 @@ module.exports = {
       },
     ],
     'import/extensions': ['error', 'ignorePackages'],
+
+    'no-restricted-syntax': [
+      'error',
+      // Don't allow underscored declarations on camelCased variables/properties.
+      // ...RESTRICTED_UNDERSCORED_IDENTIFIERS,
+    ],
   },
   overrides: [
     {
@@ -124,9 +132,21 @@ module.exports = {
         'plugin:@typescript-eslint/eslint-recommended',
         'plugin:@typescript-eslint/recommended',
       ],
+      plugins: ['eslint-plugin-tsdoc'],
       rules: {
+        // Brackets keep code readable.
+        curly: [2, 'all'],
+        // Brackets keep code readable and `return` intentions clear.
+        'arrow-body-style': ['error', 'always'],
+        // Error if comments do not adhere to `tsdoc`.
+        'tsdoc/syntax': 2,
+        // Keeps array types simple only when they are simple for readability.
+        '@typescript-eslint/array-type': ['error', {default: 'array-simple'}],
         'no-unused-vars': 0,
-        '@typescript-eslint/no-unused-vars': 2,
+        '@typescript-eslint/no-unused-vars': [
+          'error',
+          {argsIgnorePattern: '^_'},
+        ],
         'func-call-spacing': 0,
         '@typescript-eslint/func-call-spacing': 2,
         semi: 0,
@@ -138,8 +158,8 @@ module.exports = {
         // We don't require explicit return types on basic functions or
         // dummy functions in tests, for example
         '@typescript-eslint/explicit-function-return-type': 0,
-        // We know it's bad and use it very sparingly but it's needed :(
-        '@typescript-eslint/ban-ts-ignore': 0,
+        // We allow non-null assertions if the value was asserted using `assert` API.
+        '@typescript-eslint/no-non-null-assertion': 0,
         /**
          * This is the default options (as per
          * https://github.com/typescript-eslint/typescript-eslint/blob/HEAD/packages/eslint-plugin/docs/rules/ban-types.md),
@@ -160,25 +180,19 @@ module.exports = {
             },
           },
         ],
-        '@typescript-eslint/array-type': [
-          2,
-          {
-            default: 'array-simple',
-          },
-        ],
         // By default this is a warning but we want it to error.
         '@typescript-eslint/explicit-module-boundary-types': 2,
-      },
-    },
-    {
-      files: ['test-browser/**/*.js'],
-      parserOptions: {
-        sourceType: 'module',
-      },
-      env: {
-        es6: true,
-        browser: true,
-        es2020: true,
+        'no-restricted-syntax': [
+          'error',
+          {
+            // Never use `require` in TypeScript since they are transpiled out.
+            selector: "CallExpression[callee.name='require']",
+            message: '`require` statements are not allowed. Use `import`.',
+          },
+
+          // Don't allow underscored declarations on camelCased variables/properties.
+          // ...RESTRICTED_UNDERSCORED_IDENTIFIERS,
+        ],
       },
     },
   ],

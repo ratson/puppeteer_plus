@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-import { ConnectionTransport } from './ConnectionTransport.ts';
-import { Browser, TargetFilterCallback } from './Browser.ts';
-import { assert } from './assert.ts';
-import { debugError } from '../common/helper.ts';
-import { Connection } from './Connection.ts';
-import { Viewport } from './PuppeteerViewport.ts';
-import { isNode } from '../environment.ts';
+import {debugError, isErrorLike} from './util.ts';
+import {isNode} from '../environment.ts';
+import {assert} from './assert.ts';
+import {
+  Browser,
+  IsPageTargetCallback,
+  TargetFilterCallback,
+} from './Browser.ts';
+import {Connection} from './Connection.ts';
+import {ConnectionTransport} from './ConnectionTransport.ts';
+import {getFetch} from './fetch.ts';
+import {Viewport} from './PuppeteerViewport.ts';
 
 /**
  * Generic browser options that can be passed when launching any browser or when
@@ -46,6 +51,10 @@ export interface BrowserConnectOptions {
    * Callback to decide if Puppeteer should connect to a given target or not.
    */
   targetFilter?: TargetFilterCallback;
+  /**
+   * @internal
+   */
+  _isPageTarget?: IsPageTargetCallback;
 }
 
 const getWebSocketTransportClass = async () => {
@@ -56,23 +65,25 @@ const getWebSocketTransportClass = async () => {
 /**
  * Users should never call this directly; it's called when calling
  * `puppeteer.connect`.
+ *
  * @internal
  */
-export const connectToBrowser = async (
+export async function _connectToBrowser(
   options: BrowserConnectOptions & {
     browserWSEndpoint?: string;
     browserURL?: string;
     transport?: ConnectionTransport;
   }
-): Promise<Browser> => {
+): Promise<Browser> {
   const {
     browserWSEndpoint,
     browserURL,
     ignoreHTTPSErrors = false,
-    defaultViewport = { width: 800, height: 600 },
+    defaultViewport = {width: 800, height: 600},
     transport,
     slowMo = 0,
     targetFilter,
+    _isPageTarget: isPageTarget,
   } = options;
 
   assert(
@@ -81,8 +92,7 @@ export const connectToBrowser = async (
     'Exactly one of browserWSEndpoint, browserURL or transport must be passed to puppeteer.connect'
   );
 
-  // @ts-expect-error TS7034
-  let connection = null;
+  let connection!: Connection;
   if (transport) {
     connection = new Connection('', transport, slowMo);
   } else if (browserWSEndpoint) {
@@ -98,22 +108,22 @@ export const connectToBrowser = async (
     connection = new Connection(connectionURL, connectionTransport, slowMo);
   }
 
-  // @ts-expect-error TS2531
-  const { browserContextIds } = await connection.send(
+  const {browserContextIds} = await connection.send(
     'Target.getBrowserContexts'
   );
-  return Browser.create(
-    // @ts-expect-error TS2345
+  return Browser._create(
     connection,
     browserContextIds,
     ignoreHTTPSErrors,
     defaultViewport,
-    null,
-    // @ts-expect-error TS7005
-    () => connection.send('Browser.close').catch(debugError),
-    targetFilter
+    undefined,
+    () => {
+      return connection.send('Browser.close').catch(debugError);
+    },
+    targetFilter,
+    isPageTarget
   );
-};
+}
 
 async function getWSEndpoint(browserURL: string): Promise<string> {
   const endpointURL = new URL('/json/version', browserURL);
@@ -128,9 +138,11 @@ async function getWSEndpoint(browserURL: string): Promise<string> {
     const data = await result.json();
     return data.webSocketDebuggerUrl;
   } catch (error) {
-    error.message =
-      `Failed to fetch browser webSocket URL from ${endpointURL}: ` +
-      error.message;
+    if (isErrorLike(error)) {
+      error.message =
+        `Failed to fetch browser webSocket URL from ${endpointURL}: ` +
+        error.message;
+    }
     throw error;
   }
 }

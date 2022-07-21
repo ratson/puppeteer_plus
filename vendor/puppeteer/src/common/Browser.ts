@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.ts';
-import { helper } from './helper.ts';
-import { Target } from './Target.ts';
-import { EventEmitter } from './EventEmitter.ts';
-import { Connection, ConnectionEmittedEvents } from './Connection.ts';
-import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
-import { Page } from './Page.ts';
-import { TaskQueue } from './TaskQueue.ts';
-
-import { Viewport } from './PuppeteerViewport.ts';
+import {ChildProcess} from 'https://deno.land/std@0.149.0/node/child_process.ts';
+import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
+import {assert} from './assert.ts';
+import {Connection, ConnectionEmittedEvents} from './Connection.ts';
+import {EventEmitter} from './EventEmitter.ts';
+import {waitWithTimeout} from './util.ts';
+import {Page} from './Page.ts';
+import {Viewport} from './PuppeteerViewport.ts';
+import {Target} from './Target.ts';
+import {TaskQueue} from './TaskQueue.ts';
 
 /**
  * BrowserContext options.
@@ -51,6 +51,13 @@ export type BrowserCloseCallback = () => Promise<void> | void;
  * @public
  */
 export type TargetFilterCallback = (
+  target: Protocol.Target.TargetInfo
+) => boolean;
+
+/**
+ * @internal
+ */
+export type IsPageTargetCallback = (
   target: Protocol.Target.TargetInfo
 ) => boolean;
 
@@ -173,7 +180,7 @@ export const enum BrowserEmittedEvents {
  * @example
  *
  * An example of using a {@link Browser} to create a {@link Page}:
- * ```js
+ * ```ts
  * const puppeteer = require('puppeteer');
  *
  * (async () => {
@@ -187,7 +194,7 @@ export const enum BrowserEmittedEvents {
  * @example
  *
  * An example of disconnecting from and reconnecting to a {@link Browser}:
- * ```js
+ * ```ts
  * const puppeteer = require('puppeteer');
  *
  * (async () => {
@@ -210,14 +217,15 @@ export class Browser extends EventEmitter {
   /**
    * @internal
    */
-  static async create(
+  static async _create(
     connection: Connection,
     contextIds: string[],
     ignoreHTTPSErrors: boolean,
     defaultViewport?: Viewport | null,
-    process?: Deno.Process,
+    process?: ChildProcess,
     closeCallback?: BrowserCloseCallback,
-    targetFilterCallback?: TargetFilterCallback
+    targetFilterCallback?: TargetFilterCallback,
+    isPageTargetCallback?: IsPageTargetCallback
   ): Promise<Browser> {
     const browser = new Browser(
       connection,
@@ -226,26 +234,31 @@ export class Browser extends EventEmitter {
       defaultViewport,
       process,
       closeCallback,
-      targetFilterCallback
+      targetFilterCallback,
+      isPageTargetCallback
     );
-    await connection.send('Target.setDiscoverTargets', { discover: true });
+    await connection.send('Target.setDiscoverTargets', {discover: true});
     return browser;
   }
-  private _ignoreHTTPSErrors: boolean;
-  private _defaultViewport?: Viewport | null;
-  private _process?: Deno.Process;
-  private _connection: Connection;
-  private _closeCallback: BrowserCloseCallback;
-  private _targetFilterCallback: TargetFilterCallback;
-  private _defaultContext: BrowserContext;
-  private _contexts: Map<string, BrowserContext>;
-  private _screenshotTaskQueue: TaskQueue;
-  private _ignoredTargets = new Set<string>();
+  #ignoreHTTPSErrors: boolean;
+  #defaultViewport?: Viewport | null;
+  #process?: ChildProcess;
+  #connection: Connection;
+  #closeCallback: BrowserCloseCallback;
+  #targetFilterCallback: TargetFilterCallback;
+  #isPageTargetCallback!: IsPageTargetCallback;
+  #defaultContext: BrowserContext;
+  #contexts: Map<string, BrowserContext>;
+  #screenshotTaskQueue: TaskQueue;
+  #targets: Map<string, Target>;
+  #ignoredTargets = new Set<string>();
+
   /**
    * @internal
-   * Used in Target.ts directly so cannot be marked private.
    */
-  _targets: Map<string, Target>;
+  get _targets(): Map<string, Target> {
+    return this.#targets;
+  }
 
   /**
    * @internal
@@ -255,39 +268,46 @@ export class Browser extends EventEmitter {
     contextIds: string[],
     ignoreHTTPSErrors: boolean,
     defaultViewport?: Viewport | null,
-    process?: Deno.Process,
+    process?: ChildProcess,
     closeCallback?: BrowserCloseCallback,
-    targetFilterCallback?: TargetFilterCallback
+    targetFilterCallback?: TargetFilterCallback,
+    isPageTargetCallback?: IsPageTargetCallback
   ) {
     super();
-    this._ignoreHTTPSErrors = ignoreHTTPSErrors;
-    this._defaultViewport = defaultViewport;
-    this._process = process;
-    this._screenshotTaskQueue = new TaskQueue();
-    this._connection = connection;
-    this._closeCallback = closeCallback || function (): void {};
-    this._targetFilterCallback = targetFilterCallback || ((): boolean => true);
+    this.#ignoreHTTPSErrors = ignoreHTTPSErrors;
+    this.#defaultViewport = defaultViewport;
+    this.#process = process;
+    this.#screenshotTaskQueue = new TaskQueue();
+    this.#connection = connection;
+    this.#closeCallback = closeCallback || function (): void {};
+    this.#targetFilterCallback =
+      targetFilterCallback ||
+      ((): boolean => {
+        return true;
+      });
+    this.#setIsPageTargetCallback(isPageTargetCallback);
 
-    this._defaultContext = new BrowserContext(this._connection, this);
-    this._contexts = new Map();
-    for (const contextId of contextIds)
-      this._contexts.set(
+    this.#defaultContext = new BrowserContext(this.#connection, this);
+    this.#contexts = new Map();
+    for (const contextId of contextIds) {
+      this.#contexts.set(
         contextId,
-        new BrowserContext(this._connection, this, contextId)
+        new BrowserContext(this.#connection, this, contextId)
       );
+    }
 
-    this._targets = new Map();
-    this._connection.on(ConnectionEmittedEvents.Disconnected, () =>
-      this.emit(BrowserEmittedEvents.Disconnected)
-    );
-    this._connection.on('Target.targetCreated', this._targetCreated.bind(this));
-    this._connection.on(
+    this.#targets = new Map();
+    this.#connection.on(ConnectionEmittedEvents.Disconnected, () => {
+      return this.emit(BrowserEmittedEvents.Disconnected);
+    });
+    this.#connection.on('Target.targetCreated', this.#targetCreated.bind(this));
+    this.#connection.on(
       'Target.targetDestroyed',
-      this._targetDestroyed.bind(this)
+      this.#targetDestroyed.bind(this)
     );
-    this._connection.on(
+    this.#connection.on(
       'Target.targetInfoChanged',
-      this._targetInfoChanged.bind(this)
+      this.#targetInfoChanged.bind(this)
     );
   }
 
@@ -295,8 +315,27 @@ export class Browser extends EventEmitter {
    * The spawned browser process. Returns `null` if the browser instance was created with
    * {@link Puppeteer.connect}.
    */
-  process(): Deno.Process | null {
-    return this._process ?? null;
+  process(): ChildProcess | null {
+    return this.#process ?? null;
+  }
+
+  #setIsPageTargetCallback(isPageTargetCallback?: IsPageTargetCallback): void {
+    this.#isPageTargetCallback =
+      isPageTargetCallback ||
+      ((target: Protocol.Target.TargetInfo): boolean => {
+        return (
+          target.type === 'page' ||
+          target.type === 'background_page' ||
+          target.type === 'webview'
+        );
+      });
+  }
+
+  /**
+   * @internal
+   */
+  _getIsPageTargetCallback(): IsPageTargetCallback | undefined {
+    return this.#isPageTargetCallback;
   }
 
   /**
@@ -304,7 +343,7 @@ export class Browser extends EventEmitter {
    * browser contexts.
    *
    * @example
-   * ```js
+   * ```ts
    * (async () => {
    *  const browser = await puppeteer.launch();
    *   // Create a new incognito browser context.
@@ -319,9 +358,9 @@ export class Browser extends EventEmitter {
   async createIncognitoBrowserContext(
     options: BrowserContextOptions = {}
   ): Promise<BrowserContext> {
-    const { proxyServer, proxyBypassList } = options;
+    const {proxyServer, proxyBypassList} = options;
 
-    const { browserContextId } = await this._connection.send(
+    const {browserContextId} = await this.#connection.send(
       'Target.createBrowserContext',
       {
         proxyServer,
@@ -329,11 +368,11 @@ export class Browser extends EventEmitter {
       }
     );
     const context = new BrowserContext(
-      this._connection,
+      this.#connection,
       this,
       browserContextId
     );
-    this._contexts.set(browserContextId, context);
+    this.#contexts.set(browserContextId, context);
     return context;
   }
 
@@ -342,63 +381,65 @@ export class Browser extends EventEmitter {
    * return a single instance of {@link BrowserContext}.
    */
   browserContexts(): BrowserContext[] {
-    return [this._defaultContext, ...Array.from(this._contexts.values())];
+    return [this.#defaultContext, ...Array.from(this.#contexts.values())];
   }
 
   /**
    * Returns the default browser context. The default browser context cannot be closed.
    */
   defaultBrowserContext(): BrowserContext {
-    return this._defaultContext;
+    return this.#defaultContext;
   }
 
   /**
    * @internal
-   * Used by BrowserContext directly so cannot be marked private.
    */
   async _disposeContext(contextId?: string): Promise<void> {
     if (!contextId) {
       return;
     }
-    await this._connection.send('Target.disposeBrowserContext', {
+    await this.#connection.send('Target.disposeBrowserContext', {
       browserContextId: contextId,
     });
-    this._contexts.delete(contextId);
+    this.#contexts.delete(contextId);
   }
 
-  private async _targetCreated(
+  async #targetCreated(
     event: Protocol.Target.TargetCreatedEvent
   ): Promise<void> {
     const targetInfo = event.targetInfo;
-    const { browserContextId } = targetInfo;
+    const {browserContextId} = targetInfo;
     const context =
-      browserContextId && this._contexts.has(browserContextId)
-        ? this._contexts.get(browserContextId)
-        : this._defaultContext;
+      browserContextId && this.#contexts.has(browserContextId)
+        ? this.#contexts.get(browserContextId)
+        : this.#defaultContext;
 
     if (!context) {
       throw new Error('Missing browser context');
     }
 
-    const shouldAttachToTarget = this._targetFilterCallback(targetInfo);
+    const shouldAttachToTarget = this.#targetFilterCallback(targetInfo);
     if (!shouldAttachToTarget) {
-      this._ignoredTargets.add(targetInfo.targetId);
+      this.#ignoredTargets.add(targetInfo.targetId);
       return;
     }
 
     const target = new Target(
       targetInfo,
       context,
-      () => this._connection.createSession(targetInfo),
-      this._ignoreHTTPSErrors,
-      this._defaultViewport ?? null,
-      this._screenshotTaskQueue
+      () => {
+        return this.#connection.createSession(targetInfo);
+      },
+      this.#ignoreHTTPSErrors,
+      this.#defaultViewport ?? null,
+      this.#screenshotTaskQueue,
+      this.#isPageTargetCallback
     );
     assert(
-      !this._targets.has(event.targetInfo.targetId),
+      !this.#targets.has(event.targetInfo.targetId),
       'Target should not exist before targetCreated'
     );
-    this._targets.set(event.targetInfo.targetId, target);
+    this.#targets.set(event.targetInfo.targetId, target);
 
     if (await target._initializedPromise) {
       this.emit(BrowserEmittedEvents.TargetCreated, target);
@@ -406,16 +447,18 @@ export class Browser extends EventEmitter {
     }
   }
 
-  private async _targetDestroyed(event: { targetId: string }): Promise<void> {
-    if (this._ignoredTargets.has(event.targetId)) return;
-    const target = this._targets.get(event.targetId);
+  async #targetDestroyed(event: {targetId: string}): Promise<void> {
+    if (this.#ignoredTargets.has(event.targetId)) {
+      return;
+    }
+    const target = this.#targets.get(event.targetId);
     if (!target) {
       throw new Error(
         `Missing target in _targetDestroyed (id = ${event.targetId})`
       );
     }
     target._initializedCallback(false);
-    this._targets.delete(event.targetId);
+    this.#targets.delete(event.targetId);
     target._closedCallback();
     if (await target._initializedPromise) {
       this.emit(BrowserEmittedEvents.TargetDestroyed, target);
@@ -425,11 +468,11 @@ export class Browser extends EventEmitter {
     }
   }
 
-  private _targetInfoChanged(
-    event: Protocol.Target.TargetInfoChangedEvent
-  ): void {
-    if (this._ignoredTargets.has(event.targetInfo.targetId)) return;
-    const target = this._targets.get(event.targetInfo.targetId);
+  #targetInfoChanged(event: Protocol.Target.TargetInfoChangedEvent): void {
+    if (this.#ignoredTargets.has(event.targetInfo.targetId)) {
+      return;
+    }
+    const target = this.#targets.get(event.targetInfo.targetId);
     if (!target) {
       throw new Error(
         `Missing target in targetInfoChanged (id = ${event.targetInfo.targetId})`
@@ -464,7 +507,7 @@ export class Browser extends EventEmitter {
    * | browser endpoint}.
    */
   wsEndpoint(): string {
-    return this._connection.url();
+    return this.#connection.url();
   }
 
   /**
@@ -472,19 +515,18 @@ export class Browser extends EventEmitter {
    * a default browser context.
    */
   async newPage(): Promise<Page> {
-    return this._defaultContext.newPage();
+    return this.#defaultContext.newPage();
   }
 
   /**
    * @internal
-   * Used by BrowserContext directly so cannot be marked private.
    */
   async _createPageInContext(contextId?: string): Promise<Page> {
-    const { targetId } = await this._connection.send('Target.createTarget', {
+    const {targetId} = await this.#connection.send('Target.createTarget', {
       url: 'about:blank',
       browserContextId: contextId || undefined,
     });
-    const target = this._targets.get(targetId);
+    const target = this.#targets.get(targetId);
     if (!target) {
       throw new Error(`Missing target for page (id = ${targetId})`);
     }
@@ -506,18 +548,18 @@ export class Browser extends EventEmitter {
    * an array with all the targets in all browser contexts.
    */
   targets(): Target[] {
-    return Array.from(this._targets.values()).filter(
-      (target) => target._isInitialized
-    );
+    return Array.from(this.#targets.values()).filter(target => {
+      return target._isInitialized;
+    });
   }
 
   /**
    * The target associated with the browser.
    */
   target(): Target {
-    const browserTarget = this.targets().find(
-      (target) => target.type() === 'browser'
-    );
+    const browserTarget = this.targets().find(target => {
+      return target.type() === 'browser';
+    });
     if (!browserTarget) {
       throw new Error('Browser target is not found');
     }
@@ -533,7 +575,7 @@ export class Browser extends EventEmitter {
    * @example
    *
    * An example of finding a target for a page opened via `window.open`:
-   * ```js
+   * ```ts
    * await page.evaluate(() => window.open('https://www.example.com/'));
    * const newWindowTarget = await browser.waitForTarget(target => target.url() === 'https://www.example.com/');
    * ```
@@ -542,36 +584,30 @@ export class Browser extends EventEmitter {
     predicate: (x: Target) => boolean | Promise<boolean>,
     options: WaitForTargetOptions = {}
   ): Promise<Target> {
-    const { timeout = 30000 } = options;
+    const {timeout = 30000} = options;
     let resolve: (value: Target | PromiseLike<Target>) => void;
-    const targetPromise = new Promise<Target>((x) => (resolve = x));
+    let isResolved = false;
+    const targetPromise = new Promise<Target>(x => {
+      return (resolve = x);
+    });
     this.on(BrowserEmittedEvents.TargetCreated, check);
     this.on(BrowserEmittedEvents.TargetChanged, check);
     try {
-      if (!timeout) return await targetPromise;
-      return await helper.waitWithTimeout<Target>(
-        // @ts-expect-error TS2345
-        Promise.race([
-          targetPromise,
-          (async () => {
-            for (const target of this.targets()) {
-              if (await predicate(target)) {
-                return target;
-              }
-            }
-            await targetPromise;
-          })(),
-        ]),
-        'target',
-        timeout
-      );
+      if (!timeout) {
+        return await targetPromise;
+      }
+      this.targets().forEach(check);
+      return await waitWithTimeout(targetPromise, 'target', timeout);
     } finally {
-      this.removeListener(BrowserEmittedEvents.TargetCreated, check);
-      this.removeListener(BrowserEmittedEvents.TargetChanged, check);
+      this.off(BrowserEmittedEvents.TargetCreated, check);
+      this.off(BrowserEmittedEvents.TargetChanged, check);
     }
 
     async function check(target: Target): Promise<void> {
-      if (await predicate(target)) resolve(target);
+      if ((await predicate(target)) && !isResolved) {
+        isResolved = true;
+        resolve(target);
+      }
     }
   }
 
@@ -586,10 +622,14 @@ export class Browser extends EventEmitter {
    */
   async pages(): Promise<Page[]> {
     const contextPages = await Promise.all(
-      this.browserContexts().map((context) => context.pages())
+      this.browserContexts().map(context => {
+        return context.pages();
+      })
     );
     // Flatten array.
-    return contextPages.reduce((acc, x) => acc.concat(x), []);
+    return contextPages.reduce((acc, x) => {
+      return acc.concat(x);
+    }, []);
   }
 
   /**
@@ -603,7 +643,7 @@ export class Browser extends EventEmitter {
    * The format of browser.version() might change with future releases of Chromium.
    */
   async version(): Promise<string> {
-    const version = await this._getVersion();
+    const version = await this.#getVersion();
     return version.product;
   }
 
@@ -612,7 +652,7 @@ export class Browser extends EventEmitter {
    * {@link Page.setUserAgent}.
    */
   async userAgent(): Promise<string> {
-    const version = await this._getVersion();
+    const version = await this.#getVersion();
     return version.userAgent;
   }
 
@@ -621,7 +661,7 @@ export class Browser extends EventEmitter {
    * itself is considered to be disposed and cannot be used anymore.
    */
   async close(): Promise<void> {
-    await this._closeCallback.call(null);
+    await this.#closeCallback.call(null);
     this.disconnect();
   }
 
@@ -631,18 +671,18 @@ export class Browser extends EventEmitter {
    * cannot be used anymore.
    */
   disconnect(): void {
-    this._connection.dispose();
+    this.#connection.dispose();
   }
 
   /**
    * Indicates that the browser is connected.
    */
   isConnected(): boolean {
-    return !this._connection._closed;
+    return !this.#connection._closed;
   }
 
-  private _getVersion(): Promise<Protocol.Browser.GetVersionResponse> {
-    return this._connection.send('Browser.getVersion');
+  #getVersion(): Promise<Protocol.Browser.GetVersionResponse> {
+    return this.#connection.send('Browser.getVersion');
   }
 }
 /**
@@ -691,7 +731,7 @@ export const enum BrowserContextEmittedEvents {
  * method. "Incognito" browser contexts don't write any browsing data to disk.
  *
  * @example
- * ```js
+ * ```ts
  * // Create a new incognito browser context
  * const context = await browser.createIncognitoBrowserContext();
  * // Create a new page inside context.
@@ -704,27 +744,27 @@ export const enum BrowserContextEmittedEvents {
  * @public
  */
 export class BrowserContext extends EventEmitter {
-  private _connection: Connection;
-  private _browser: Browser;
-  private _id?: string;
+  #connection: Connection;
+  #browser: Browser;
+  #id?: string;
 
   /**
    * @internal
    */
   constructor(connection: Connection, browser: Browser, contextId?: string) {
     super();
-    this._connection = connection;
-    this._browser = browser;
-    this._id = contextId;
+    this.#connection = connection;
+    this.#browser = browser;
+    this.#id = contextId;
   }
 
   /**
    * An array of all active targets inside the browser context.
    */
   targets(): Target[] {
-    return this._browser
-      .targets()
-      .filter((target) => target.browserContext() === this);
+    return this.#browser.targets().filter(target => {
+      return target.browserContext() === this;
+    });
   }
 
   /**
@@ -732,7 +772,7 @@ export class BrowserContext extends EventEmitter {
    *
    * @example
    * An example of finding a target for a page opened via `window.open`:
-   * ```js
+   * ```ts
    * await page.evaluate(() => window.open('https://www.example.com/'));
    * const newWindowTarget = await browserContext.waitForTarget(target => target.url() === 'https://www.example.com/');
    * ```
@@ -746,12 +786,11 @@ export class BrowserContext extends EventEmitter {
    */
   waitForTarget(
     predicate: (x: Target) => boolean | Promise<boolean>,
-    options: { timeout?: number } = {}
+    options: {timeout?: number} = {}
   ): Promise<Target> {
-    return this._browser.waitForTarget(
-      (target) => target.browserContext() === this && predicate(target),
-      options
-    );
+    return this.#browser.waitForTarget(target => {
+      return target.browserContext() === this && predicate(target);
+    }, options);
   }
 
   /**
@@ -764,10 +803,22 @@ export class BrowserContext extends EventEmitter {
   async pages(): Promise<Page[]> {
     const pages = await Promise.all(
       this.targets()
-        .filter((target) => target.type() === 'page')
-        .map((target) => target.page())
+        .filter(target => {
+          return (
+            target.type() === 'page' ||
+            (target.type() === 'other' &&
+              this.#browser._getIsPageTargetCallback()?.(
+                target._getTargetInfo()
+              ))
+          );
+        })
+        .map(target => {
+          return target.page();
+        })
     );
-    return pages.filter((page): page is Page => !!page);
+    return pages.filter((page): page is Page => {
+      return !!page;
+    });
   }
 
   /**
@@ -778,12 +829,12 @@ export class BrowserContext extends EventEmitter {
    * The default browser context cannot be closed.
    */
   isIncognito(): boolean {
-    return !!this._id;
+    return !!this.#id;
   }
 
   /**
    * @example
-   * ```js
+   * ```ts
    * const context = browser.defaultBrowserContext();
    * await context.overridePermissions('https://html5demos.com', ['geolocation']);
    * ```
@@ -796,16 +847,17 @@ export class BrowserContext extends EventEmitter {
     origin: string,
     permissions: Permission[]
   ): Promise<void> {
-    const protocolPermissions = permissions.map((permission) => {
+    const protocolPermissions = permissions.map(permission => {
       const protocolPermission =
         WEB_PERMISSION_TO_PROTOCOL_PERMISSION.get(permission);
-      if (!protocolPermission)
+      if (!protocolPermission) {
         throw new Error('Unknown permission: ' + permission);
+      }
       return protocolPermission;
     });
-    await this._connection.send('Browser.grantPermissions', {
+    await this.#connection.send('Browser.grantPermissions', {
       origin,
-      browserContextId: this._id || undefined,
+      browserContextId: this.#id || undefined,
       permissions: protocolPermissions,
     });
   }
@@ -814,7 +866,7 @@ export class BrowserContext extends EventEmitter {
    * Clears all permission overrides for the browser context.
    *
    * @example
-   * ```js
+   * ```ts
    * const context = browser.defaultBrowserContext();
    * context.overridePermissions('https://example.com', ['clipboard-read']);
    * // do stuff ..
@@ -822,8 +874,8 @@ export class BrowserContext extends EventEmitter {
    * ```
    */
   async clearPermissionOverrides(): Promise<void> {
-    await this._connection.send('Browser.resetPermissions', {
-      browserContextId: this._id || undefined,
+    await this.#connection.send('Browser.resetPermissions', {
+      browserContextId: this.#id || undefined,
     });
   }
 
@@ -831,14 +883,14 @@ export class BrowserContext extends EventEmitter {
    * Creates a new page in the browser context.
    */
   newPage(): Promise<Page> {
-    return this._browser._createPageInContext(this._id);
+    return this.#browser._createPageInContext(this.#id);
   }
 
   /**
    * The browser this browser context belongs to.
    */
   browser(): Browser {
-    return this._browser;
+    return this.#browser;
   }
 
   /**
@@ -849,7 +901,7 @@ export class BrowserContext extends EventEmitter {
    * Only incognito browser contexts can be closed.
    */
   async close(): Promise<void> {
-    assert(this._id, 'Non-incognito profiles cannot be closed!');
-    await this._browser._disposeContext(this._id);
+    assert(this.#id, 'Non-incognito profiles cannot be closed!');
+    await this.#browser._disposeContext(this.#id);
   }
 }

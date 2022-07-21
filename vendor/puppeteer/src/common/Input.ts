@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.ts';
-import { CDPSession } from './Connection.ts';
-import { keyDefinitions, KeyDefinition, KeyInput } from './USKeyboardLayout.ts';
-import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
-import { Point } from './JSHandle.ts';
+import {assert} from './assert.ts';
+import {CDPSession} from './Connection.ts';
+import {_keyDefinitions, KeyDefinition, KeyInput} from './USKeyboardLayout.ts';
+import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
+import {Point} from './JSHandle.ts';
 
 type KeyDescription = Required<
   Pick<KeyDefinition, 'keyCode' | 'key' | 'text' | 'code' | 'location'>
@@ -40,7 +40,7 @@ type KeyDescription = Required<
  *
  * @example
  * An example of holding down `Shift` in order to select and delete some text:
- * ```js
+ * ```ts
  * await page.keyboard.type('Hello World!');
  * await page.keyboard.press('ArrowLeft');
  *
@@ -55,7 +55,7 @@ type KeyDescription = Required<
  *
  * @example
  * An example of pressing `A`
- * ```js
+ * ```ts
  * await page.keyboard.down('Shift');
  * await page.keyboard.press('KeyA');
  * await page.keyboard.up('Shift');
@@ -64,14 +64,19 @@ type KeyDescription = Required<
  * @public
  */
 export class Keyboard {
-  private _client: CDPSession;
-  /** @internal */
-  _modifiers = 0;
-  private _pressedKeys = new Set<string>();
+  #client: CDPSession;
+  #pressedKeys = new Set<string>();
 
-  /** @internal */
+  /**
+   * @internal
+   */
+  _modifiers = 0;
+
+  /**
+   * @internal
+   */
   constructor(client: CDPSession) {
-    this._client = client;
+    this.#client = client;
   }
 
   /**
@@ -101,16 +106,16 @@ export class Keyboard {
    */
   async down(
     key: KeyInput,
-    options: { text?: string } = { text: undefined }
+    options: {text?: string} = {text: undefined}
   ): Promise<void> {
-    const description = this._keyDescriptionForString(key);
+    const description = this.#keyDescriptionForString(key);
 
-    const autoRepeat = this._pressedKeys.has(description.code);
-    this._pressedKeys.add(description.code);
-    this._modifiers |= this._modifierBit(description.key);
+    const autoRepeat = this.#pressedKeys.has(description.code);
+    this.#pressedKeys.add(description.code);
+    this._modifiers |= this.#modifierBit(description.key);
 
     const text = options.text === undefined ? description.text : options.text;
-    await this._client.send('Input.dispatchKeyEvent', {
+    await this.#client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
       modifiers: this._modifiers,
       windowsVirtualKeyCode: description.keyCode,
@@ -124,15 +129,23 @@ export class Keyboard {
     });
   }
 
-  private _modifierBit(key: string): number {
-    if (key === 'Alt') return 1;
-    if (key === 'Control') return 2;
-    if (key === 'Meta') return 4;
-    if (key === 'Shift') return 8;
+  #modifierBit(key: string): number {
+    if (key === 'Alt') {
+      return 1;
+    }
+    if (key === 'Control') {
+      return 2;
+    }
+    if (key === 'Meta') {
+      return 4;
+    }
+    if (key === 'Shift') {
+      return 8;
+    }
     return 0;
   }
 
-  private _keyDescriptionForString(keyString: KeyInput): KeyDescription {
+  #keyDescriptionForString(keyString: KeyInput): KeyDescription {
     const shift = this._modifiers & 8;
     const description = {
       key: '',
@@ -142,27 +155,46 @@ export class Keyboard {
       location: 0,
     };
 
-    const definition = keyDefinitions[keyString];
+    const definition = _keyDefinitions[keyString];
     assert(definition, `Unknown key: "${keyString}"`);
 
-    if (definition.key) description.key = definition.key;
-    if (shift && definition.shiftKey) description.key = definition.shiftKey;
+    if (definition.key) {
+      description.key = definition.key;
+    }
+    if (shift && definition.shiftKey) {
+      description.key = definition.shiftKey;
+    }
 
-    if (definition.keyCode) description.keyCode = definition.keyCode;
-    if (shift && definition.shiftKeyCode)
+    if (definition.keyCode) {
+      description.keyCode = definition.keyCode;
+    }
+    if (shift && definition.shiftKeyCode) {
       description.keyCode = definition.shiftKeyCode;
+    }
 
-    if (definition.code) description.code = definition.code;
+    if (definition.code) {
+      description.code = definition.code;
+    }
 
-    if (definition.location) description.location = definition.location;
+    if (definition.location) {
+      description.location = definition.location;
+    }
 
-    if (description.key.length === 1) description.text = description.key;
+    if (description.key.length === 1) {
+      description.text = description.key;
+    }
 
-    if (definition.text) description.text = definition.text;
-    if (shift && definition.shiftText) description.text = definition.shiftText;
+    if (definition.text) {
+      description.text = definition.text;
+    }
+    if (shift && definition.shiftText) {
+      description.text = definition.shiftText;
+    }
 
     // if any modifiers besides shift are pressed, no text should be sent
-    if (this._modifiers & ~8) description.text = '';
+    if (this._modifiers & ~8) {
+      description.text = '';
+    }
 
     return description;
   }
@@ -175,11 +207,11 @@ export class Keyboard {
    * for a list of all key names.
    */
   async up(key: KeyInput): Promise<void> {
-    const description = this._keyDescriptionForString(key);
+    const description = this.#keyDescriptionForString(key);
 
-    this._modifiers &= ~this._modifierBit(description.key);
-    this._pressedKeys.delete(description.code);
-    await this._client.send('Input.dispatchKeyEvent', {
+    this._modifiers &= ~this.#modifierBit(description.key);
+    this.#pressedKeys.delete(description.code);
+    await this.#client.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: this._modifiers,
       key: description.key,
@@ -198,19 +230,18 @@ export class Keyboard {
    * Holding down `Shift` will not type the text in upper case.
    *
    * @example
-   * ```js
+   * ```ts
    * page.keyboard.sendCharacter('嗨');
    * ```
    *
    * @param char - Character to send into the page.
    */
   async sendCharacter(char: string): Promise<void> {
-    await this._client.send('Input.insertText', { text: char });
+    await this.#client.send('Input.insertText', {text: char});
   }
 
   private charIsKey(char: string): char is KeyInput {
-    // @ts-expect-error TS7053
-    return !!keyDefinitions[char];
+    return !!_keyDefinitions[char as KeyInput];
   }
 
   /**
@@ -225,7 +256,7 @@ export class Keyboard {
    * Holding down `Shift` will not type the text in upper case.
    *
    * @example
-   * ```js
+   * ```ts
    * await page.keyboard.type('Hello'); // Types instantly
    * await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
    * ```
@@ -235,14 +266,17 @@ export class Keyboard {
    * if specified, is the time to wait between `keydown` and `keyup` in milliseconds.
    * Defaults to 0.
    */
-  async type(text: string, options: { delay?: number } = {}): Promise<void> {
-    const delay = options.delay || null;
+  async type(text: string, options: {delay?: number} = {}): Promise<void> {
+    const delay = options.delay || undefined;
     for (const char of text) {
       if (this.charIsKey(char)) {
-        // @ts-expect-error TS2322
-        await this.press(char, { delay });
+        await this.press(char, {delay});
       } else {
-        if (delay) await new Promise((f) => setTimeout(f, delay));
+        if (delay) {
+          await new Promise(f => {
+            return setTimeout(f, delay);
+          });
+        }
         await this.sendCharacter(char);
       }
     }
@@ -270,11 +304,15 @@ export class Keyboard {
    */
   async press(
     key: KeyInput,
-    options: { delay?: number; text?: string } = {}
+    options: {delay?: number; text?: string} = {}
   ): Promise<void> {
-    const { delay = null } = options;
+    const {delay = null} = options;
     await this.down(key, options);
-    if (delay) await new Promise((f) => setTimeout(f, options.delay));
+    if (delay) {
+      await new Promise(f => {
+        return setTimeout(f, options.delay);
+      });
+    }
     await this.up(key);
   }
 }
@@ -282,7 +320,7 @@ export class Keyboard {
 /**
  * @public
  */
-export type MouseButton = 'left' | 'right' | 'middle';
+export type MouseButton = 'left' | 'right' | 'middle' | 'back' | 'forward';
 
 /**
  * @public
@@ -307,7 +345,7 @@ export interface MouseWheelOptions {
  * Every `page` object has its own Mouse, accessible with [`page.mouse`](#pagemouse).
  *
  * @example
- * ```js
+ * ```ts
  * // Using ‘page.mouse’ to trace a 100x100 square.
  * await page.mouse.move(0, 0);
  * await page.mouse.down();
@@ -327,7 +365,7 @@ export interface MouseWheelOptions {
  *
  * @example
  * For example, if you want to select all content between nodes:
- * ```js
+ * ```ts
  * await page.evaluate((from, to) => {
  *   const selection = from.getRootNode().getSelection();
  *   const range = document.createRange();
@@ -338,7 +376,7 @@ export interface MouseWheelOptions {
  * }, fromJSHandle, toJSHandle);
  * ```
  * If you then would want to copy-paste your selection, you can use the clipboard api:
- * ```js
+ * ```ts
  * // The clipboard api does not allow you to copy, unless the tab is focused.
  * await page.bringToFront();
  * await page.evaluate(() => {
@@ -350,7 +388,7 @@ export interface MouseWheelOptions {
  * ```
  * **Note**: If you want access to the clipboard API,
  * you have to give it permission to do so:
- * ```js
+ * ```ts
  * await browser.defaultBrowserContext().overridePermissions(
  *   '<your origin>', ['clipboard-read', 'clipboard-write']
  * );
@@ -358,18 +396,18 @@ export interface MouseWheelOptions {
  * @public
  */
 export class Mouse {
-  private _client: CDPSession;
-  private _keyboard: Keyboard;
-  private _x = 0;
-  private _y = 0;
-  private _button: MouseButton | 'none' = 'none';
+  #client: CDPSession;
+  #keyboard: Keyboard;
+  #x = 0;
+  #y = 0;
+  #button: MouseButton | 'none' = 'none';
 
   /**
    * @internal
    */
   constructor(client: CDPSession, keyboard: Keyboard) {
-    this._client = client;
-    this._keyboard = keyboard;
+    this.#client = client;
+    this.#keyboard = keyboard;
   }
 
   /**
@@ -382,20 +420,20 @@ export class Mouse {
   async move(
     x: number,
     y: number,
-    options: { steps?: number } = {}
+    options: {steps?: number} = {}
   ): Promise<void> {
-    const { steps = 1 } = options;
-    const fromX = this._x,
-      fromY = this._y;
-    this._x = x;
-    this._y = y;
+    const {steps = 1} = options;
+    const fromX = this.#x,
+      fromY = this.#y;
+    this.#x = x;
+    this.#y = y;
     for (let i = 1; i <= steps; i++) {
-      await this._client.send('Input.dispatchMouseEvent', {
+      await this.#client.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
-        button: this._button,
-        x: fromX + (this._x - fromX) * (i / steps),
-        y: fromY + (this._y - fromY) * (i / steps),
-        modifiers: this._keyboard._modifiers,
+        button: this.#button,
+        x: fromX + (this.#x - fromX) * (i / steps),
+        y: fromY + (this.#y - fromY) * (i / steps),
+        modifiers: this.#keyboard._modifiers,
       });
     }
   }
@@ -409,13 +447,15 @@ export class Mouse {
   async click(
     x: number,
     y: number,
-    options: MouseOptions & { delay?: number } = {}
+    options: MouseOptions & {delay?: number} = {}
   ): Promise<void> {
-    const { delay = null } = options;
+    const {delay = null} = options;
     if (delay !== null) {
       await this.move(x, y);
       await this.down(options);
-      await new Promise((f) => setTimeout(f, delay));
+      await new Promise(f => {
+        return setTimeout(f, delay);
+      });
       await this.up(options);
     } else {
       await this.move(x, y);
@@ -429,14 +469,14 @@ export class Mouse {
    * @param options - Optional `MouseOptions`.
    */
   async down(options: MouseOptions = {}): Promise<void> {
-    const { button = 'left', clickCount = 1 } = options;
-    this._button = button;
-    await this._client.send('Input.dispatchMouseEvent', {
+    const {button = 'left', clickCount = 1} = options;
+    this.#button = button;
+    await this.#client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       button,
-      x: this._x,
-      y: this._y,
-      modifiers: this._keyboard._modifiers,
+      x: this.#x,
+      y: this.#y,
+      modifiers: this.#keyboard._modifiers,
       clickCount,
     });
   }
@@ -446,14 +486,14 @@ export class Mouse {
    * @param options - Optional `MouseOptions`.
    */
   async up(options: MouseOptions = {}): Promise<void> {
-    const { button = 'left', clickCount = 1 } = options;
-    this._button = 'none';
-    await this._client.send('Input.dispatchMouseEvent', {
+    const {button = 'left', clickCount = 1} = options;
+    this.#button = 'none';
+    await this.#client.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
       button,
-      x: this._x,
-      y: this._y,
-      modifiers: this._keyboard._modifiers,
+      x: this.#x,
+      y: this.#y,
+      modifiers: this.#keyboard._modifiers,
       clickCount,
     });
   }
@@ -464,7 +504,7 @@ export class Mouse {
    *
    * @example
    * An example of zooming into an element:
-   * ```js
+   * ```ts
    * await page.goto('https://mdn.mozillademos.org/en-US/docs/Web/API/Element/wheel_event$samples/Scaling_an_element_via_the_wheel?revision=1587366');
    *
    * const elem = await page.$('div');
@@ -478,14 +518,14 @@ export class Mouse {
    * ```
    */
   async wheel(options: MouseWheelOptions = {}): Promise<void> {
-    const { deltaX = 0, deltaY = 0 } = options;
-    await this._client.send('Input.dispatchMouseEvent', {
+    const {deltaX = 0, deltaY = 0} = options;
+    await this.#client.send('Input.dispatchMouseEvent', {
       type: 'mouseWheel',
-      x: this._x,
-      y: this._y,
+      x: this.#x,
+      y: this.#y,
       deltaX,
       deltaY,
-      modifiers: this._keyboard._modifiers,
+      modifiers: this.#keyboard._modifiers,
       pointerType: 'mouse',
     });
   }
@@ -496,10 +536,10 @@ export class Mouse {
    * @param target - point to drag to
    */
   async drag(start: Point, target: Point): Promise<Protocol.Input.DragData> {
-    const promise = new Promise<Protocol.Input.DragData>((resolve) => {
-      this._client.once('Input.dragIntercepted', (event) =>
-        resolve(event.data)
-      );
+    const promise = new Promise<Protocol.Input.DragData>(resolve => {
+      this.#client.once('Input.dragIntercepted', event => {
+        return resolve(event.data);
+      });
     });
     await this.move(start.x, start.y);
     await this.down();
@@ -513,11 +553,11 @@ export class Mouse {
    * @param data - drag data containing items and operations mask
    */
   async dragEnter(target: Point, data: Protocol.Input.DragData): Promise<void> {
-    await this._client.send('Input.dispatchDragEvent', {
+    await this.#client.send('Input.dispatchDragEvent', {
       type: 'dragEnter',
       x: target.x,
       y: target.y,
-      modifiers: this._keyboard._modifiers,
+      modifiers: this.#keyboard._modifiers,
       data,
     });
   }
@@ -528,11 +568,11 @@ export class Mouse {
    * @param data - drag data containing items and operations mask
    */
   async dragOver(target: Point, data: Protocol.Input.DragData): Promise<void> {
-    await this._client.send('Input.dispatchDragEvent', {
+    await this.#client.send('Input.dispatchDragEvent', {
       type: 'dragOver',
       x: target.x,
       y: target.y,
-      modifiers: this._keyboard._modifiers,
+      modifiers: this.#keyboard._modifiers,
       data,
     });
   }
@@ -543,11 +583,11 @@ export class Mouse {
    * @param data - drag data containing items and operations mask
    */
   async drop(target: Point, data: Protocol.Input.DragData): Promise<void> {
-    await this._client.send('Input.dispatchDragEvent', {
+    await this.#client.send('Input.dispatchDragEvent', {
       type: 'drop',
       x: target.x,
       y: target.y,
-      modifiers: this._keyboard._modifiers,
+      modifiers: this.#keyboard._modifiers,
       data,
     });
   }
@@ -563,14 +603,16 @@ export class Mouse {
   async dragAndDrop(
     start: Point,
     target: Point,
-    options: { delay?: number } = {}
+    options: {delay?: number} = {}
   ): Promise<void> {
-    const { delay = null } = options;
+    const {delay = null} = options;
     const data = await this.drag(start, target);
     await this.dragEnter(target, data);
     await this.dragOver(target, data);
     if (delay) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise(resolve => {
+        return setTimeout(resolve, delay);
+      });
     }
     await this.drop(target, data);
     await this.up();
@@ -582,15 +624,15 @@ export class Mouse {
  * @public
  */
 export class Touchscreen {
-  private _client: CDPSession;
-  private _keyboard: Keyboard;
+  #client: CDPSession;
+  #keyboard: Keyboard;
 
   /**
    * @internal
    */
   constructor(client: CDPSession, keyboard: Keyboard) {
-    this._client = client;
-    this._keyboard = keyboard;
+    this.#client = client;
+    this.#keyboard = keyboard;
   }
 
   /**
@@ -599,16 +641,16 @@ export class Touchscreen {
    * @param y - Vertical position of the tap.
    */
   async tap(x: number, y: number): Promise<void> {
-    const touchPoints = [{ x: Math.round(x), y: Math.round(y) }];
-    await this._client.send('Input.dispatchTouchEvent', {
+    const touchPoints = [{x: Math.round(x), y: Math.round(y)}];
+    await this.#client.send('Input.dispatchTouchEvent', {
       type: 'touchStart',
       touchPoints,
-      modifiers: this._keyboard._modifiers,
+      modifiers: this.#keyboard._modifiers,
     });
-    await this._client.send('Input.dispatchTouchEvent', {
+    await this.#client.send('Input.dispatchTouchEvent', {
       type: 'touchEnd',
       touchPoints: [],
-      modifiers: this._keyboard._modifiers,
+      modifiers: this.#keyboard._modifiers,
     });
   }
 }

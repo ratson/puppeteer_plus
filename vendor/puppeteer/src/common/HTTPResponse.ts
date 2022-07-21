@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Buffer } from 'https://deno.land/std@0.135.0/node/buffer.ts';
-import { ProtocolMapping } from '../../../devtools-protocol/types/protocol-mapping.d.ts';
+import {ProtocolMapping} from '../../../devtools-protocol/types/protocol-mapping.d.ts';
 
-import { EventEmitter } from './EventEmitter.ts';
-import { Frame } from './FrameManager.ts';
-import { HTTPRequest } from './HTTPRequest.ts';
-import { SecurityDetails } from './SecurityDetails.ts';
-import { Protocol } from '../../../devtools-protocol/types/protocol.d.ts';
-import { ProtocolError } from './Errors.ts';
+import {EventEmitter} from './EventEmitter.ts';
+import {Frame} from './FrameManager.ts';
+import {HTTPRequest} from './HTTPRequest.ts';
+import {SecurityDetails} from './SecurityDetails.ts';
+import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
+import {ProtocolError} from './Errors.ts';
 
 /**
  * @public
  */
 export interface RemoteAddress {
-  ip: string;
-  port: number;
+  ip?: string;
+  port?: number;
 }
 
 interface CDPSession extends EventEmitter {
@@ -45,21 +44,20 @@ interface CDPSession extends EventEmitter {
  * @public
  */
 export class HTTPResponse {
-  private _client: CDPSession;
-  private _request: HTTPRequest;
-  private _contentPromise: Promise<Buffer> | null = null;
-  private _bodyLoadedPromise: Promise<Error | void>;
-  // @ts-expect-error TS2564
-  private _bodyLoadedPromiseFulfill: (err: Error | void) => void;
-  private _remoteAddress: RemoteAddress;
-  private _status: number;
-  private _statusText: string;
-  private _url: string;
-  private _fromDiskCache: boolean;
-  private _fromServiceWorker: boolean;
-  private _headers: Record<string, string> = {};
-  private _securityDetails: SecurityDetails | null;
-  private _timing: Protocol.Network.ResourceTiming | null;
+  #client: CDPSession;
+  #request: HTTPRequest;
+  #contentPromise: Promise<Buffer> | null = null;
+  #bodyLoadedPromise: Promise<Error | void>;
+  #bodyLoadedPromiseFulfill: (err: Error | void) => void = () => {};
+  #remoteAddress: RemoteAddress;
+  #status: number;
+  #statusText: string;
+  #url: string;
+  #fromDiskCache: boolean;
+  #fromServiceWorker: boolean;
+  #headers: Record<string, string> = {};
+  #securityDetails: SecurityDetails | null;
+  #timing: Protocol.Network.ResourceTiming | null;
 
   /**
    * @internal
@@ -70,51 +68,54 @@ export class HTTPResponse {
     responsePayload: Protocol.Network.Response,
     extraInfo: Protocol.Network.ResponseReceivedExtraInfoEvent | null
   ) {
-    this._client = client;
-    this._request = request;
+    this.#client = client;
+    this.#request = request;
 
-    this._bodyLoadedPromise = new Promise((fulfill) => {
-      this._bodyLoadedPromiseFulfill = fulfill;
+    this.#bodyLoadedPromise = new Promise(fulfill => {
+      this.#bodyLoadedPromiseFulfill = fulfill;
     });
 
-    this._remoteAddress = {
-      // @ts-expect-error TS2322
+    this.#remoteAddress = {
       ip: responsePayload.remoteIPAddress,
-      // @ts-expect-error TS2322
       port: responsePayload.remotePort,
     };
-    this._statusText =
-      this._parseStatusTextFromExtrInfo(extraInfo) ||
+    this.#statusText =
+      this.#parseStatusTextFromExtrInfo(extraInfo) ||
       responsePayload.statusText;
-    this._url = request.url();
-    this._fromDiskCache = !!responsePayload.fromDiskCache;
-    this._fromServiceWorker = !!responsePayload.fromServiceWorker;
+    this.#url = request.url();
+    this.#fromDiskCache = !!responsePayload.fromDiskCache;
+    this.#fromServiceWorker = !!responsePayload.fromServiceWorker;
 
-    this._status = extraInfo ? extraInfo.statusCode : responsePayload.status;
+    this.#status = extraInfo ? extraInfo.statusCode : responsePayload.status;
     const headers = extraInfo ? extraInfo.headers : responsePayload.headers;
-    for (const key of Object.keys(headers))
-      this._headers[key.toLowerCase()] = headers[key];
+    for (const [key, value] of Object.entries(headers)) {
+      this.#headers[key.toLowerCase()] = value;
+    }
 
-    this._securityDetails = responsePayload.securityDetails
+    this.#securityDetails = responsePayload.securityDetails
       ? new SecurityDetails(responsePayload.securityDetails)
       : null;
-    // @ts-expect-error TS2322
-    this._timing = responsePayload.timing;
+    this.#timing = responsePayload.timing || null;
   }
 
-  /**
-   * @internal
-   */
-  _parseStatusTextFromExtrInfo(
+  #parseStatusTextFromExtrInfo(
     extraInfo: Protocol.Network.ResponseReceivedExtraInfoEvent | null
   ): string | undefined {
-    if (!extraInfo || !extraInfo.headersText) return;
+    if (!extraInfo || !extraInfo.headersText) {
+      return;
+    }
     const firstLine = extraInfo.headersText.split('\r', 1)[0];
-    if (!firstLine) return;
+    if (!firstLine) {
+      return;
+    }
     const match = firstLine.match(/[^ ]* [^ ]* (.*)/);
-    if (!match) return;
+    if (!match) {
+      return;
+    }
     const statusText = match[1];
-    if (!statusText) return;
+    if (!statusText) {
+      return;
+    }
     return statusText;
   }
 
@@ -122,8 +123,10 @@ export class HTTPResponse {
    * @internal
    */
   _resolveBody(err: Error | null): void {
-    // @ts-expect-error TS2345
-    return this._bodyLoadedPromiseFulfill(err);
+    if (err) {
+      return this.#bodyLoadedPromiseFulfill(err);
+    }
+    return this.#bodyLoadedPromiseFulfill();
   }
 
   /**
@@ -131,14 +134,14 @@ export class HTTPResponse {
    * server.
    */
   remoteAddress(): RemoteAddress {
-    return this._remoteAddress;
+    return this.#remoteAddress;
   }
 
   /**
    * @returns The URL of the response.
    */
   url(): string {
-    return this._url;
+    return this.#url;
   }
 
   /**
@@ -146,14 +149,14 @@ export class HTTPResponse {
    */
   ok(): boolean {
     // TODO: document === 0 case?
-    return this._status === 0 || (this._status >= 200 && this._status <= 299);
+    return this.#status === 0 || (this.#status >= 200 && this.#status <= 299);
   }
 
   /**
    * @returns The status code of the response (e.g., 200 for a success).
    */
   status(): number {
-    return this._status;
+    return this.#status;
   }
 
   /**
@@ -161,7 +164,7 @@ export class HTTPResponse {
    * success).
    */
   statusText(): string {
-    return this._statusText;
+    return this.#statusText;
   }
 
   /**
@@ -169,7 +172,7 @@ export class HTTPResponse {
    * header names are lower-case.
    */
   headers(): Record<string, string> {
-    return this._headers;
+    return this.#headers;
   }
 
   /**
@@ -177,26 +180,28 @@ export class HTTPResponse {
    * secure connection, or `null` otherwise.
    */
   securityDetails(): SecurityDetails | null {
-    return this._securityDetails;
+    return this.#securityDetails;
   }
 
   /**
    * @returns Timing information related to the response.
    */
   timing(): Protocol.Network.ResourceTiming | null {
-    return this._timing;
+    return this.#timing;
   }
 
   /**
    * @returns Promise which resolves to a buffer with response body.
    */
   buffer(): Promise<Buffer> {
-    if (!this._contentPromise) {
-      this._contentPromise = this._bodyLoadedPromise.then(async (error) => {
-        if (error) throw error;
+    if (!this.#contentPromise) {
+      this.#contentPromise = this.#bodyLoadedPromise.then(async error => {
+        if (error) {
+          throw error;
+        }
         try {
-          const response = await this._client.send('Network.getResponseBody', {
-            requestId: this._request._requestId,
+          const response = await this.#client.send('Network.getResponseBody', {
+            requestId: this.#request._requestId,
           });
           return Buffer.from(
             response.body,
@@ -216,7 +221,7 @@ export class HTTPResponse {
         }
       });
     }
-    return this._contentPromise;
+    return this.#contentPromise;
   }
 
   /**
@@ -245,7 +250,7 @@ export class HTTPResponse {
    * @returns A matching {@link HTTPRequest} object.
    */
   request(): HTTPRequest {
-    return this._request;
+    return this.#request;
   }
 
   /**
@@ -253,14 +258,14 @@ export class HTTPResponse {
    * cache or memory cache.
    */
   fromCache(): boolean {
-    return this._fromDiskCache || this._request._fromMemoryCache;
+    return this.#fromDiskCache || this.#request._fromMemoryCache;
   }
 
   /**
    * @returns True if the response was served by a service worker.
    */
   fromServiceWorker(): boolean {
-    return this._fromServiceWorker;
+    return this.#fromServiceWorker;
   }
 
   /**
@@ -268,6 +273,6 @@ export class HTTPResponse {
    * navigating to error pages.
    */
   frame(): Frame | null {
-    return this._request.frame();
+    return this.#request.frame();
   }
 }

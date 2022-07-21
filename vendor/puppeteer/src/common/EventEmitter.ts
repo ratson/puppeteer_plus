@@ -1,13 +1,13 @@
 import mitt, {
   Emitter,
-  EventType,
-  Handler,
+  type EventType,
+  type Handler,
 } from '../../vendor/mitt/src/index.ts';
 
 /**
  * @public
  */
-export type { EventType, Handler };
+export type {EventType, Handler};
 
 /**
  * @public
@@ -110,7 +110,7 @@ export class EventEmitter implements CommonEventEmitter {
    * @returns `this` to enable you to chain method calls.
    */
   once(event: EventType, handler: Handler): EventEmitter {
-    const onceHandler: Handler = (eventData) => {
+    const onceHandler: Handler = eventData => {
       handler(eventData);
       this.off(event, onceHandler);
     };

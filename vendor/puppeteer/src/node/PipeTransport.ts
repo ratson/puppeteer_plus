@@ -13,73 +13,82 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Buffer } from 'https://deno.land/std@0.135.0/node/buffer.ts';
+import { Buffer } from 'https://deno.land/std@0.149.0/node/buffer.ts';
+import {assert} from '../common/assert.ts';
+import {ConnectionTransport} from '../common/ConnectionTransport.ts';
 import {
-  helper,
+  addEventListener,
   debugError,
   PuppeteerEventListener,
-} from '../common/helper.ts';
-import { ConnectionTransport } from '../common/ConnectionTransport.ts';
+  removeEventListeners,
+} from '../common/util.ts';
 
+/**
+ * @internal
+ */
 export class PipeTransport implements ConnectionTransport {
-  _pipeWrite: any;
-  _pendingMessage: string;
-  _eventListeners: PuppeteerEventListener[];
+  #pipeWrite: any;
+  #eventListeners: PuppeteerEventListener[];
+
+  #isClosed = false;
+  #pendingMessage = '';
 
   onclose?: () => void;
-  onmessage?: () => void;
+  onmessage?: (value: string) => void;
 
   constructor(
     pipeWrite: any,
     pipeRead: any
   ) {
-    this._pipeWrite = pipeWrite;
-    this._pendingMessage = '';
-    this._eventListeners = [
-      helper.addEventListener(pipeRead, 'data', (buffer) =>
-        this._dispatch(buffer)
-      ),
-      helper.addEventListener(pipeRead, 'close', () => {
-        if (this.onclose) this.onclose.call(null);
+    this.#pipeWrite = pipeWrite;
+    this.#eventListeners = [
+      addEventListener(pipeRead, 'data', buffer => {
+        return this.#dispatch(buffer);
       }),
-      helper.addEventListener(pipeRead, 'error', debugError),
-      helper.addEventListener(pipeWrite, 'error', debugError),
+      addEventListener(pipeRead, 'close', () => {
+        if (this.onclose) {
+          this.onclose.call(null);
+        }
+      }),
+      addEventListener(pipeRead, 'error', debugError),
+      addEventListener(pipeWrite, 'error', debugError),
     ];
-    // @ts-expect-error TS2322
-    this.onmessage = null;
-    // @ts-expect-error TS2322
-    this.onclose = null;
   }
 
   send(message: string): void {
-    this._pipeWrite.write(message);
-    this._pipeWrite.write('\0');
+    assert(!this.#isClosed, '`PipeTransport` is closed.');
+
+    this.#pipeWrite.write(message);
+    this.#pipeWrite.write('\0');
   }
 
-  _dispatch(buffer: Buffer): void {
+  #dispatch(buffer: Buffer): void {
+    assert(!this.#isClosed, '`PipeTransport` is closed.');
+
     let end = buffer.indexOf('\0');
     if (end === -1) {
-      this._pendingMessage += buffer.toString();
+      this.#pendingMessage += buffer.toString();
       return;
     }
-    const message = this._pendingMessage + buffer.toString(undefined, 0, end);
-    // @ts-expect-error TS2554
-    if (this.onmessage) this.onmessage.call(null, message);
+    const message = this.#pendingMessage + buffer.toString(undefined, 0, end);
+    if (this.onmessage) {
+      this.onmessage.call(null, message);
+    }
 
     let start = end + 1;
     end = buffer.indexOf('\0', start);
     while (end !== -1) {
-      if (this.onmessage)
-        // @ts-expect-error TS2554
+      if (this.onmessage) {
         this.onmessage.call(null, buffer.toString(undefined, start, end));
+      }
       start = end + 1;
       end = buffer.indexOf('\0', start);
     }
-    this._pendingMessage = buffer.toString(undefined, start);
+    this.#pendingMessage = buffer.toString(undefined, start);
   }
 
   close(): void {
-    this._pipeWrite = null;
-    helper.removeEventListeners(this._eventListeners);
+    this.#isClosed = true;
+    removeEventListeners(this.#eventListeners);
   }
 }

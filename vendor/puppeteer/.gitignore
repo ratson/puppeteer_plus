@@ -1,26 +1,33 @@
-/node_modules/
-test-ts-types/**/node_modules
-test-ts-types/**/dist/
-/test/output-chromium
-/test/output-firefox
-/test/test-user-data-dir*
-/.local-chromium/
-/.local-firefox/
-/.dev_profile*
-.DS_Store
-*.swp
-*.pyc
-.vscode
-package-lock.json
+# Dependencies
+node_modules
+
+# Production
+build/
+lib/
+
+# Generated files
+**/*.tsbuildinfo
+puppeteer.api.json
+puppeteer*.tgz
 yarn.lock
-/node6
-/utils/browser/puppeteer-web.js
-/lib
-test/coverage.json
-temp/
-new-docs/
-puppeteer.tgz
-docs-api-json/
-docs-dist/
-website/docs
-docs/api.html
+.docusaurus/
+.cache-loader
+.local-chromium/
+.local-firefox/
+test/output-*/
+.dev_profile*
+coverage/
+
+# IDE Artifacts
+.vscode
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

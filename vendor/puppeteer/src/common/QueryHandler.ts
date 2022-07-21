@@ -14,36 +14,38 @@
  * limitations under the License.
  */
 
-import { WaitForSelectorOptions, DOMWorld } from './DOMWorld.ts';
-import { ElementHandle, JSHandle } from './JSHandle.ts';
-import { ariaHandler } from './AriaQueryHandler.ts';
+import {ariaHandler} from './AriaQueryHandler.ts';
+import {DOMWorld, WaitForSelectorOptions} from './DOMWorld.ts';
+import {ElementHandle} from './ElementHandle.ts';
+import {JSHandle} from './JSHandle.ts';
 
 /**
  * @internal
  */
 export interface InternalQueryHandler {
   queryOne?: (
-    element: ElementHandle,
+    element: ElementHandle<Node>,
     selector: string
-  ) => Promise<ElementHandle | null>;
+  ) => Promise<ElementHandle<Node> | null>;
+  queryAll?: (
+    element: ElementHandle<Node>,
+    selector: string
+  ) => Promise<Array<ElementHandle<Node>>>;
+
   waitFor?: (
     domWorld: DOMWorld,
     selector: string,
     options: WaitForSelectorOptions
-  ) => Promise<ElementHandle | null>;
-  queryAll?: (
-    element: ElementHandle,
-    selector: string
-  ) => Promise<ElementHandle[]>;
+  ) => Promise<ElementHandle<Node> | null>;
   queryAllArray?: (
-    element: ElementHandle,
+    element: ElementHandle<Node>,
     selector: string
-  ) => Promise<JSHandle>;
+  ) => Promise<JSHandle<Node[]>>;
 }
 
 /**
  * Contains two functions `queryOne` and `queryAll` that can
- * be {@link Puppeteer.registerCustomQueryHandler | registered}
+ * be {@link registerCustomQueryHandler | registered}
  * as alternative querying strategies. The functions `queryOne` and `queryAll`
  * are executed in the page context.  `queryOne` should take an `Element` and a
  * selector string as argument and return a single `Element` or `null` if no
@@ -53,25 +55,23 @@ export interface InternalQueryHandler {
  * @public
  */
 export interface CustomQueryHandler {
-  // @ts-expect-error TS2304
-  queryOne?: (element: Element | Document, selector: string) => Element | null;
-  queryAll?: (
-    // @ts-expect-error TS2304
-    element: Element | Document,
-    selector: string
-  // @ts-expect-error TS2304
-  ) => Element[] | NodeListOf<Element>;
+  queryOne?: (element: Node, selector: string) => Node | null;
+  queryAll?: (element: Node, selector: string) => Node[];
 }
 
-function makeQueryHandler(handler: CustomQueryHandler): InternalQueryHandler {
+function createInternalQueryHandler(
+  handler: CustomQueryHandler
+): InternalQueryHandler {
   const internalHandler: InternalQueryHandler = {};
 
   if (handler.queryOne) {
+    const queryOne = handler.queryOne;
     internalHandler.queryOne = async (element, selector) => {
-      // @ts-expect-error TS2345
-      const jsHandle = await element.evaluateHandle(handler.queryOne, selector);
+      const jsHandle = await element.evaluateHandle(queryOne, selector);
       const elementHandle = jsHandle.asElement();
-      if (elementHandle) return elementHandle;
+      if (elementHandle) {
+        return elementHandle;
+      }
       await jsHandle.dispose();
       return null;
     };
@@ -79,33 +79,34 @@ function makeQueryHandler(handler: CustomQueryHandler): InternalQueryHandler {
       domWorld: DOMWorld,
       selector: string,
       options: WaitForSelectorOptions
-    // @ts-expect-error TS2345
-    ) => domWorld.waitForSelectorInPage(handler.queryOne, selector, options);
+    ) => {
+      return domWorld._waitForSelectorInPage(queryOne, selector, options);
+    };
   }
 
   if (handler.queryAll) {
+    const queryAll = handler.queryAll;
     internalHandler.queryAll = async (element, selector) => {
-      // @ts-expect-error TS2345
-      const jsHandle = await element.evaluateHandle(handler.queryAll, selector);
+      const jsHandle = await element.evaluateHandle(queryAll, selector);
       const properties = await jsHandle.getProperties();
       await jsHandle.dispose();
       const result = [];
       for (const property of properties.values()) {
         const elementHandle = property.asElement();
-        if (elementHandle) result.push(elementHandle);
+        if (elementHandle) {
+          result.push(elementHandle);
+        }
       }
       return result;
     };
     internalHandler.queryAllArray = async (element, selector) => {
-      const resultHandle = await element.evaluateHandle(
-        // @ts-expect-error TS2345
-        handler.queryAll,
+      const resultHandle = (await element.evaluateHandle(
+        queryAll,
         selector
-      );
-      const arrayHandle = await resultHandle.evaluateHandle(
-        // @ts-expect-error TS2304
-        (res: Element[] | NodeListOf<Element>) => Array.from(res)
-      );
+      )) as JSHandle<Element[] | NodeListOf<Element>>;
+      const arrayHandle = await resultHandle.evaluateHandle(res => {
+        return Array.from(res);
+      });
       return arrayHandle;
     };
   }
@@ -113,39 +114,51 @@ function makeQueryHandler(handler: CustomQueryHandler): InternalQueryHandler {
   return internalHandler;
 }
 
-const _defaultHandler = makeQueryHandler({
-  // @ts-expect-error TS2304
-  queryOne: (element: Element, selector: string) =>
-    element.querySelector(selector),
-  // @ts-expect-error TS2304
-  queryAll: (element: Element, selector: string) =>
-    element.querySelectorAll(selector),
+const defaultHandler = createInternalQueryHandler({
+  queryOne: (element, selector) => {
+    if (!('querySelector' in element)) {
+      throw new Error(
+        `Could not invoke \`querySelector\` on node of type ${element.nodeName}.`
+      );
+    }
+    return (
+      element as unknown as {querySelector(selector: string): Element}
+    ).querySelector(selector);
+  },
+  queryAll: (element, selector) => {
+    if (!('querySelectorAll' in element)) {
+      throw new Error(
+        `Could not invoke \`querySelectorAll\` on node of type ${element.nodeName}.`
+      );
+    }
+    return [
+      ...(
+        element as unknown as {
+          querySelectorAll(selector: string): NodeList;
+        }
+      ).querySelectorAll(selector),
+    ];
+  },
 });
 
-const pierceHandler = makeQueryHandler({
+const pierceHandler = createInternalQueryHandler({
   queryOne: (element, selector) => {
-    // @ts-expect-error TS2304
-    let found: Element | null = null;
-    // @ts-expect-error TS2304
-    const search = (root: Element | ShadowRoot) => {
-      // @ts-expect-error TS2584
+    let found: Node | null = null;
+    const search = (root: Node) => {
       const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
       do {
-        // @ts-expect-error TS2304
         const currentNode = iter.currentNode as HTMLElement;
         if (currentNode.shadowRoot) {
           search(currentNode.shadowRoot);
         }
-        // @ts-expect-error TS2304
         if (currentNode instanceof ShadowRoot) {
           continue;
         }
-        if (!found && currentNode.matches(selector)) {
+        if (currentNode !== root && !found && currentNode.matches(selector)) {
           found = currentNode;
         }
       } while (!found && iter.nextNode());
     };
-    // @ts-expect-error TS2304
     if (element instanceof Document) {
       element = element.documentElement;
     }
@@ -154,28 +167,22 @@ const pierceHandler = makeQueryHandler({
   },
 
   queryAll: (element, selector) => {
-    // @ts-expect-error TS2304
-    const result: Element[] = [];
-    // @ts-expect-error TS2304
-    const collect = (root: Element | ShadowRoot) => {
-      // @ts-expect-error TS2584
+    const result: Node[] = [];
+    const collect = (root: Node) => {
       const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
       do {
-        // @ts-expect-error TS2304
         const currentNode = iter.currentNode as HTMLElement;
         if (currentNode.shadowRoot) {
           collect(currentNode.shadowRoot);
         }
-        // @ts-expect-error TS2304
         if (currentNode instanceof ShadowRoot) {
           continue;
         }
-        if (currentNode.matches(selector)) {
+        if (currentNode !== root && currentNode.matches(selector)) {
           result.push(currentNode);
         }
       } while (iter.nextNode());
     };
-    // @ts-expect-error TS2304
     if (element instanceof Document) {
       element = element.documentElement;
     }
@@ -184,51 +191,77 @@ const pierceHandler = makeQueryHandler({
   },
 });
 
-const _builtInHandlers = new Map([
+const builtInHandlers = new Map([
   ['aria', ariaHandler],
   ['pierce', pierceHandler],
 ]);
-const _queryHandlers = new Map(_builtInHandlers);
+const queryHandlers = new Map(builtInHandlers);
 
 /**
- * @internal
+ * Registers a {@link CustomQueryHandler | custom query handler}.
+ *
+ * @remarks
+ * After registration, the handler can be used everywhere where a selector is
+ * expected by prepending the selection string with `<name>/`. The name is only
+ * allowed to consist of lower- and upper case latin letters.
+ *
+ * @example
+ * ```
+ * puppeteer.registerCustomQueryHandler('text', { … });
+ * const aHandle = await page.$('text/…');
+ * ```
+ *
+ * @param name - The name that the custom query handler will be registered
+ * under.
+ * @param queryHandler - The {@link CustomQueryHandler | custom query handler}
+ * to register.
+ *
+ * @public
  */
 export function registerCustomQueryHandler(
   name: string,
   handler: CustomQueryHandler
 ): void {
-  if (_queryHandlers.get(name))
+  if (queryHandlers.get(name)) {
     throw new Error(`A custom query handler named "${name}" already exists`);
+  }
 
   const isValidName = /^[a-zA-Z]+$/.test(name);
-  if (!isValidName)
+  if (!isValidName) {
     throw new Error(`Custom query handler names may only contain [a-zA-Z]`);
+  }
 
-  const internalHandler = makeQueryHandler(handler);
+  const internalHandler = createInternalQueryHandler(handler);
 
-  _queryHandlers.set(name, internalHandler);
+  queryHandlers.set(name, internalHandler);
 }
 
 /**
- * @internal
+ * @param name - The name of the query handler to unregistered.
+ *
+ * @public
  */
 export function unregisterCustomQueryHandler(name: string): void {
-  if (_queryHandlers.has(name) && !_builtInHandlers.has(name)) {
-    _queryHandlers.delete(name);
+  if (queryHandlers.has(name) && !builtInHandlers.has(name)) {
+    queryHandlers.delete(name);
   }
 }
 
 /**
- * @internal
+ * @returns a list with the names of all registered custom query handlers.
+ *
+ * @public
  */
 export function customQueryHandlerNames(): string[] {
-  return [..._queryHandlers.keys()].filter(
-    (name) => !_builtInHandlers.has(name)
-  );
+  return [...queryHandlers.keys()].filter(name => {
+    return !builtInHandlers.has(name);
+  });
 }
 
 /**
- * @internal
+ * Clears all registered handlers.
+ *
+ * @public
  */
 export function clearCustomQueryHandlers(): void {
   customQueryHandlerNames().forEach(unregisterCustomQueryHandler);
@@ -242,17 +275,19 @@ export function getQueryHandlerAndSelector(selector: string): {
   queryHandler: InternalQueryHandler;
 } {
   const hasCustomQueryHandler = /^[a-zA-Z]+\//.test(selector);
-  if (!hasCustomQueryHandler)
-    return { updatedSelector: selector, queryHandler: _defaultHandler };
+  if (!hasCustomQueryHandler) {
+    return {updatedSelector: selector, queryHandler: defaultHandler};
+  }
 
   const index = selector.indexOf('/');
   const name = selector.slice(0, index);
   const updatedSelector = selector.slice(index + 1);
-  const queryHandler = _queryHandlers.get(name);
-  if (!queryHandler)
+  const queryHandler = queryHandlers.get(name);
+  if (!queryHandler) {
     throw new Error(
       `Query set to use "${name}", but no query handler of that name was found`
     );
+  }
 
   return {
     updatedSelector,
