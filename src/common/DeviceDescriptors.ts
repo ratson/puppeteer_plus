@@ -30,7 +30,7 @@ export interface Device {
   };
 }
 
-const devices: Device[] = [
+const deviceArray: Device[] = [
   {
     name: 'Blackberry PlayBook',
     userAgent:
@@ -1527,6 +1527,7 @@ const devices: Device[] = [
     },
   },
 ];
+
 /**
  * @public
  */
@@ -1535,8 +1536,30 @@ export type DevicesMap = {
 };
 
 /**
- * @internal
+ * A list of devices to be used with `page.emulate(options)`. Actual list of devices can be found in {@link https://github.com/puppeteer/puppeteer/blob/main/src/common/DeviceDescriptors.ts | src/common/DeviceDescriptors.ts}.
+ *
+ * @example
+ *
+ * ```ts
+ * const puppeteer = require('puppeteer');
+ * const iPhone = puppeteer.devices['iPhone 6'];
+ *
+ * (async () => {
+ *   const browser = await puppeteer.launch();
+ *   const page = await browser.newPage();
+ *   await page.emulate(iPhone);
+ *   await page.goto('https://www.google.com');
+ *   // other actions...
+ *   await browser.close();
+ * })();
+ * ```
+ *
+ * @public
  */
-export const devicesMap: DevicesMap = {};
+const devices: DevicesMap = {};
 
-for (const device of devices) devicesMap[device.name] = device;
+for (const device of deviceArray) {
+  devices[device.name] = device;
+}
+
+export {devices};

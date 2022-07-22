@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-import { assert } from './assert.js';
-import { helper, PuppeteerEventListener } from './helper.js';
-import { TimeoutError } from './Errors.js';
+import {assert} from './assert.js';
+import {
+  addEventListener,
+  PuppeteerEventListener,
+  removeEventListeners,
+} from './util.js';
+import {TimeoutError} from './Errors.js';
 import {
   FrameManager,
   Frame,
   FrameManagerEmittedEvents,
 } from './FrameManager.js';
-import { HTTPRequest } from './HTTPRequest.js';
-import { HTTPResponse } from './HTTPResponse.js';
-import { NetworkManagerEmittedEvents } from './NetworkManager.js';
-import { CDPSessionEmittedEvents } from './Connection.js';
+import {HTTPRequest} from './HTTPRequest.js';
+import {HTTPResponse} from './HTTPResponse.js';
+import {NetworkManagerEmittedEvents} from './NetworkManager.js';
+import {CDPSessionEmittedEvents} from './Connection.js';
 /**
  * @public
  */
@@ -54,35 +58,47 @@ const puppeteerToProtocolLifecycle = new Map<
   ['networkidle2', 'networkAlmostIdle'],
 ]);
 
+const noop = (): void => {};
+
 /**
  * @internal
  */
 export class LifecycleWatcher {
-  _expectedLifecycle: ProtocolLifeCycleEvent[];
-  _frameManager: FrameManager;
-  _frame: Frame;
-  _timeout: number;
-  _navigationRequest?: HTTPRequest;
-  _eventListeners: PuppeteerEventListener[];
-  _initialLoaderId: string;
+  #expectedLifecycle: ProtocolLifeCycleEvent[];
+  #frameManager: FrameManager;
+  #frame: Frame;
+  #timeout: number;
+  #navigationRequest: HTTPRequest | null = null;
+  #eventListeners: PuppeteerEventListener[];
 
-  _sameDocumentNavigationPromise: Promise<Error | null>;
-  _sameDocumentNavigationCompleteCallback: (x?: Error) => void;
+  #sameDocumentNavigationCompleteCallback: (x?: Error) => void = noop;
+  #sameDocumentNavigationPromise = new Promise<Error | undefined>(fulfill => {
+    this.#sameDocumentNavigationCompleteCallback = fulfill;
+  });
 
-  _lifecyclePromise: Promise<void>;
-  _lifecycleCallback: () => void;
+  #lifecycleCallback: () => void = noop;
+  #lifecyclePromise: Promise<void> = new Promise(fulfill => {
+    this.#lifecycleCallback = fulfill;
+  });
 
-  _newDocumentNavigationPromise: Promise<Error | null>;
-  _newDocumentNavigationCompleteCallback: (x?: Error) => void;
+  #newDocumentNavigationCompleteCallback: (x?: Error) => void = noop;
+  #newDocumentNavigationPromise: Promise<Error | undefined> = new Promise(
+    fulfill => {
+      this.#newDocumentNavigationCompleteCallback = fulfill;
+    }
+  );
 
-  _terminationPromise: Promise<Error | null>;
-  _terminationCallback: (x?: Error) => void;
+  #terminationCallback: (x?: Error) => void = noop;
+  #terminationPromise: Promise<Error | undefined> = new Promise(fulfill => {
+    this.#terminationCallback = fulfill;
+  });
 
-  _timeoutPromise: Promise<TimeoutError | null>;
+  #timeoutPromise: Promise<TimeoutError | undefined>;
 
-  _maximumTimer?: NodeJS.Timeout;
-  _hasSameDocumentNavigation?: boolean;
-  _swapped?: boolean;
+  #maximumTimer?: NodeJS.Timeout;
+  #hasSameDocumentNavigation?: boolean;
+  #newDocumentNavigation?: boolean;
+  #swapped?: boolean;
 
   constructor(
     frameManager: FrameManager,
@@ -90,179 +106,180 @@ export class LifecycleWatcher {
     waitUntil: PuppeteerLifeCycleEvent | PuppeteerLifeCycleEvent[],
     timeout: number
   ) {
-    if (Array.isArray(waitUntil)) waitUntil = waitUntil.slice();
-    else if (typeof waitUntil === 'string') waitUntil = [waitUntil];
-    this._expectedLifecycle = waitUntil.map((value) => {
+    if (Array.isArray(waitUntil)) {
+      waitUntil = waitUntil.slice();
+    } else if (typeof waitUntil === 'string') {
+      waitUntil = [waitUntil];
+    }
+    this.#expectedLifecycle = waitUntil.map(value => {
       const protocolEvent = puppeteerToProtocolLifecycle.get(value);
       assert(protocolEvent, 'Unknown value for options.waitUntil: ' + value);
-      return protocolEvent;
+      return protocolEvent as ProtocolLifeCycleEvent;
     });
 
-    this._frameManager = frameManager;
-    this._frame = frame;
-    this._initialLoaderId = frame._loaderId;
-    this._timeout = timeout;
-    this._navigationRequest = null;
-    this._eventListeners = [
-      helper.addEventListener(
+    this.#frameManager = frameManager;
+    this.#frame = frame;
+    this.#timeout = timeout;
+    this.#eventListeners = [
+      addEventListener(
         frameManager._client,
         CDPSessionEmittedEvents.Disconnected,
-        () =>
-          this._terminate(
-            new Error('Navigation failed because browser has disconnected!')
-          )
+        this.#terminate.bind(
+          this,
+          new Error('Navigation failed because browser has disconnected!')
+        )
       ),
-      helper.addEventListener(
-        this._frameManager,
+      addEventListener(
+        this.#frameManager,
         FrameManagerEmittedEvents.LifecycleEvent,
-        this._checkLifecycleComplete.bind(this)
+        this.#checkLifecycleComplete.bind(this)
       ),
-      helper.addEventListener(
-        this._frameManager,
+      addEventListener(
+        this.#frameManager,
         FrameManagerEmittedEvents.FrameNavigatedWithinDocument,
-        this._navigatedWithinDocument.bind(this)
+        this.#navigatedWithinDocument.bind(this)
       ),
-      helper.addEventListener(
-        this._frameManager,
+      addEventListener(
+        this.#frameManager,
+        FrameManagerEmittedEvents.FrameNavigated,
+        this.#navigated.bind(this)
+      ),
+      addEventListener(
+        this.#frameManager,
         FrameManagerEmittedEvents.FrameSwapped,
-        this._frameSwapped.bind(this)
+        this.#frameSwapped.bind(this)
       ),
-      helper.addEventListener(
-        this._frameManager,
+      addEventListener(
+        this.#frameManager,
         FrameManagerEmittedEvents.FrameDetached,
-        this._onFrameDetached.bind(this)
+        this.#onFrameDetached.bind(this)
       ),
-      helper.addEventListener(
-        this._frameManager.networkManager(),
+      addEventListener(
+        this.#frameManager.networkManager(),
         NetworkManagerEmittedEvents.Request,
-        this._onRequest.bind(this)
+        this.#onRequest.bind(this)
       ),
     ];
 
-    this._sameDocumentNavigationPromise = new Promise<Error | null>(
-      (fulfill) => {
-        this._sameDocumentNavigationCompleteCallback = fulfill;
-      }
-    );
-
-    this._lifecyclePromise = new Promise((fulfill) => {
-      this._lifecycleCallback = fulfill;
-    });
-
-    this._newDocumentNavigationPromise = new Promise((fulfill) => {
-      this._newDocumentNavigationCompleteCallback = fulfill;
-    });
-
-    this._timeoutPromise = this._createTimeoutPromise();
-    this._terminationPromise = new Promise((fulfill) => {
-      this._terminationCallback = fulfill;
-    });
-    this._checkLifecycleComplete();
+    this.#timeoutPromise = this.#createTimeoutPromise();
+    this.#checkLifecycleComplete();
   }
 
-  _onRequest(request: HTTPRequest): void {
-    if (request.frame() !== this._frame || !request.isNavigationRequest())
+  #onRequest(request: HTTPRequest): void {
+    if (request.frame() !== this.#frame || !request.isNavigationRequest()) {
       return;
-    this._navigationRequest = request;
+    }
+    this.#navigationRequest = request;
   }
 
-  _onFrameDetached(frame: Frame): void {
-    if (this._frame === frame) {
-      this._terminationCallback.call(
+  #onFrameDetached(frame: Frame): void {
+    if (this.#frame === frame) {
+      this.#terminationCallback.call(
         null,
         new Error('Navigating frame was detached')
       );
       return;
     }
-    this._checkLifecycleComplete();
+    this.#checkLifecycleComplete();
   }
 
   async navigationResponse(): Promise<HTTPResponse | null> {
     // We may need to wait for ExtraInfo events before the request is complete.
-    return this._navigationRequest ? this._navigationRequest.response() : null;
+    return this.#navigationRequest ? this.#navigationRequest.response() : null;
   }
 
-  _terminate(error: Error): void {
-    this._terminationCallback.call(null, error);
+  #terminate(error: Error): void {
+    this.#terminationCallback.call(null, error);
   }
 
-  sameDocumentNavigationPromise(): Promise<Error | null> {
-    return this._sameDocumentNavigationPromise;
+  sameDocumentNavigationPromise(): Promise<Error | undefined> {
+    return this.#sameDocumentNavigationPromise;
   }
 
-  newDocumentNavigationPromise(): Promise<Error | null> {
-    return this._newDocumentNavigationPromise;
+  newDocumentNavigationPromise(): Promise<Error | undefined> {
+    return this.#newDocumentNavigationPromise;
   }
 
   lifecyclePromise(): Promise<void> {
-    return this._lifecyclePromise;
+    return this.#lifecyclePromise;
   }
 
-  timeoutOrTerminationPromise(): Promise<Error | TimeoutError | null> {
-    return Promise.race([this._timeoutPromise, this._terminationPromise]);
+  timeoutOrTerminationPromise(): Promise<Error | TimeoutError | undefined> {
+    return Promise.race([this.#timeoutPromise, this.#terminationPromise]);
   }
 
-  _createTimeoutPromise(): Promise<TimeoutError | null> {
-    if (!this._timeout) return new Promise(() => {});
+  async #createTimeoutPromise(): Promise<TimeoutError | undefined> {
+    if (!this.#timeout) {
+      return new Promise(noop);
+    }
     const errorMessage =
-      'Navigation timeout of ' + this._timeout + ' ms exceeded';
-    return new Promise(
-      (fulfill) => (this._maximumTimer = setTimeout(fulfill, this._timeout))
-    ).then(() => new TimeoutError(errorMessage));
+      'Navigation timeout of ' + this.#timeout + ' ms exceeded';
+    await new Promise(fulfill => {
+      return (this.#maximumTimer = setTimeout(fulfill, this.#timeout));
+    });
+    return new TimeoutError(errorMessage);
   }
 
-  _navigatedWithinDocument(frame: Frame): void {
-    if (frame !== this._frame) return;
-    this._hasSameDocumentNavigation = true;
-    this._checkLifecycleComplete();
-  }
-
-  _frameSwapped(frame: Frame): void {
-    if (frame !== this._frame) return;
-    this._swapped = true;
-    this._checkLifecycleComplete();
-  }
-
-  _checkLifecycleComplete(): void {
-    // We expect navigation to commit.
-    if (!checkLifecycle(this._frame, this._expectedLifecycle)) return;
-    this._lifecycleCallback();
-    if (
-      this._frame._loaderId === this._initialLoaderId &&
-      !this._hasSameDocumentNavigation
-    ) {
-      if (this._swapped) {
-        this._swapped = false;
-        this._newDocumentNavigationCompleteCallback();
-      }
+  #navigatedWithinDocument(frame: Frame): void {
+    if (frame !== this.#frame) {
       return;
     }
-    if (this._hasSameDocumentNavigation)
-      this._sameDocumentNavigationCompleteCallback();
-    if (this._frame._loaderId !== this._initialLoaderId)
-      this._newDocumentNavigationCompleteCallback();
+    this.#hasSameDocumentNavigation = true;
+    this.#checkLifecycleComplete();
+  }
 
-    /**
-     * @param {!Frame} frame
-     * @param {!Array<string>} expectedLifecycle
-     * @returns {boolean}
-     */
+  #navigated(frame: Frame): void {
+    if (frame !== this.#frame) {
+      return;
+    }
+    this.#newDocumentNavigation = true;
+    this.#checkLifecycleComplete();
+  }
+
+  #frameSwapped(frame: Frame): void {
+    if (frame !== this.#frame) {
+      return;
+    }
+    this.#swapped = true;
+    this.#checkLifecycleComplete();
+  }
+
+  #checkLifecycleComplete(): void {
+    // We expect navigation to commit.
+    if (!checkLifecycle(this.#frame, this.#expectedLifecycle)) {
+      return;
+    }
+    this.#lifecycleCallback();
+    if (this.#hasSameDocumentNavigation) {
+      this.#sameDocumentNavigationCompleteCallback();
+    }
+    if (this.#swapped || this.#newDocumentNavigation) {
+      this.#newDocumentNavigationCompleteCallback();
+    }
+
     function checkLifecycle(
       frame: Frame,
       expectedLifecycle: ProtocolLifeCycleEvent[]
     ): boolean {
       for (const event of expectedLifecycle) {
-        if (!frame._lifecycleEvents.has(event)) return false;
+        if (!frame._lifecycleEvents.has(event)) {
+          return false;
+        }
       }
       for (const child of frame.childFrames()) {
-        if (!checkLifecycle(child, expectedLifecycle)) return false;
+        if (
+          child._hasStartedLoading &&
+          !checkLifecycle(child, expectedLifecycle)
+        ) {
+          return false;
+        }
       }
       return true;
     }
   }
 
   dispose(): void {
-    helper.removeEventListeners(this._eventListeners);
-    clearTimeout(this._maximumTimer);
+    removeEventListeners(this.#eventListeners);
+    this.#maximumTimer !== undefined && clearTimeout(this.#maximumTimer);
   }
 }

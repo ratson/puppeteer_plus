@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ElementHandle } from './JSHandle.js';
-import { Protocol } from 'devtools-protocol';
-import { assert } from './assert.js';
+import {Protocol} from 'devtools-protocol';
+import {assert} from './assert.js';
+import {ElementHandle} from './ElementHandle.js';
 
 /**
  * File choosers let you react to the page requesting for a file.
@@ -24,7 +24,7 @@ import { assert } from './assert.js';
  * `FileChooser` objects are returned via the `page.waitForFileChooser` method.
  * @example
  * An example of using `FileChooser`:
- * ```js
+ * ```ts
  * const [fileChooser] = await Promise.all([
  *   page.waitForFileChooser(),
  *   page.click('#upload-file-button'), // some button that triggers file selection
@@ -37,26 +37,26 @@ import { assert } from './assert.js';
  * @public
  */
 export class FileChooser {
-  private _element: ElementHandle;
-  private _multiple: boolean;
-  private _handled = false;
+  #element: ElementHandle<HTMLInputElement>;
+  #multiple: boolean;
+  #handled = false;
 
   /**
    * @internal
    */
   constructor(
-    element: ElementHandle,
+    element: ElementHandle<HTMLInputElement>,
     event: Protocol.Page.FileChooserOpenedEvent
   ) {
-    this._element = element;
-    this._multiple = event.mode !== 'selectSingle';
+    this.#element = element;
+    this.#multiple = event.mode !== 'selectSingle';
   }
 
   /**
    * Whether file chooser allow for {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#attr-multiple | multiple} file selection.
    */
   isMultiple(): boolean {
-    return this._multiple;
+    return this.#multiple;
   }
 
   /**
@@ -66,11 +66,11 @@ export class FileChooser {
    */
   async accept(filePaths: string[]): Promise<void> {
     assert(
-      !this._handled,
+      !this.#handled,
       'Cannot accept FileChooser which is already handled!'
     );
-    this._handled = true;
-    await this._element.uploadFile(...filePaths);
+    this.#handled = true;
+    await this.#element.uploadFile(...filePaths);
   }
 
   /**
@@ -78,9 +78,9 @@ export class FileChooser {
    */
   cancel(): void {
     assert(
-      !this._handled,
+      !this.#handled,
       'Cannot cancel FileChooser which is already handled!'
     );
-    this._handled = true;
+    this.#handled = true;
   }
 }
