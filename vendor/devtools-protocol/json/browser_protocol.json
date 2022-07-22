@@ -1440,22 +1440,14 @@
                     "type": "string",
                     "enum": [
                         "PermissionPolicyDisabled",
-                        "InvalidAttributionSourceEventId",
-                        "InvalidAttributionData",
                         "AttributionSourceUntrustworthyOrigin",
                         "AttributionUntrustworthyOrigin",
-                        "AttributionTriggerDataTooLarge",
-                        "AttributionEventSourceTriggerDataTooLarge",
-                        "InvalidAttributionSourceExpiry",
-                        "InvalidAttributionSourcePriority",
-                        "InvalidEventSourceTriggerData",
-                        "InvalidTriggerPriority",
-                        "InvalidTriggerDedupKey"
+                        "InvalidHeader"
                     ]
                 },
                 {
                     "id": "AttributionReportingIssueDetails",
-                    "description": "Details for issues around \"Attribution Reporting API\" usage.\nExplainer: https://github.com/WICG/conversion-measurement-api",
+                    "description": "Details for issues around \"Attribution Reporting API\" usage.\nExplainer: https://github.com/WICG/attribution-reporting-api",
                     "type": "object",
                     "properties": [
                         {
@@ -1552,8 +1544,68 @@
                     ]
                 },
                 {
+                    "id": "DeprecationIssueType",
+                    "type": "string",
+                    "enum": [
+                        "AuthorizationCoveredByWildcard",
+                        "CanRequestURLHTTPContainingNewline",
+                        "ChromeLoadTimesConnectionInfo",
+                        "ChromeLoadTimesFirstPaintAfterLoadTime",
+                        "ChromeLoadTimesWasAlternateProtocolAvailable",
+                        "CookieWithTruncatingChar",
+                        "CrossOriginAccessBasedOnDocumentDomain",
+                        "CrossOriginWindowAlert",
+                        "CrossOriginWindowConfirm",
+                        "CSSSelectorInternalMediaControlsOverlayCastButton",
+                        "DeprecationExample",
+                        "DocumentDomainSettingWithoutOriginAgentClusterHeader",
+                        "EventPath",
+                        "ExpectCTHeader",
+                        "GeolocationInsecureOrigin",
+                        "GeolocationInsecureOriginDeprecatedNotRemoved",
+                        "GetUserMediaInsecureOrigin",
+                        "HostCandidateAttributeGetter",
+                        "IdentityInCanMakePaymentEvent",
+                        "InsecurePrivateNetworkSubresourceRequest",
+                        "LegacyConstraintGoogIPv6",
+                        "LocalCSSFileExtensionRejected",
+                        "MediaSourceAbortRemove",
+                        "MediaSourceDurationTruncatingBuffered",
+                        "NavigateEventRestoreScroll",
+                        "NavigateEventTransitionWhile",
+                        "NoSysexWebMIDIWithoutPermission",
+                        "NotificationInsecureOrigin",
+                        "NotificationPermissionRequestedIframe",
+                        "ObsoleteWebRtcCipherSuite",
+                        "OpenWebDatabaseInsecureContext",
+                        "PictureSourceSrc",
+                        "PrefixedCancelAnimationFrame",
+                        "PrefixedRequestAnimationFrame",
+                        "PrefixedStorageInfo",
+                        "PrefixedVideoDisplayingFullscreen",
+                        "PrefixedVideoEnterFullscreen",
+                        "PrefixedVideoEnterFullScreen",
+                        "PrefixedVideoExitFullscreen",
+                        "PrefixedVideoExitFullScreen",
+                        "PrefixedVideoSupportsFullscreen",
+                        "RangeExpand",
+                        "RequestedSubresourceWithEmbeddedCredentials",
+                        "RTCConstraintEnableDtlsSrtpFalse",
+                        "RTCConstraintEnableDtlsSrtpTrue",
+                        "RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics",
+                        "RTCPeerConnectionSdpSemanticsPlanB",
+                        "RtcpMuxPolicyNegotiate",
+                        "SharedArrayBufferConstructedWithoutIsolation",
+                        "TextToSpeech_DisallowedByAutoplay",
+                        "V8SharedArrayBufferConstructedInExtensionWithoutIsolation",
+                        "XHRJSONEncodingDetection",
+                        "XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload",
+                        "XRSupportsSession"
+                    ]
+                },
+                {
                     "id": "DeprecationIssueDetails",
-                    "description": "This issue tracks information needed to print a deprecation message.\nThe formatting is inherited from the old console.log version, see more at:\nhttps://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/deprecation.cc\nTODO(crbug.com/1264960): Re-work format to add i18n support per:\nhttps://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/devtools_protocol/README.md",
+                    "description": "This issue tracks information needed to print a deprecation message.\nhttps://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/third_party/blink/renderer/core/frame/deprecation/README.md",
                     "type": "object",
                     "properties": [
                         {
@@ -1566,17 +1618,8 @@
                             "$ref": "SourceCodeLocation"
                         },
                         {
-                            "name": "message",
-                            "description": "The content of an untranslated deprecation issue,\ne.g. \"window.inefficientLegacyStorageMethod will be removed in M97,\naround January 2022. Please use Web Storage or Indexed Database\ninstead. This standard was abandoned in January, 1970. See\nhttps://www.chromestatus.com/feature/5684870116278272 for more details.\"",
-                            "deprecated": true,
-                            "optional": true,
-                            "type": "string"
-                        },
-                        {
-                            "name": "deprecationType",
-                            "description": "The id of an untranslated deprecation issue e.g. PrefixedStorageInfo.",
-                            "deprecated": true,
-                            "type": "string"
+                            "name": "type",
+                            "$ref": "DeprecationIssueType"
                         }
                     ]
                 },
@@ -1605,6 +1648,11 @@
                     "enum": [
                         "ApprovalDeclined",
                         "TooManyRequests",
+                        "ManifestListHttpNotFound",
+                        "ManifestListNoResponse",
+                        "ManifestListInvalidResponse",
+                        "ManifestNotInManifestList",
+                        "ManifestListTooBig",
                         "ManifestHttpNotFound",
                         "ManifestNoResponse",
                         "ManifestInvalidResponse",
@@ -2645,6 +2693,12 @@
                             "$ref": "DOM.PseudoType"
                         },
                         {
+                            "name": "pseudoIdentifier",
+                            "description": "Pseudo element custom ident.",
+                            "optional": true,
+                            "type": "string"
+                        },
+                        {
                             "name": "matches",
                             "description": "Matches of CSS rules applicable to the pseudo style.",
                             "type": "array",
@@ -2906,6 +2960,16 @@
                             "type": "array",
                             "items": {
                                 "$ref": "CSSLayer"
+                            }
+                        },
+                        {
+                            "name": "scopes",
+                            "description": "@scope CSS at-rule array.\nThe array enumerates @scope at-rules starting with the innermost one, going outwards.",
+                            "experimental": true,
+                            "optional": true,
+                            "type": "array",
+                            "items": {
+                                "$ref": "CSSScope"
                             }
                         }
                     ]
@@ -3262,6 +3326,31 @@
                     ]
                 },
                 {
+                    "id": "CSSScope",
+                    "description": "CSS Scope at-rule descriptor.",
+                    "experimental": true,
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "text",
+                            "description": "Scope rule text.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "range",
+                            "description": "The associated rule header range in the enclosing stylesheet (if\navailable).",
+                            "optional": true,
+                            "$ref": "SourceRange"
+                        },
+                        {
+                            "name": "styleSheetId",
+                            "description": "Identifier of the stylesheet containing this object (if exists).",
+                            "optional": true,
+                            "$ref": "StyleSheetId"
+                        }
+                    ]
+                },
+                {
                     "id": "CSSLayer",
                     "description": "CSS Layer at-rule descriptor.",
                     "experimental": true,
@@ -3395,6 +3484,11 @@
                         {
                             "name": "fontStretch",
                             "description": "The font-stretch.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "fontDisplay",
+                            "description": "The font-display.",
                             "type": "string"
                         },
                         {
@@ -3731,6 +3825,13 @@
                             "items": {
                                 "$ref": "CSSKeyframesRule"
                             }
+                        },
+                        {
+                            "name": "parentLayoutNodeId",
+                            "description": "Id of the first parent element that does not have display: contents.",
+                            "experimental": true,
+                            "optional": true,
+                            "$ref": "DOM.NodeId"
                         }
                     ]
                 },
@@ -3948,6 +4049,32 @@
                             "name": "supports",
                             "description": "The resulting CSS Supports rule after modification.",
                             "$ref": "CSSSupports"
+                        }
+                    ]
+                },
+                {
+                    "name": "setScopeText",
+                    "description": "Modifies the expression of a scope at-rule.",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "styleSheetId",
+                            "$ref": "StyleSheetId"
+                        },
+                        {
+                            "name": "range",
+                            "$ref": "SourceRange"
+                        },
+                        {
+                            "name": "text",
+                            "type": "string"
+                        }
+                    ],
+                    "returns": [
+                        {
+                            "name": "scope",
+                            "description": "The resulting CSS Scope rule after modification.",
+                            "$ref": "CSSScope"
                         }
                     ]
                 },
@@ -4689,6 +4816,12 @@
                             "$ref": "PseudoType"
                         },
                         {
+                            "name": "pseudoIdentifier",
+                            "description": "Pseudo element identifier for this node. Only present if there is a\nvalid pseudoType.",
+                            "optional": true,
+                            "type": "string"
+                        },
+                        {
                             "name": "shadowRootType",
                             "description": "Shadow root type.",
                             "optional": true,
@@ -4756,6 +4889,11 @@
                             "name": "compatibilityMode",
                             "optional": true,
                             "$ref": "CompatibilityMode"
+                        },
+                        {
+                            "name": "assignedSlot",
+                            "optional": true,
+                            "$ref": "BackendNode"
                         }
                     ]
                 },
@@ -5572,6 +5710,21 @@
                     ]
                 },
                 {
+                    "name": "getTopLayerElements",
+                    "description": "Returns NodeIds of current top layer elements.\nTop layer is rendered closest to the user within a viewport, therefore its elements always\nappear on top of all other content.",
+                    "experimental": true,
+                    "returns": [
+                        {
+                            "name": "nodeIds",
+                            "description": "NodeIds of top layer elements",
+                            "type": "array",
+                            "items": {
+                                "$ref": "NodeId"
+                            }
+                        }
+                    ]
+                },
+                {
                     "name": "redo",
                     "description": "Re-does the last undone action.",
                     "experimental": true
@@ -6111,6 +6264,11 @@
                             "$ref": "Node"
                         }
                     ]
+                },
+                {
+                    "name": "topLayerElementsUpdated",
+                    "description": "Called when top layer elements are changed.",
+                    "experimental": true
                 },
                 {
                     "name": "pseudoElementRemoved",
@@ -7027,6 +7185,12 @@
                             "$ref": "RareStringData"
                         },
                         {
+                            "name": "pseudoIdentifier",
+                            "description": "Pseudo element identifier for this node. Only present if there is a\nvalid pseudoType.",
+                            "optional": true,
+                            "$ref": "RareStringData"
+                        },
+                        {
                             "name": "isClickable",
                             "description": "Whether this DOM node responds to mouse clicks. This includes nodes that have had click\nevent listeners attached via JavaScript as well as anchor tags that naturally navigate when\nclicked.",
                             "optional": true,
@@ -7320,6 +7484,10 @@
             "experimental": true,
             "types": [
                 {
+                    "id": "SerializedStorageKey",
+                    "type": "string"
+                },
+                {
                     "id": "StorageId",
                     "description": "DOM Storage identifier.",
                     "type": "object",
@@ -7327,7 +7495,14 @@
                         {
                             "name": "securityOrigin",
                             "description": "Security origin for the storage.",
+                            "optional": true,
                             "type": "string"
+                        },
+                        {
+                            "name": "storageKey",
+                            "description": "Represents a key by which DOM Storage keys its CachedStorageAreas",
+                            "optional": true,
+                            "$ref": "SerializedStorageKey"
                         },
                         {
                             "name": "isLocalStorage",
@@ -7780,6 +7955,16 @@
                         },
                         {
                             "name": "mobile",
+                            "type": "boolean"
+                        },
+                        {
+                            "name": "bitness",
+                            "optional": true,
+                            "type": "string"
+                        },
+                        {
+                            "name": "wow64",
+                            "optional": true,
                             "type": "boolean"
                         }
                     ]
@@ -8235,6 +8420,17 @@
                     ]
                 },
                 {
+                    "name": "setHardwareConcurrencyOverride",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "hardwareConcurrency",
+                            "description": "Hardware concurrency to report",
+                            "type": "integer"
+                        }
+                    ]
+                },
+                {
                     "name": "setUserAgentOverride",
                     "description": "Allows overriding user agent with the given string.",
                     "parameters": [
@@ -8321,7 +8517,7 @@
             "commands": [
                 {
                     "name": "beginFrame",
-                    "description": "Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a\nscreenshot from the resulting frame. Requires that the target was created with enabled\nBeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also\nhttps://goo.gl/3zHXhB for more background.",
+                    "description": "Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a\nscreenshot from the resulting frame. Requires that the target was created with enabled\nBeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also\nhttps://goo.gle/chrome-headless-rendering for more background.",
                     "parameters": [
                         {
                             "name": "frameTimeTicks",
@@ -10481,6 +10677,7 @@
                         "TextTrack",
                         "XHR",
                         "Fetch",
+                        "Prefetch",
                         "EventSource",
                         "WebSocket",
                         "Manifest",
@@ -10937,6 +11134,17 @@
                             "name": "certificateTransparencyCompliance",
                             "description": "Whether the request complied with Certificate Transparency policy",
                             "$ref": "CertificateTransparencyCompliance"
+                        },
+                        {
+                            "name": "serverSignatureAlgorithm",
+                            "description": "The signature algorithm used by the server in the TLS server signature,\nrepresented as a TLS SignatureScheme code point. Omitted if not\napplicable or not known.",
+                            "optional": true,
+                            "type": "integer"
+                        },
+                        {
+                            "name": "encryptedClientHello",
+                            "description": "Whether the connection used Encrypted ClientHello",
+                            "type": "boolean"
                         }
                     ]
                 },
@@ -11986,9 +12194,10 @@
                     "enum": [
                         "SameOrigin",
                         "SameOriginAllowPopups",
+                        "RestrictProperties",
                         "UnsafeNone",
                         "SameOriginPlusCoep",
-                        "SameOriginAllowPopupsPlusCoep"
+                        "RestrictPropertiesPlusCoep"
                     ]
                 },
                 {
@@ -14881,6 +15090,24 @@
                     ]
                 },
                 {
+                    "id": "AdScriptId",
+                    "description": "Identifies the bottom-most script which caused the frame to be labelled\nas an ad.",
+                    "experimental": true,
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "scriptId",
+                            "description": "Script Id of the bottom-most script which caused the frame to be labelled\nas an ad.",
+                            "$ref": "Runtime.ScriptId"
+                        },
+                        {
+                            "name": "debuggerId",
+                            "description": "Id of adScriptId's debugger.",
+                            "$ref": "Runtime.UniqueDebuggerId"
+                        }
+                    ]
+                },
+                {
                     "id": "SecureContextType",
                     "description": "Indicates whether the frame is a secure context and why it is the case.",
                     "experimental": true,
@@ -14924,6 +15151,7 @@
                         "ambient-light-sensor",
                         "attribution-reporting",
                         "autoplay",
+                        "bluetooth",
                         "browsing-topics",
                         "camera",
                         "ch-dpr",
@@ -14932,6 +15160,7 @@
                         "ch-ect",
                         "ch-prefers-color-scheme",
                         "ch-rtt",
+                        "ch-save-data",
                         "ch-ua",
                         "ch-ua-arch",
                         "ch-ua-bitness",
@@ -14947,7 +15176,6 @@
                         "ch-viewport-height",
                         "ch-viewport-width",
                         "ch-width",
-                        "ch-partitioned-cookies",
                         "clipboard-read",
                         "clipboard-write",
                         "cross-origin-isolated",
@@ -14957,6 +15185,7 @@
                         "encrypted-media",
                         "execution-while-out-of-viewport",
                         "execution-while-not-rendered",
+                        "federated-credentials",
                         "focus-without-user-activation",
                         "fullscreen",
                         "frobulate",
@@ -14968,6 +15197,7 @@
                         "interest-cohort",
                         "join-ad-interest-group",
                         "keyboard-map",
+                        "local-fonts",
                         "magnetometer",
                         "microphone",
                         "midi",
@@ -14979,6 +15209,7 @@
                         "screen-wake-lock",
                         "serial",
                         "shared-autofill",
+                        "shared-storage",
                         "storage-access-api",
                         "sync-xhr",
                         "trust-token-redemption",
@@ -14997,7 +15228,8 @@
                     "enum": [
                         "Header",
                         "IframeAttribute",
-                        "InFencedFrameTree"
+                        "InFencedFrameTree",
+                        "InIsolatedApp"
                     ]
                 },
                 {
@@ -15642,8 +15874,8 @@
                             "type": "string"
                         },
                         {
-                            "name": "pictograph",
-                            "description": "The pictograph font-family.",
+                            "name": "math",
+                            "description": "The math font-family.",
                             "optional": true,
                             "type": "string"
                         }
@@ -15818,7 +16050,6 @@
                         "JavaScriptExecution",
                         "RendererProcessKilled",
                         "RendererProcessCrashed",
-                        "GrantedMediaStreamAccess",
                         "SchedulerTrackedFeatureUsed",
                         "ConflictingBrowsingInstance",
                         "CacheFlushed",
@@ -15845,7 +16076,6 @@
                         "ForegroundCacheLimit",
                         "BrowsingInstanceNotSwapped",
                         "BackForwardCacheDisabledForDelegate",
-                        "OptInUnloadHeaderNotPresent",
                         "UnloadHandlerExistsInMainFrame",
                         "UnloadHandlerExistsInSubFrame",
                         "ServiceWorkerUnregistration",
@@ -15856,6 +16086,7 @@
                         "Unknown",
                         "ActivationNavigationsDisallowedForBug1234857",
                         "ErrorDocument",
+                        "FencedFramesEmbedder",
                         "WebSocket",
                         "WebTransport",
                         "WebRTC",
@@ -15908,7 +16139,6 @@
                         "ContentMediaDevicesDispatcherHost",
                         "ContentWebBluetooth",
                         "ContentWebUSB",
-                        "ContentMediaSession",
                         "ContentMediaSessionService",
                         "ContentScreenReader",
                         "EmbedderPopupBlockerTabHelper",
@@ -15988,6 +16218,46 @@
                                 "$ref": "BackForwardCacheNotRestoredExplanationTree"
                             }
                         }
+                    ]
+                },
+                {
+                    "id": "PrerenderFinalStatus",
+                    "description": "List of FinalStatus reasons for Prerender2.",
+                    "type": "string",
+                    "enum": [
+                        "Activated",
+                        "Destroyed",
+                        "LowEndDevice",
+                        "CrossOriginRedirect",
+                        "CrossOriginNavigation",
+                        "InvalidSchemeRedirect",
+                        "InvalidSchemeNavigation",
+                        "InProgressNavigation",
+                        "NavigationRequestBlockedByCsp",
+                        "MainFrameNavigation",
+                        "MojoBinderPolicy",
+                        "RendererProcessCrashed",
+                        "RendererProcessKilled",
+                        "Download",
+                        "TriggerDestroyed",
+                        "NavigationNotCommitted",
+                        "NavigationBadHttpStatus",
+                        "ClientCertRequested",
+                        "NavigationRequestNetworkError",
+                        "MaxNumOfRunningPrerendersExceeded",
+                        "CancelAllHostsForTesting",
+                        "DidFailLoad",
+                        "Stop",
+                        "SslCertificateError",
+                        "LoginAuthRequested",
+                        "UaChangeRequiresReload",
+                        "BlockedByClient",
+                        "AudioOutputDeviceRequested",
+                        "MixedContent",
+                        "TriggerBackgrounded",
+                        "EmbedderTriggeredAndSameOriginRedirected",
+                        "EmbedderTriggeredAndCrossOriginRedirected",
+                        "EmbedderTriggeredAndDestroyed"
                     ]
                 }
             ],
@@ -16303,19 +16573,19 @@
                     "returns": [
                         {
                             "name": "layoutViewport",
-                            "description": "Deprecated metrics relating to the layout viewport. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssLayoutViewport` instead.",
+                            "description": "Deprecated metrics relating to the layout viewport. Is in device pixels. Use `cssLayoutViewport` instead.",
                             "deprecated": true,
                             "$ref": "LayoutViewport"
                         },
                         {
                             "name": "visualViewport",
-                            "description": "Deprecated metrics relating to the visual viewport. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssVisualViewport` instead.",
+                            "description": "Deprecated metrics relating to the visual viewport. Is in device pixels. Use `cssVisualViewport` instead.",
                             "deprecated": true,
                             "$ref": "VisualViewport"
                         },
                         {
                             "name": "contentSize",
-                            "description": "Deprecated size of scrollable area. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssContentSize` instead.",
+                            "description": "Deprecated size of scrollable area. Is in DP. Use `cssContentSize` instead.",
                             "deprecated": true,
                             "$ref": "DOM.Rect"
                         },
@@ -16460,7 +16730,7 @@
                         },
                         {
                             "name": "loaderId",
-                            "description": "Loader identifier.",
+                            "description": "Loader identifier. This is omitted in case of same-document navigation,\nas the previously committed loaderId would not change.",
                             "optional": true,
                             "$ref": "Network.LoaderId"
                         },
@@ -16549,15 +16819,9 @@
                         },
                         {
                             "name": "pageRanges",
-                            "description": "Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means\nprint all pages.",
+                            "description": "Paper ranges to print, one based, e.g., '1-5, 8, 11-13'. Pages are\nprinted in the document order, not in the order specified, and no\nmore than once.\nDefaults to empty string, which implies the entire document is printed.\nThe page numbers are quietly capped to actual page count of the\ndocument, and ranges beyond the end of the document are ignored.\nIf this results in no pages to print, an error is reported.\nIt is an error to specify a range with start greater than end.",
                             "optional": true,
                             "type": "string"
-                        },
-                        {
-                            "name": "ignoreInvalidPageRanges",
-                            "description": "Whether to silently ignore invalid but successfully parsed page ranges, such as '3-2'.\nDefaults to false.",
-                            "optional": true,
-                            "type": "boolean"
                         },
                         {
                             "name": "headerTemplate",
@@ -17183,12 +17447,6 @@
                             "$ref": "FrameId"
                         },
                         {
-                            "name": "backendNodeId",
-                            "description": "Input node id.",
-                            "experimental": true,
-                            "$ref": "DOM.BackendNodeId"
-                        },
-                        {
                             "name": "mode",
                             "description": "Input mode.",
                             "type": "string",
@@ -17196,6 +17454,13 @@
                                 "selectSingle",
                                 "selectMultiple"
                             ]
+                        },
+                        {
+                            "name": "backendNodeId",
+                            "description": "Input node id. Only present for file choosers opened via an <input type=\"file\"> element.",
+                            "experimental": true,
+                            "optional": true,
+                            "$ref": "DOM.BackendNodeId"
                         }
                     ]
                 },
@@ -17218,6 +17483,13 @@
                             "description": "JavaScript stack trace of when frame was attached, only set if frame initiated from script.",
                             "optional": true,
                             "$ref": "Runtime.StackTrace"
+                        },
+                        {
+                            "name": "adScriptId",
+                            "description": "Identifies the bottom-most script which caused the frame to be labelled\nas an ad. Only sent if frame is labelled as an ad and id is available.",
+                            "experimental": true,
+                            "optional": true,
+                            "$ref": "AdScriptId"
                         }
                     ]
                 },
@@ -17532,6 +17804,25 @@
                             "description": "Tree structure of reasons why the page could not be cached for each frame.",
                             "optional": true,
                             "$ref": "BackForwardCacheNotRestoredExplanationTree"
+                        }
+                    ]
+                },
+                {
+                    "name": "prerenderAttemptCompleted",
+                    "description": "Fired when a prerender attempt is completed.",
+                    "parameters": [
+                        {
+                            "name": "initiatingFrameId",
+                            "description": "The frame id of the frame initiating prerendering.",
+                            "$ref": "FrameId"
+                        },
+                        {
+                            "name": "prerenderingUrl",
+                            "type": "string"
+                        },
+                        {
+                            "name": "finalStatus",
+                            "$ref": "PrerenderFinalStatus"
                         }
                     ]
                 },
@@ -18638,6 +18929,10 @@
             ],
             "types": [
                 {
+                    "id": "SerializedStorageKey",
+                    "type": "string"
+                },
+                {
                     "id": "StorageType",
                     "description": "Enum of possible storage types.",
                     "type": "string",
@@ -18788,6 +19083,22 @@
                 }
             ],
             "commands": [
+                {
+                    "name": "getStorageKeyForFrame",
+                    "description": "Returns a storage key given a frame id.",
+                    "parameters": [
+                        {
+                            "name": "frameId",
+                            "$ref": "Page.FrameId"
+                        }
+                    ],
+                    "returns": [
+                        {
+                            "name": "storageKey",
+                            "$ref": "SerializedStorageKey"
+                        }
+                    ]
+                },
                 {
                     "name": "clearDataForOrigin",
                     "description": "Clears storage for origin.",
@@ -20013,6 +20324,12 @@
                                 "recordAsMuchAsPossible",
                                 "echoToConsole"
                             ]
+                        },
+                        {
+                            "name": "traceBufferSizeInKb",
+                            "description": "Size of the trace buffer in kilobytes. If not specified or zero is passed, a default value\nof 200 MB would be used.",
+                            "optional": true,
+                            "type": "number"
                         },
                         {
                             "name": "enableSampling",
@@ -21350,7 +21667,15 @@
             "commands": [
                 {
                     "name": "enable",
-                    "description": "Enable the WebAuthn domain and start intercepting credential storage and\nretrieval with a virtual authenticator."
+                    "description": "Enable the WebAuthn domain and start intercepting credential storage and\nretrieval with a virtual authenticator.",
+                    "parameters": [
+                        {
+                            "name": "enableUI",
+                            "description": "Whether to enable the WebAuthn user interface. Enabling the UI is\nrecommended for debugging and demo purposes, as it is closer to the real\nexperience. Disabling the UI is recommended for automated testing.\nSupported at the embedder's discretion if UI is available.\nDefaults to false.",
+                            "optional": true,
+                            "type": "boolean"
+                        }
+                    ]
                 },
                 {
                     "name": "disable",
@@ -21556,22 +21881,54 @@
                     ]
                 },
                 {
+                    "id": "PlayerErrorSourceLocation",
+                    "description": "Represents logged source line numbers reported in an error.\nNOTE: file and line are from chromium c++ implementation code, not js.",
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "file",
+                            "type": "string"
+                        },
+                        {
+                            "name": "line",
+                            "type": "integer"
+                        }
+                    ]
+                },
+                {
                     "id": "PlayerError",
                     "description": "Corresponds to kMediaError",
                     "type": "object",
                     "properties": [
                         {
-                            "name": "type",
-                            "type": "string",
-                            "enum": [
-                                "pipeline_error",
-                                "media_error"
-                            ]
+                            "name": "errorType",
+                            "type": "string"
                         },
                         {
-                            "name": "errorCode",
-                            "description": "When this switches to using media::Status instead of PipelineStatus\nwe can remove \"errorCode\" and replace it with the fields from\na Status instance. This also seems like a duplicate of the error\nlevel enum - there is a todo bug to have that level removed and\nuse this instead. (crbug.com/1068454)",
-                            "type": "string"
+                            "name": "code",
+                            "description": "Code is the numeric enum entry for a specific set of error codes, such\nas PipelineStatusCodes in media/base/pipeline_status.h",
+                            "type": "integer"
+                        },
+                        {
+                            "name": "stack",
+                            "description": "A trace of where this error was caused / where it passed through.",
+                            "type": "array",
+                            "items": {
+                                "$ref": "PlayerErrorSourceLocation"
+                            }
+                        },
+                        {
+                            "name": "cause",
+                            "description": "Errors potentially have a root cause error, ie, a DecoderError might be\ncaused by an WindowsError",
+                            "type": "array",
+                            "items": {
+                                "$ref": "PlayerError"
+                            }
+                        },
+                        {
+                            "name": "data",
+                            "description": "Extra data attached to an error, such as an HRESULT, Video Codec, etc.",
+                            "type": "object"
                         }
                     ]
                 }

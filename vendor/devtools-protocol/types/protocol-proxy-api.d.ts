@@ -162,6 +162,16 @@ export namespace ProtocolProxyApi {
          */
         getScriptSource(params: Protocol.Debugger.GetScriptSourceRequest): Promise<Protocol.Debugger.GetScriptSourceResponse>;
 
+        disassembleWasmModule(params: Protocol.Debugger.DisassembleWasmModuleRequest): Promise<Protocol.Debugger.DisassembleWasmModuleResponse>;
+
+        /**
+         * Disassemble the next chunk of lines for the module corresponding to the
+         * stream. If disassembly is complete, this API will invalidate the streamId
+         * and return an empty chunk. Any subsequent calls for the now invalid stream
+         * will return errors.
+         */
+        nextWasmDisassemblyChunk(params: Protocol.Debugger.NextWasmDisassemblyChunkRequest): Promise<Protocol.Debugger.NextWasmDisassemblyChunkResponse>;
+
         /**
          * This command is deprecated. Use getScriptSource instead.
          */
@@ -185,7 +195,19 @@ export namespace ProtocolProxyApi {
         removeBreakpoint(params: Protocol.Debugger.RemoveBreakpointRequest): Promise<void>;
 
         /**
-         * Restarts particular call frame from the beginning.
+         * Restarts particular call frame from the beginning. The old, deprecated
+         * behavior of `restartFrame` is to stay paused and allow further CDP commands
+         * after a restart was scheduled. This can cause problems with restarting, so
+         * we now continue execution immediatly after it has been scheduled until we
+         * reach the beginning of the restarted frame.
+         * 
+         * To stay back-wards compatible, `restartFrame` now expects a `mode`
+         * parameter to be present. If the `mode` parameter is missing, `restartFrame`
+         * errors out.
+         * 
+         * The various return values are deprecated and `callFrames` is always empty.
+         * Use the call frames from the `Debugger#paused` events instead, that fires
+         * once V8 pauses at the beginning of the restarted function.
          */
         restartFrame(params: Protocol.Debugger.RestartFrameRequest): Promise<Protocol.Debugger.RestartFrameResponse>;
 
@@ -262,6 +284,12 @@ export namespace ProtocolProxyApi {
 
         /**
          * Edits JavaScript source live.
+         * 
+         * In general, functions that are currently on the stack can not be edited with
+         * a single exception: If the edited function is the top-most stack frame and
+         * that is the only activation of that function on the stack. In this case
+         * the live edit will be successful and a `Debugger.restartFrame` for the
+         * top-most function is automatically triggered.
          */
         setScriptSource(params: Protocol.Debugger.SetScriptSourceRequest): Promise<Protocol.Debugger.SetScriptSourceResponse>;
 
@@ -552,6 +580,15 @@ export namespace ProtocolProxyApi {
          * unsubscribes current runtime agent from Runtime.bindingCalled notifications.
          */
         removeBinding(params: Protocol.Runtime.RemoveBindingRequest): Promise<void>;
+
+        /**
+         * This method tries to lookup and populate exception details for a
+         * JavaScript Error object.
+         * Note that the stackTrace portion of the resulting exceptionDetails will
+         * only be populated if the Runtime domain was enabled at the time when the
+         * Error was thrown.
+         */
+        getExceptionDetails(params: Protocol.Runtime.GetExceptionDetailsRequest): Promise<Protocol.Runtime.GetExceptionDetailsResponse>;
 
         /**
          * Notification is issued every time when binding is called.
@@ -1013,6 +1050,11 @@ export namespace ProtocolProxyApi {
         setSupportsText(params: Protocol.CSS.SetSupportsTextRequest): Promise<Protocol.CSS.SetSupportsTextResponse>;
 
         /**
+         * Modifies the expression of a scope at-rule.
+         */
+        setScopeText(params: Protocol.CSS.SetScopeTextRequest): Promise<Protocol.CSS.SetScopeTextResponse>;
+
+        /**
          * Modifies the rule selector.
          */
         setRuleSelector(params: Protocol.CSS.SetRuleSelectorRequest): Promise<Protocol.CSS.SetRuleSelectorResponse>;
@@ -1309,6 +1351,13 @@ export namespace ProtocolProxyApi {
         querySelectorAll(params: Protocol.DOM.QuerySelectorAllRequest): Promise<Protocol.DOM.QuerySelectorAllResponse>;
 
         /**
+         * Returns NodeIds of current top layer elements.
+         * Top layer is rendered closest to the user within a viewport, therefore its elements always
+         * appear on top of all other content.
+         */
+        getTopLayerElements(): Promise<Protocol.DOM.GetTopLayerElementsResponse>;
+
+        /**
          * Re-does the last undone action.
          */
         redo(): Promise<void>;
@@ -1467,6 +1516,11 @@ export namespace ProtocolProxyApi {
          * Called when a pseudo element is added to an element.
          */
         on(event: 'pseudoElementAdded', listener: (params: Protocol.DOM.PseudoElementAddedEvent) => void): void;
+
+        /**
+         * Called when top layer elements are changed.
+         */
+        on(event: 'topLayerElementsUpdated', listener: () => void): void;
 
         /**
          * Called when a pseudo element is removed from an element.
@@ -1773,6 +1827,8 @@ export namespace ProtocolProxyApi {
 
         setDisabledImageTypes(params: Protocol.Emulation.SetDisabledImageTypesRequest): Promise<void>;
 
+        setHardwareConcurrencyOverride(params: Protocol.Emulation.SetHardwareConcurrencyOverrideRequest): Promise<void>;
+
         /**
          * Allows overriding user agent with the given string.
          */
@@ -1795,7 +1851,7 @@ export namespace ProtocolProxyApi {
          * Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a
          * screenshot from the resulting frame. Requires that the target was created with enabled
          * BeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also
-         * https://goo.gl/3zHXhB for more background.
+         * https://goo.gle/chrome-headless-rendering for more background.
          */
         beginFrame(params: Protocol.HeadlessExperimental.BeginFrameRequest): Promise<Protocol.HeadlessExperimental.BeginFrameResponse>;
 
@@ -3015,6 +3071,11 @@ export namespace ProtocolProxyApi {
          */
         on(event: 'backForwardCacheNotUsed', listener: (params: Protocol.Page.BackForwardCacheNotUsedEvent) => void): void;
 
+        /**
+         * Fired when a prerender attempt is completed.
+         */
+        on(event: 'prerenderAttemptCompleted', listener: (params: Protocol.Page.PrerenderAttemptCompletedEvent) => void): void;
+
         on(event: 'loadEventFired', listener: (params: Protocol.Page.LoadEventFiredEvent) => void): void;
 
         /**
@@ -3173,6 +3234,11 @@ export namespace ProtocolProxyApi {
     }
 
     export interface StorageApi {
+        /**
+         * Returns a storage key given a frame id.
+         */
+        getStorageKeyForFrame(params: Protocol.Storage.GetStorageKeyForFrameRequest): Promise<Protocol.Storage.GetStorageKeyForFrameResponse>;
+
         /**
          * Clears storage for origin.
          */
@@ -3661,7 +3727,7 @@ export namespace ProtocolProxyApi {
          * Enable the WebAuthn domain and start intercepting credential storage and
          * retrieval with a virtual authenticator.
          */
-        enable(): Promise<void>;
+        enable(params: Protocol.WebAuthn.EnableRequest): Promise<void>;
 
         /**
          * Disable the WebAuthn domain.
