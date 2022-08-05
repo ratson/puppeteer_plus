@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import process from 'https://deno.land/std@0.149.0/node/process.ts';
-import { copy } from 'https://deno.land/std@0.149.0/fs/copy.ts';
-import { copy as copyIO, writeAll } from 'https://deno.land/std@0.149.0/streams/conversion.ts';
+import process from 'https://deno.land/std@0.151.0/node/process.ts';
+import { copy } from 'https://deno.land/std@0.151.0/fs/copy.ts';
+import { copy as copyIO, writeAll } from 'https://deno.land/std@0.151.0/streams/conversion.ts';
 import { extractZip } from '../../../../src/deps.ts';
-import * as os from 'https://deno.land/std@0.149.0/node/os.ts';
-import * as fs from 'https://deno.land/std@0.149.0/node/fs.ts';
-import * as path from 'https://deno.land/std@0.149.0/node/path.ts';
-import * as util from 'https://deno.land/std@0.149.0/node/util.ts';
-import * as childProcess from 'https://deno.land/std@0.149.0/node/child_process.ts';
-import * as https from 'https://deno.land/std@0.149.0/node/https.ts';
-import * as http from 'https://deno.land/std@0.149.0/node/http.ts';
+import * as os from 'https://deno.land/std@0.151.0/node/os.ts';
+import * as fs from 'https://deno.land/std@0.151.0/node/fs.ts';
+import * as path from 'https://deno.land/std@0.151.0/node/path.ts';
+import * as util from 'https://deno.land/std@0.151.0/node/util.ts';
+import * as childProcess from 'https://deno.land/std@0.151.0/node/child_process.ts';
+import * as https from 'https://deno.land/std@0.151.0/node/https.ts';
+import * as http from 'https://deno.land/std@0.151.0/node/http.ts';
 
 import {Product} from '../common/Product.ts';
 import {debug} from '../common/Debug.ts';
-import {promisify} from 'https://deno.land/std@0.149.0/node/util.ts';
-import * as URL from 'https://deno.land/std@0.149.0/node/url.ts';
+import {promisify} from 'https://deno.land/std@0.151.0/node/util.ts';
+import * as URL from 'https://deno.land/std@0.151.0/node/url.ts';
 import {assert} from '../common/assert.ts';
 
 

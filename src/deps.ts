@@ -1,7 +1,7 @@
 import { unzip } from "https://deno.land/x/yxz@0.17.0/archive/zip.ts";
 
-export { isWindows } from "https://deno.land/std@0.135.0/_util/os.ts";
-export { grantOrThrow } from "https://deno.land/std@0.135.0/permissions/mod.ts";
+export { isWindows } from "https://deno.land/std@0.151.0/_util/os.ts";
+export { grantOrThrow } from "https://deno.land/std@0.151.0/permissions/mod.ts";
 
 export { denoDir } from "https://deno.land/x/yxz@0.17.0/os/path.ts";
 

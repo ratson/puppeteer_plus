@@ -1,5 +1,5 @@
-import process from 'https://deno.land/std@0.149.0/node/process.ts';
-import * as os from 'https://deno.land/std@0.149.0/node/os.ts';
+import process from 'https://deno.land/std@0.151.0/node/process.ts';
+import * as os from 'https://deno.land/std@0.151.0/node/os.ts';
 
 /**
  * Gets the temporary directory, either from the environmental variable

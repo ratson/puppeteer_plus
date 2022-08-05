@@ -1,5 +1,5 @@
 import {createRequire} from 'module';
-import {dirname} from 'https://deno.land/std@0.135.0/node/path.ts';
+import {dirname} from 'https://deno.land/std@0.151.0/node/path.ts';
 import {fileURLToPath} from 'https://deno.land/std@0.149.0/node/url.ts';
 
 const require = createRequire(import.meta.url);

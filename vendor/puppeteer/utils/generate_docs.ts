@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {readFileSync, writeFileSync} from 'https://deno.land/std@0.135.0/node/fs.ts';
-import {join} from 'https://deno.land/std@0.135.0/node/path.ts';
+import {readFileSync, writeFileSync} from 'https://deno.land/std@0.151.0/node/fs.ts';
+import {join} from 'https://deno.land/std@0.151.0/node/path.ts';
 import {chdir} from 'process';
 import semver from 'semver';
 import {versionsPerRelease} from '../versions.ts';
@@ -58,7 +58,7 @@ chdir(join(__dirname, '..'));
  ---
  sidebar_position: 1
  ---
- 
+
  `;
   writeFileSync('docs/index.md', sectionContent + content);
 }

@@ -15,7 +15,7 @@
  */
 
 import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
-import type {Readable} from 'https://deno.land/std@0.149.0/node/stream.ts';
+import type {Readable} from 'https://deno.land/std@0.151.0/node/stream.ts';
 import {isNode} from '../environment.ts';
 import {assert} from './assert.ts';
 import {CDPSession} from './Connection.ts';
@@ -415,13 +415,13 @@ export async function waitWithTimeout<T>(
 /**
  * @internal
  */
-let fs: typeof import('https://deno.land/std@0.149.0/node/fs.ts') | null = null;
+let fs: typeof import('https://deno.land/std@0.151.0/node/fs.ts') | null = null;
 /**
  * @internal
  */
-export async function importFS(): Promise<typeof import('https://deno.land/std@0.149.0/node/fs.ts')> {
+export async function importFS(): Promise<typeof import('https://deno.land/std@0.151.0/node/fs.ts')> {
   if (!fs) {
-    fs = await import('https://deno.land/std@0.149.0/node/fs.ts');
+    fs = await import('https://deno.land/std@0.151.0/node/fs.ts');
   }
   return fs;
 }
@@ -435,7 +435,7 @@ export async function getReadableAsBuffer(
 ): Promise<Buffer | null> {
   const buffers = [];
   if (path) {
-    let fs: typeof import('https://deno.land/std@0.149.0/node/fs.ts').promises;
+    let fs: typeof import('https://deno.land/std@0.151.0/node/fs.ts').promises;
     try {
       fs = (await importFS()).promises;
     } catch (error) {

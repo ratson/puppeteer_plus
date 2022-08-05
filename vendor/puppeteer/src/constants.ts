@@ -1,4 +1,4 @@
-import {dirname} from 'https://deno.land/std@0.149.0/node/path.ts';
+import {dirname} from 'https://deno.land/std@0.151.0/node/path.ts';
 import {puppeteerDirname} from './compat.ts';
 
 /**

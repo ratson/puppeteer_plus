@@ -15,7 +15,7 @@
  */
 
 import assert from 'assert';
-import {readFile, readFileSync} from 'https://deno.land/std@0.135.0/node/fs.ts';
+import {readFile, readFileSync} from 'https://deno.land/std@0.151.0/node/fs.ts';
 import {
   createServer as createHttpServer,
   IncomingMessage,

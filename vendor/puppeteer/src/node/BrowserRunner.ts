@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import process from 'https://deno.land/std@0.149.0/node/process.ts';
-          import 'https://deno.land/std@0.149.0/node/global.ts';
-import {copy} from 'https://deno.land/std@0.149.0/streams/conversion.ts';
-import {deadline, DeadlineError} from 'https://deno.land/std@0.149.0/async/deadline.ts';
-import {readLines} from 'https://deno.land/std@0.149.0/io/mod.ts';
-import * as childProcess from 'https://deno.land/std@0.149.0/node/child_process.ts';
-import * as fs from 'https://deno.land/std@0.149.0/node/fs.ts';
-import * as path from 'https://deno.land/std@0.149.0/node/path.ts';
-import * as readline from 'https://deno.land/std@0.149.0/node/readline.ts';
-import {promisify} from 'https://deno.land/std@0.149.0/node/util.ts';
+import process from 'https://deno.land/std@0.151.0/node/process.ts';
+          import 'https://deno.land/std@0.151.0/node/global.ts';
+import {copy} from 'https://deno.land/std@0.151.0/streams/conversion.ts';
+import {deadline, DeadlineError} from 'https://deno.land/std@0.151.0/async/deadline.ts';
+import {readLines} from 'https://deno.land/std@0.151.0/io/mod.ts';
+import * as childProcess from 'https://deno.land/std@0.151.0/node/child_process.ts';
+import * as fs from 'https://deno.land/std@0.151.0/node/fs.ts';
+import * as path from 'https://deno.land/std@0.151.0/node/path.ts';
+import * as readline from 'https://deno.land/std@0.151.0/node/readline.ts';
+import {promisify} from 'https://deno.land/std@0.151.0/node/util.ts';
 import {assert} from '../common/assert.ts';
 import {Connection} from '../common/Connection.ts';
 import {debug} from '../common/Debug.ts';

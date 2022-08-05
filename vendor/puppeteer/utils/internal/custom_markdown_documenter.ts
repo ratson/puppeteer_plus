@@ -68,7 +68,7 @@ import {
   NewlineKind,
   PackageName,
 } from '@rushstack/node-core-library';
-import * as path from 'https://deno.land/std@0.135.0/node/path.ts';
+import * as path from 'https://deno.land/std@0.151.0/node/path.ts';
 
 import {DocumenterConfig} from '@microsoft/api-documenter/lib/documenters/DocumenterConfig';
 import {CustomMarkdownEmitter} from '@microsoft/api-documenter/lib/markdown/CustomMarkdownEmitter';

@@ -332,7 +332,7 @@ export class DOMWorld {
     if (path !== null) {
       let fs;
       try {
-        fs = (await import('https://deno.land/std@0.149.0/node/fs.ts')).promises;
+        fs = (await import('https://deno.land/std@0.151.0/node/fs.ts')).promises;
       } catch (error) {
         if (error instanceof TypeError) {
           throw new Error(
@@ -428,7 +428,7 @@ export class DOMWorld {
     }
 
     if (path !== null) {
-      let fs: typeof import('https://deno.land/std@0.149.0/node/fs.ts').promises;
+      let fs: typeof import('https://deno.land/std@0.151.0/node/fs.ts').promises;
       try {
         fs = (await importFS()).promises;
       } catch (error) {
