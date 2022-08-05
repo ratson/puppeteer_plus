@@ -15,6 +15,7 @@ Deno.test("core", async () => {
     "run",
     "--unstable",
     "--allow-env=NODE_DEBUG",
+    "--check",
     "core.ts",
   ], {
     check: true,
