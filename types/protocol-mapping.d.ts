@@ -2740,7 +2740,7 @@ export namespace ProtocolMapping {
          * Requests database names for given security origin.
          */
         'IndexedDB.requestDatabaseNames': {
-            paramsType: [Protocol.IndexedDB.RequestDatabaseNamesRequest];
+            paramsType: [Protocol.IndexedDB.RequestDatabaseNamesRequest?];
             returnType: Protocol.IndexedDB.RequestDatabaseNamesResponse;
         };
         /**
@@ -3997,6 +3997,13 @@ export namespace ProtocolMapping {
             returnType: void;
         };
         /**
+         * Clears storage for storage key.
+         */
+        'Storage.clearDataForStorageKey': {
+            paramsType: [Protocol.Storage.ClearDataForStorageKeyRequest];
+            returnType: void;
+        };
+        /**
          * Returns all browser cookies.
          */
         'Storage.getCookies': {
@@ -4046,6 +4053,13 @@ export namespace ProtocolMapping {
             returnType: void;
         };
         /**
+         * Registers storage key to be notified when an update occurs to its IndexedDB.
+         */
+        'Storage.trackIndexedDBForStorageKey': {
+            paramsType: [Protocol.Storage.TrackIndexedDBForStorageKeyRequest];
+            returnType: void;
+        };
+        /**
          * Unregisters origin from receiving notifications for cache storage.
          */
         'Storage.untrackCacheStorageForOrigin': {
@@ -4057,6 +4071,13 @@ export namespace ProtocolMapping {
          */
         'Storage.untrackIndexedDBForOrigin': {
             paramsType: [Protocol.Storage.UntrackIndexedDBForOriginRequest];
+            returnType: void;
+        };
+        /**
+         * Unregisters storage key from receiving notifications for IndexedDB.
+         */
+        'Storage.untrackIndexedDBForStorageKey': {
+            paramsType: [Protocol.Storage.UntrackIndexedDBForStorageKeyRequest];
             returnType: void;
         };
         /**
@@ -4193,7 +4214,7 @@ export namespace ProtocolMapping {
          * Retrieves a list of available targets.
          */
         'Target.getTargets': {
-            paramsType: [];
+            paramsType: [Protocol.Target.GetTargetsRequest?];
             returnType: Protocol.Target.GetTargetsResponse;
         };
         /**

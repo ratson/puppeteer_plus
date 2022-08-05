@@ -1,7 +1,441 @@
 
 
+## Roll protocol to r1031356 — _2022-08-04T04:34:29.000Z_
+######  Diff: [`ced9091...7fa58bb`](https://github.com/ChromeDevTools/devtools-protocol/compare/`ced9091...7fa58bb`)
+
+```diff
+@@ browser_protocol.pdl:845 @@ experimental domain Audits
+       ClientMetadataHttpNotFound
+       ClientMetadataNoResponse
+       ClientMetadataInvalidResponse
++      ClientMetadataMissingPrivacyPolicyUrl
+       DisabledInSettings
+       ErrorFetchingSignin
+       InvalidSigninResponse
+```
+
+## Roll protocol to r1030896 — _2022-08-03T04:47:29.000Z_
+######  Diff: [`750f434...ced9091`](https://github.com/ChromeDevTools/devtools-protocol/compare/`750f434...ced9091`)
+
+```diff
+@@ browser_protocol.pdl:481 @@ experimental domain Audits
+       ExcludeSameSiteStrict
+       ExcludeInvalidSameParty
+       ExcludeSamePartyCrossPartyContext
+-      ExcludeDomainNonASCII
+ 
+   type CookieWarningReason extends string
+     enum
+@@ -494,7 +493,6 @@ experimental domain Audits
+       WarnSameSiteLaxCrossDowngradeStrict
+       WarnSameSiteLaxCrossDowngradeLax
+       WarnAttributeValueExceedsMaxSize
+-      WarnDomainNonASCII
+ 
+   type CookieOperation extends string
+     enum
+@@ -4183,11 +4181,8 @@ experimental domain IndexedDB
+   # Requests database names for given security origin.
+   command requestDatabaseNames
+     parameters
+-      # At least and at most one of securityOrigin, storageKey must be specified.
+       # Security origin.
+-      optional string securityOrigin
+-      # Storage key.
+-      optional string storageKey
++      string securityOrigin
+     returns
+       # Database names for origin.
+       array of string databaseNames
+```
+
+## Roll protocol to r1030398 — _2022-08-02T04:50:11.000Z_
+######  Diff: [`18fb7c3...750f434`](https://github.com/ChromeDevTools/devtools-protocol/compare/`18fb7c3...750f434`)
+
+```diff
+@@ browser_protocol.pdl:705 @@ experimental domain Audits
+       InvalidHeader
+       InvalidRegisterTriggerHeader
+       InvalidEligibleHeader
+-      TooManyConcurrentRequests
+ 
+   # Details for issues around "Attribution Reporting API" usage.
+   # Explainer: https://github.com/WICG/attribution-reporting-api
+```
+
+## Roll protocol to r1030018 — _2022-07-30T04:33:35.000Z_
+######  Diff: [`1ad73ad...18fb7c3`](https://github.com/ChromeDevTools/devtools-protocol/compare/`1ad73ad...18fb7c3`)
+
+```diff
+@@ browser_protocol.pdl:9091 @@ experimental domain Storage
+       # Security origin.
+       string origin
+ 
+-  # Registers storage key to be notified when an update occurs to its IndexedDB.
+-  command trackIndexedDBForStorageKey
+-    parameters
+-      # Storage key.
+-      string storageKey
+-
+   # Unregisters origin from receiving notifications for cache storage.
+   command untrackCacheStorageForOrigin
+     parameters
+@@ -9109,12 +9103,6 @@ experimental domain Storage
+       # Security origin.
+       string origin
+ 
+-  # Unregisters storage key from receiving notifications for IndexedDB.
+-  command untrackIndexedDBForStorageKey
+-    parameters
+-      # Storage key.
+-      string storageKey
+-
+   # Returns the number of stored Trust Tokens per issuer for the
+   # current browsing context.
+   experimental command getTrustTokens
+@@ -9162,8 +9150,6 @@ experimental domain Storage
+     parameters
+       # Origin to update.
+       string origin
+-      # Storage key to update.
+-      string storageKey
+       # Database to update.
+       string databaseName
+       # ObjectStore to update.
+@@ -9174,8 +9160,6 @@ experimental domain Storage
+     parameters
+       # Origin to update.
+       string origin
+-      # Storage key to update.
+-      string storageKey
+ 
+   # One of the interest groups was accessed by the associated page.
+   event interestGroupAccessed
+@@ -9346,16 +9330,13 @@ domain Target
+   experimental type FilterEntry extends object
+     properties
+       # If set, causes exclusion of mathcing targets from the list.
++      # The remainder of filter entries in the filter arrat are ignored.
+       optional boolean exclude
+       # If not present, matches any type.
+       optional string type
+ 
+-  # The entries in TargetFilter are matched sequentially against targets and
+-  # the first entry that matches determines if the target is included or not,
+-  # depending on the value of `exclude` field in the entry.
+-  # If filter is not specified, the one assumed is
+-  # [{type: "browser", exclude: true}, {type: "tab", exclude: true}, {}]
+-  # (i.e. include everything but `browser` and `tab`).
++  # If filter is not specified, the one assumed is [{type: "browser", exclude: true}, {}]
++  # (i.e. include everything but browser).
+   experimental type TargetFilter extends array of FilterEntry
+ 
+   experimental type RemoteLocation extends object
+```
+
+## Roll protocol to r1029622 — _2022-07-29T04:36:32.000Z_
+######  Diff: [`d36a521...1ad73ad`](https://github.com/ChromeDevTools/devtools-protocol/compare/`d36a521...1ad73ad`)
+
+```diff
+@@ browser_protocol.pdl:9326 @@ domain Target
+       experimental optional Page.FrameId openerFrameId
+       experimental optional Browser.BrowserContextID browserContextId
+ 
+-  # A filter used by target query/discovery/auto-attach operations.
+-  experimental type FilterEntry extends object
+-    properties
+-      # If set, causes exclusion of mathcing targets from the list.
+-      # The remainder of filter entries in the filter arrat are ignored.
+-      optional boolean exclude
+-      # If not present, matches any type.
+-      optional string type
+-
+-  # If filter is not specified, the one assumed is [{type: "browser", exclude: true}, {}]
+-  # (i.e. include everything but browser).
+-  experimental type TargetFilter extends array of FilterEntry
+-
+   experimental type RemoteLocation extends object
+     properties
+       string host
+@@ -9402,6 +9389,7 @@ domain Target
+       # An optional list of origins to grant unlimited cross-origin access to.
+       # Parts of the URL other than those constituting origin are ignored.
+       optional array of string originsWithUniversalNetworkAccess
++
+     returns
+       # The id of the context created.
+       Browser.BrowserContextID browserContextId
+@@ -9458,11 +9446,6 @@ domain Target
+ 
+   # Retrieves a list of available targets.
+   command getTargets
+-    parameters
+-      # Only targets matching filter will be reported. If filter is not specified
+-      # and target discovery is currently enabled, a filter used for target discovery
+-      # is used for consistency.
+-      experimental optional TargetFilter filter
+     returns
+       # The list of targets.
+       array of TargetInfo targetInfos
+@@ -9494,8 +9477,6 @@ domain Target
+       # We plan to make this the default, deprecate non-flattened mode,
+       # and eventually retire it. See crbug.com/991325.
+       optional boolean flatten
+-      # Only targets matching filter will be attached.
+-      experimental optional TargetFilter filter
+ 
+   # Adds the specified target to the list of targets that will be monitored for any related target
+   # creation (such as child frames, child workers and new versions of service worker) and reported
+@@ -9508,8 +9489,6 @@ domain Target
+       # Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
+       # to run paused targets.
+       boolean waitForDebuggerOnStart
+-      # Only targets matching filter will be attached.
+-      experimental optional TargetFilter filter
+ 
+   # Controls whether to discover available targets and notify via
+   # `targetCreated/targetInfoChanged/targetDestroyed` events.
+@@ -9517,9 +9496,6 @@ domain Target
+     parameters
+       # Whether to discover available targets.
+       boolean discover
+-      # Only targets matching filter will be attached. If `discover` is false,
+-      # `filter` must be omitted or empty.
+-      experimental optional TargetFilter filter
+ 
+   # Enables target discovery for the specified locations, when `setDiscoverTargets` was set to
+   # `true`.
+```
+
+## Roll protocol to r1029085 — _2022-07-28T04:34:38.000Z_
+######  Diff: [`47224e5...d36a521`](https://github.com/ChromeDevTools/devtools-protocol/compare/`47224e5...d36a521`)
+
+```diff
+@@ browser_protocol.pdl:699 @@ experimental domain Audits
+   type AttributionReportingIssueType extends string
+     enum
+       PermissionPolicyDisabled
++      # TODO(apaseltiner): Remove this once it is no longer referenced by the frontend.
++      AttributionSourceUntrustworthyOrigin
++      # TODO(apaseltiner): Remove this once it is no longer referenced by the frontend.
++      AttributionUntrustworthyOrigin
+       UntrustworthyReportingOrigin
+       InsecureContext
+       # TODO(apaseltiner): Rename this to InvalidRegisterSourceHeader
+       InvalidHeader
+       InvalidRegisterTriggerHeader
+-      InvalidEligibleHeader
+ 
+   # Details for issues around "Attribution Reporting API" usage.
+   # Explainer: https://github.com/WICG/attribution-reporting-api
+   type AttributionReportingIssueDetails extends object
+     properties
+       AttributionReportingIssueType violationType
++      # TODO(apaseltiner): Remove this once it is no longer referenced by the frontend.
++      optional AffectedFrame frame
+       optional AffectedRequest request
+       optional DOM.BackendNodeId violatingNodeId
+       optional string invalidParameter
+@@ -4120,11 +4125,8 @@ experimental domain IndexedDB
+   # Requests data from object store or index.
+   command requestData
+     parameters
+-      # At least and at most one of securityOrigin, storageKey must be specified.
+       # Security origin.
+-      optional string securityOrigin
+-      # Storage key.
+-      optional string storageKey
++      string securityOrigin
+       # Database name.
+       string databaseName
+       # Object store name.
+@@ -4166,11 +4168,8 @@ experimental domain IndexedDB
+   # Requests database with given name in given frame.
+   command requestDatabase
+     parameters
+-      # At least and at most one of securityOrigin, storageKey must be specified.
+       # Security origin.
+-      optional string securityOrigin
+-      # Storage key.
+-      optional string storageKey
++      string securityOrigin
+       # Database name.
+       string databaseName
+     returns
+```
+
+## Roll protocol to r1028580 — _2022-07-27T04:39:00.000Z_
+######  Diff: [`51ea7c8...47224e5`](https://github.com/ChromeDevTools/devtools-protocol/compare/`51ea7c8...47224e5`)
+
+```diff
+@@ browser_protocol.pdl:782 @@ experimental domain Audits
+       ObsoleteWebRtcCipherSuite
+       OpenWebDatabaseInsecureContext
+       OverflowVisibleOnReplacedElement
+-      PersistentQuotaType
+       PictureSourceSrc
+       PrefixedCancelAnimationFrame
+       PrefixedRequestAnimationFrame
+@@ -4106,11 +4105,7 @@ experimental domain IndexedDB
+   # Delete a range of entries from an object store
+   command deleteObjectStoreEntries
+     parameters
+-      # At least and at most one of securityOrigin, storageKey must be specified.
+-      # Security origin.
+-      optional string securityOrigin
+-      # Storage key.
+-      optional string storageKey
++      string securityOrigin
+       string databaseName
+       string objectStoreName
+       # Range of entry keys to delete
+@@ -4148,11 +4143,8 @@ experimental domain IndexedDB
+   # Gets metadata of an object store
+   command getMetadata
+     parameters
+-      # At least and at most one of securityOrigin, storageKey must be specified.
+       # Security origin.
+-      optional string securityOrigin
+-      # Storage key.
+-      optional string storageKey
++      string securityOrigin
+       # Database name.
+       string databaseName
+       # Object store name.
+```
+
+## Roll protocol to r1028116 — _2022-07-26T04:49:26.000Z_
+######  Diff: [`5036b2e...2a10dd2`](https://github.com/ChromeDevTools/devtools-protocol/compare/`5036b2e...2a10dd2`)
+
+```diff
+@@ browser_protocol.pdl:699 @@ experimental domain Audits
+   type AttributionReportingIssueType extends string
+     enum
+       PermissionPolicyDisabled
+-      # TODO(apaseltiner): Remove this once it is no longer referenced by the frontend.
+       AttributionSourceUntrustworthyOrigin
+-      # TODO(apaseltiner): Remove this once it is no longer referenced by the frontend.
+       AttributionUntrustworthyOrigin
+-      UntrustworthyReportingOrigin
+-      InsecureContext
+-      # TODO(apaseltiner): Rename this to InvalidRegisterSourceHeader
+       InvalidHeader
+-      InvalidRegisterTriggerHeader
+ 
+   # Details for issues around "Attribution Reporting API" usage.
+   # Explainer: https://github.com/WICG/attribution-reporting-api
+   type AttributionReportingIssueDetails extends object
+     properties
+       AttributionReportingIssueType violationType
+-      # TODO(apaseltiner): Remove this once it is no longer referenced by the frontend.
+       optional AffectedFrame frame
+       optional AffectedRequest request
+       optional DOM.BackendNodeId violatingNodeId
+@@ -4081,11 +4074,8 @@ experimental domain IndexedDB
+   # Clears all entries from an object store.
+   command clearObjectStore
+     parameters
+-      # At least and at most one of securityOrigin, storageKey must be specified.
+       # Security origin.
+-      optional string securityOrigin
+-      # Storage key.
+-      optional string storageKey
++      string securityOrigin
+       # Database name.
+       string databaseName
+       # Object store name.
+@@ -4094,11 +4084,8 @@ experimental domain IndexedDB
+   # Deletes a database.
+   command deleteDatabase
+     parameters
+-      # At least and at most one of securityOrigin, storageKey must be specified.
+       # Security origin.
+-      optional string securityOrigin
+-      # Storage key.
+-      optional string storageKey
++      string securityOrigin
+       # Database name.
+       string databaseName
+ 
+@@ -8439,10 +8426,6 @@ domain Page
+       EmbedderTriggeredAndSameOriginRedirected
+       EmbedderTriggeredAndCrossOriginRedirected
+       EmbedderTriggeredAndDestroyed
+-      MemoryLimitExceeded
+-      # Prerenders can be cancelled when Chrome uses excessive memory. This is
+-      # recorded when it fails to get the memory usage.
+-      FailToGetMemoryUsage
+ 
+   # Fired when a prerender attempt is completed.
+   event prerenderAttemptCompleted
+```
+
+## Roll protocol to r1027518 — _2022-07-23T04:32:37.000Z_
+######  Diff: [`84a4545...5036b2e`](https://github.com/ChromeDevTools/devtools-protocol/compare/`84a4545...5036b2e`)
+
+```diff
+@@ js_protocol.pdl:261 @@ domain Debugger
+       optional string streamId
+       # The total number of lines in the disassembly text.
+       integer totalNumberOfLines
+-      # The offsets of all function bodies, in the format [start1, end1,
+-      # start2, end2, ...] where all ends are exclusive.
++      # The offsets of all function bodies plus one additional entry pointing
++      # one by past the end of the last function.
+       array of integer functionBodyOffsets
+       # The first chunk of disassembly.
+       WasmDisassemblyChunk chunk
+```
+
+## Roll protocol to r1027117 — _2022-07-22T04:34:56.000Z_
+######  Diff: [`d99c911...84a4545`](https://github.com/ChromeDevTools/devtools-protocol/compare/`d99c911...84a4545`)
+
+```diff
+@@ browser_protocol.pdl:168 @@ experimental domain Accessibility
+       optional array of AXProperty ignoredReasons
+       # This `Node`'s role, whether explicit or implicit.
+       optional AXValue role
+-      # This `Node`'s Chrome raw role.
+-      optional AXValue chromeRole
+       # The accessible name for this `Node`.
+       optional AXValue name
+       # The accessible description for this `Node`.
+@@ -774,7 +772,6 @@ experimental domain Audits
+       NotificationPermissionRequestedIframe
+       ObsoleteWebRtcCipherSuite
+       OpenWebDatabaseInsecureContext
+-      OverflowVisibleOnReplacedElement
+       PictureSourceSrc
+       PrefixedCancelAnimationFrame
+       PrefixedRequestAnimationFrame
+@@ -2685,7 +2682,7 @@ domain DOM
+       array of NodeId nodeIds
+ 
+   # Returns NodeIds of current top layer elements.
+-  # Top layer is rendered closest to the user within a viewport, therefore its elements always
++  # Top layer is rendered closest to the user within a viewport, therefore its elements always 
+   # appear on top of all other content.
+   experimental command getTopLayerElements
+     returns
+@@ -8993,14 +8990,6 @@ experimental domain Storage
+       # Comma separated list of StorageType to clear.
+       string storageTypes
+ 
+-  # Clears storage for storage key.
+-  command clearDataForStorageKey
+-    parameters
+-      # Storage key.
+-      string storageKey
+-      # Comma separated list of StorageType to clear.
+-      string storageTypes
+-
+   # Returns all browser cookies.
+   command getCookies
+     parameters
+```
+
 ## Roll protocol to r1026613 — _2022-07-21T04:34:49.000Z_
-######  Diff: [`523543a...4e1eb3a`](https://github.com/ChromeDevTools/devtools-protocol/compare/`523543a...4e1eb3a`)
+######  Diff: [`523543a...d99c911`](https://github.com/ChromeDevTools/devtools-protocol/compare/`523543a...d99c911`)
 
 ```diff
 @@ browser_protocol.pdl:765 @@ experimental domain Audits
@@ -9499,305 +9933,4 @@ index bd277eb..09c420e 100644
      properties
        # The decision on what to do in response to the authorization challenge.  Default means
        # deferring to the default behavior of the net stack, which will likely either the Cancel
-```
-
-## Roll protocol to r806611 — _2020-09-14T12:16:27.000Z_
-######  Diff: [`176b07f...2155b85`](https://github.com/ChromeDevTools/devtools-protocol/compare/`176b07f...2155b85`)
-
-```diff
-@@ browser_protocol.pdl:5427 @@ experimental domain Overlay
-       optional DOM.RGBA columnHatchColor
-       # The named grid areas border color (Default: transparent).
-       optional DOM.RGBA areaBorderColor
--      # The grid container background color (Default: transparent).
--      optional DOM.RGBA gridBackgroundColor
- 
-   # Configuration data for the highlighting of page elements.
-   type HighlightConfig extends object
-```
-
-## Roll protocol to r806105 — _2020-09-11T09:16:20.000Z_
-######  Diff: [`23323c5...176b07f`](https://github.com/ChromeDevTools/devtools-protocol/compare/`23323c5...176b07f`)
-
-```diff
-@@ browser_protocol.pdl:1076 @@ experimental domain CSS
-       boolean isInline
-       # Whether this stylesheet is mutable. Inline stylesheets become mutable
-       # after they have been modified via CSSOM API.
--      # <link> element's stylesheets become mutable only if DevTools modifies them.
--      # Constructed stylesheets (new CSSStyleSheet()) are mutable immediately after creation.
-+      # <link> element's stylesheets are never mutable. Constructed stylesheets
-+      # (new CSSStyleSheet()) are mutable immediately after creation.
-       boolean isMutable
--      # Whether this stylesheet is a constructed stylesheet (created using new CSSStyleSheet()).
--      boolean isConstructed
-       # Line offset of the stylesheet within the resource (zero based).
-       number startLine
-       # Column offset of the stylesheet within the resource (zero based).
-```
-
-## Roll protocol to r805376 — _2020-09-09T17:16:20.000Z_
-######  Diff: [`caa0ede...23323c5`](https://github.com/ChromeDevTools/devtools-protocol/compare/`caa0ede...23323c5`)
-
-```diff
-@@ browser_protocol.pdl:7970 @@ experimental domain WebAudio
-       # Context sample rate.
-       number sampleRate
- 
--# Protocol object for AudioListener
-+# Protocol object for AudioListner
-   type AudioListener extends object
-     properties
-       GraphObjectId listenerId
-```
-
-## Roll protocol to r805182 — _2020-09-09T02:16:15.000Z_
-######  Diff: [`4f48bef...caa0ede`](https://github.com/ChromeDevTools/devtools-protocol/compare/`4f48bef...caa0ede`)
-
-```diff
-@@ js_protocol.pdl:863 @@ domain Profiler
-       # Counter value.
-       integer value
- 
--  # Runtime call counter information.
--  experimental type RuntimeCallCounterInfo extends object
--    properties
--      # Counter name.
--      string name
--      # Counter value.
--      number value
--      # Counter time in seconds.
--      number time
--
-   command disable
- 
-   command enable
-@@ -937,18 +927,6 @@ domain Profiler
-       # Type profile for all scripts since startTypeProfile() was turned on.
-       array of ScriptTypeProfile result
- 
--  # Enable counters collection.
--  experimental command enableCounters
--
--  # Disable counters collection.
--  experimental command disableCounters
--
--  # Retrieve counters.
--  experimental command getCounters
--    returns
--      # Collected counters information.
--      array of CounterInfo result
--
-   # Enable run time call stats collection.
-   experimental command enableRuntimeCallStats
- 
-@@ -958,8 +936,8 @@ domain Profiler
-   # Retrieve run time call stats.
-   experimental command getRuntimeCallStats
-     returns
--      # Collected runtime call counter information.
--      array of RuntimeCallCounterInfo result
-+      # Collected counter information.
-+      array of CounterInfo result
- 
-   event consoleProfileFinished
-     parameters
-```
-
-## Roll protocol to r802093 — _2020-08-27T03:16:11.000Z_
-######  Diff: [`4d26309...4f48bef`](https://github.com/ChromeDevTools/devtools-protocol/compare/`4d26309...4f48bef`)
-
-```diff
-@@ browser_protocol.pdl:5050 @@ domain Network
-       # Map with extra HTTP headers.
-       Headers headers
- 
--  # Specifies whether to sned a debug header to all outgoing requests.
--  experimental command setAttachDebugHeader
--    parameters
--      # Whether to send a debug header.
--      boolean enabled
--
-   # Sets the requests to intercept that match the provided patterns and optionally resource types.
-   # Deprecated, please use Fetch.enable instead.
-   experimental deprecated command setRequestInterception
-```
-
-## Roll protocol to r801017 — _2020-08-24T16:16:09.000Z_
-######  Diff: [`5ac7d2e...4d26309`](https://github.com/ChromeDevTools/devtools-protocol/compare/`5ac7d2e...4d26309`)
-
-```diff
-@@ browser_protocol.pdl:826 @@ domain Browser
-       # For "push" permission, may specify userVisibleOnly.
-       # Note that userVisibleOnly = true is the only currently supported type.
-       optional boolean userVisibleOnly
-+      # For "wake-lock" permission, must specify type as either "screen" or "system".
-+      optional string type
-       # For "clipboard" permission, may specify allowWithoutSanitization.
-       optional boolean allowWithoutSanitization
-```
-
-## Roll protocol to r799653 — _2020-08-19T16:16:16.000Z_
-######  Diff: [`0e651b0...5ac7d2e`](https://github.com/ChromeDevTools/devtools-protocol/compare/`0e651b0...5ac7d2e`)
-
-```diff
-@@ browser_protocol.pdl:5712 @@ domain Page
-       # This frame is the root of an ad frame.
-       root
- 
--  # Indicates whether the frame is a secure context and why it is the case.
--  experimental type SecureContextType extends string
--    enum
--      # The origin is a secure context.
--      Secure
--      # The host is localhost and hence is considered secure.
--      SecureLocalhost
--      # The origin has an insecure scheme and is not localhost.
--      InsecureScheme
--      # One of the ancestor frames is not a secure context.
--      InsecureAncestor
--
--  # Indicates whether the frame is cross-origin isolated and why it is the case.
--  experimental type CrossOriginIsolatedContextType extends string
--    enum
--      # The origin is cross-origin isolated.
--      Isolated
--      # The origin is not cross-origin isolated.
--      NotIsolated
--      # The cross-origin isolation feature is disabled.
--      NotIsolatedFeatureDisabled
--
-   # Information about the Frame on the page.
-   type Frame extends object
-     properties
-@@ -5762,10 +5740,6 @@ domain Page
-       experimental optional string unreachableUrl
-       # Indicates whether this frame was tagged as an ad.
-       experimental optional AdFrameType adFrameType
--      # Indicates whether the main document is a secure context and explains why that is the case.
--      experimental SecureContextType secureContextType
--      # Indicates whether this is a cross origin isolated context.
--      experimental CrossOriginIsolatedContextType crossOriginIsolatedContextType
- 
-   # Information about the Resource on the page.
-   experimental type FrameResource extends object
-```
-
-## Roll protocol to r799090 — _2020-08-18T14:16:17.000Z_
-######  Diff: [`3c9bb33...0e651b0`](https://github.com/ChromeDevTools/devtools-protocol/compare/`3c9bb33...0e651b0`)
-
-```diff
-@@ browser_protocol.pdl:5333 @@ domain Network
-       # available, such as in the case of HTTP/2 or QUIC.
-       optional string headersText
- 
--  experimental type CrossOriginOpenerPolicyValue extends string
--    enum
--      SameOrigin
--      SameOriginAllowPopups
--      UnsafeNone
--      SameOriginPlusCoep
--
--  experimental type CrossOriginOpenerPolicyStatus extends object
--    properties
--      CrossOriginOpenerPolicyValue value
--
--  experimental type CrossOriginEmbedderPolicyValue extends string
--    enum
--      None
--      RequireCorp
--
--  experimental type CrossOriginEmbedderPolicyStatus extends object
--    properties
--      CrossOriginEmbedderPolicyValue value
--
--  experimental type SecurityIsolationStatus extends object
--    properties
--      CrossOriginOpenerPolicyStatus coop
--      CrossOriginEmbedderPolicyStatus coep
--
--  # Returns information about the COEP/COOP isolation status.
--  experimental command getSecurityIsolationStatus
--    parameters
--      # If no frameId is provided, the status of the target is provided.
--      optional Page.FrameId frameId
--    returns
--      SecurityIsolationStatus status
--
- # This domain provides various functionality related to drawing atop the inspected page.
- experimental domain Overlay
-   depends on DOM
-```
-
-## Roll protocol to r796752 — _2020-08-11T09:16:15.000Z_
-######  Diff: [`6b171b5...3c9bb33`](https://github.com/ChromeDevTools/devtools-protocol/compare/`6b171b5...3c9bb33`)
-
-```diff
-@@ browser_protocol.pdl:1888 @@ domain DOM
-       # Rectangle height
-       number height
- 
--  type CSSComputedStyleProperty extends object
--    properties
--      # Computed style property name.
--      string name
--      # Computed style property value.
--      string value
--
-   # Collects class names for the node with given id and all of it's child nodes.
-   experimental command collectClassNamesFromSubtree
-     parameters
-@@ -2041,20 +2034,6 @@ domain DOM
-       # Resulting node.
-       array of Node nodes
- 
--  # Finds nodes with a given computed style in a subtree.
--  experimental command getNodesForSubtreeByStyle
--    parameters
--      # Node ID pointing to the root of a subtree.
--      NodeId nodeId
--      # The style to filter nodes by (includes nodes if any of properties matches).
--      array of CSSComputedStyleProperty computedStyles
--      # Whether or not iframes and shadow roots in the same target should be traversed when returning the
--      # results (default is false).
--      optional boolean pierce
--    returns
--      # Resulting nodes.
--      array of NodeId nodeIds
--
-   # Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
-   # either returned or not.
-   command getNodeForLocation
-```
-
-## Roll protocol to r795450 — _2020-08-06T14:16:06.000Z_
-######  Diff: [`c89b1a6...6b171b5`](https://github.com/ChromeDevTools/devtools-protocol/compare/`c89b1a6...6b171b5`)
-
-```diff
-@@ browser_protocol.pdl:623 @@ experimental domain Audits
-       ContentSecurityPolicyViolationType contentSecurityPolicyViolationType
-       optional AffectedFrame frameAncestor
-       optional SourceCodeLocation sourceCodeLocation
--      optional DOM.BackendNodeId violatingNodeId
-+      optional integer violatingNodeId
- 
-   # A unique identifier for the type of issue. Each type may use one of the
-   # optional fields in InspectorIssueDetails to convey more specific
-```
-
-## Roll protocol to r795133 — _2020-08-05T19:16:31.000Z_
-######  Diff: [`40517aa...c89b1a6`](https://github.com/ChromeDevTools/devtools-protocol/compare/`40517aa...c89b1a6`)
-
-```diff
-@@ browser_protocol.pdl:2020 @@ domain DOM
-       Node root
- 
-   # Returns the root DOM node (and optionally the subtree) to the caller.
--  # Deprecated, as it is not designed to work well with the rest of the DOM agent.
--  # Use DOMSnapshot.captureSnapshot instead.
--  deprecated command getFlattenedDocument
-+  command getFlattenedDocument
-     parameters
-       # The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
-       # entire subtree or provide an integer larger than 0.
 ```

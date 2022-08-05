@@ -168,6 +168,8 @@ experimental domain Accessibility
       optional array of AXProperty ignoredReasons
       # This `Node`'s role, whether explicit or implicit.
       optional AXValue role
+      # This `Node`'s Chrome raw role.
+      optional AXValue chromeRole
       # The accessible name for this `Node`.
       optional AXValue name
       # The accessible description for this `Node`.
@@ -479,6 +481,7 @@ experimental domain Audits
       ExcludeSameSiteStrict
       ExcludeInvalidSameParty
       ExcludeSamePartyCrossPartyContext
+      ExcludeDomainNonASCII
 
   type CookieWarningReason extends string
     enum
@@ -491,6 +494,7 @@ experimental domain Audits
       WarnSameSiteLaxCrossDowngradeStrict
       WarnSameSiteLaxCrossDowngradeLax
       WarnAttributeValueExceedsMaxSize
+      WarnDomainNonASCII
 
   type CookieOperation extends string
     enum
@@ -697,16 +701,19 @@ experimental domain Audits
   type AttributionReportingIssueType extends string
     enum
       PermissionPolicyDisabled
-      AttributionSourceUntrustworthyOrigin
-      AttributionUntrustworthyOrigin
+      UntrustworthyReportingOrigin
+      InsecureContext
+      # TODO(apaseltiner): Rename this to InvalidRegisterSourceHeader
       InvalidHeader
+      InvalidRegisterTriggerHeader
+      InvalidEligibleHeader
+      TooManyConcurrentRequests
 
   # Details for issues around "Attribution Reporting API" usage.
   # Explainer: https://github.com/WICG/attribution-reporting-api
   type AttributionReportingIssueDetails extends object
     properties
       AttributionReportingIssueType violationType
-      optional AffectedFrame frame
       optional AffectedRequest request
       optional DOM.BackendNodeId violatingNodeId
       optional string invalidParameter
@@ -772,6 +779,8 @@ experimental domain Audits
       NotificationPermissionRequestedIframe
       ObsoleteWebRtcCipherSuite
       OpenWebDatabaseInsecureContext
+      OverflowVisibleOnReplacedElement
+      PersistentQuotaType
       PictureSourceSrc
       PrefixedCancelAnimationFrame
       PrefixedRequestAnimationFrame
@@ -836,7 +845,6 @@ experimental domain Audits
       ClientMetadataHttpNotFound
       ClientMetadataNoResponse
       ClientMetadataInvalidResponse
-      ClientMetadataMissingPrivacyPolicyUrl
       DisabledInSettings
       ErrorFetchingSignin
       InvalidSigninResponse
@@ -2682,7 +2690,7 @@ domain DOM
       array of NodeId nodeIds
 
   # Returns NodeIds of current top layer elements.
-  # Top layer is rendered closest to the user within a viewport, therefore its elements always 
+  # Top layer is rendered closest to the user within a viewport, therefore its elements always
   # appear on top of all other content.
   experimental command getTopLayerElements
     returns
@@ -4071,8 +4079,11 @@ experimental domain IndexedDB
   # Clears all entries from an object store.
   command clearObjectStore
     parameters
+      # At least and at most one of securityOrigin, storageKey must be specified.
       # Security origin.
-      string securityOrigin
+      optional string securityOrigin
+      # Storage key.
+      optional string storageKey
       # Database name.
       string databaseName
       # Object store name.
@@ -4081,15 +4092,22 @@ experimental domain IndexedDB
   # Deletes a database.
   command deleteDatabase
     parameters
+      # At least and at most one of securityOrigin, storageKey must be specified.
       # Security origin.
-      string securityOrigin
+      optional string securityOrigin
+      # Storage key.
+      optional string storageKey
       # Database name.
       string databaseName
 
   # Delete a range of entries from an object store
   command deleteObjectStoreEntries
     parameters
-      string securityOrigin
+      # At least and at most one of securityOrigin, storageKey must be specified.
+      # Security origin.
+      optional string securityOrigin
+      # Storage key.
+      optional string storageKey
       string databaseName
       string objectStoreName
       # Range of entry keys to delete
@@ -4104,8 +4122,11 @@ experimental domain IndexedDB
   # Requests data from object store or index.
   command requestData
     parameters
+      # At least and at most one of securityOrigin, storageKey must be specified.
       # Security origin.
-      string securityOrigin
+      optional string securityOrigin
+      # Storage key.
+      optional string storageKey
       # Database name.
       string databaseName
       # Object store name.
@@ -4127,8 +4148,11 @@ experimental domain IndexedDB
   # Gets metadata of an object store
   command getMetadata
     parameters
+      # At least and at most one of securityOrigin, storageKey must be specified.
       # Security origin.
-      string securityOrigin
+      optional string securityOrigin
+      # Storage key.
+      optional string storageKey
       # Database name.
       string databaseName
       # Object store name.
@@ -4144,8 +4168,11 @@ experimental domain IndexedDB
   # Requests database with given name in given frame.
   command requestDatabase
     parameters
+      # At least and at most one of securityOrigin, storageKey must be specified.
       # Security origin.
-      string securityOrigin
+      optional string securityOrigin
+      # Storage key.
+      optional string storageKey
       # Database name.
       string databaseName
     returns
@@ -4155,8 +4182,11 @@ experimental domain IndexedDB
   # Requests database names for given security origin.
   command requestDatabaseNames
     parameters
+      # At least and at most one of securityOrigin, storageKey must be specified.
       # Security origin.
-      string securityOrigin
+      optional string securityOrigin
+      # Storage key.
+      optional string storageKey
     returns
       # Database names for origin.
       array of string databaseNames
@@ -8423,6 +8453,10 @@ domain Page
       EmbedderTriggeredAndSameOriginRedirected
       EmbedderTriggeredAndCrossOriginRedirected
       EmbedderTriggeredAndDestroyed
+      MemoryLimitExceeded
+      # Prerenders can be cancelled when Chrome uses excessive memory. This is
+      # recorded when it fails to get the memory usage.
+      FailToGetMemoryUsage
 
   # Fired when a prerender attempt is completed.
   event prerenderAttemptCompleted
@@ -8990,6 +9024,14 @@ experimental domain Storage
       # Comma separated list of StorageType to clear.
       string storageTypes
 
+  # Clears storage for storage key.
+  command clearDataForStorageKey
+    parameters
+      # Storage key.
+      string storageKey
+      # Comma separated list of StorageType to clear.
+      string storageTypes
+
   # Returns all browser cookies.
   command getCookies
     parameters
@@ -9054,6 +9096,12 @@ experimental domain Storage
       # Security origin.
       string origin
 
+  # Registers storage key to be notified when an update occurs to its IndexedDB.
+  command trackIndexedDBForStorageKey
+    parameters
+      # Storage key.
+      string storageKey
+
   # Unregisters origin from receiving notifications for cache storage.
   command untrackCacheStorageForOrigin
     parameters
@@ -9065,6 +9113,12 @@ experimental domain Storage
     parameters
       # Security origin.
       string origin
+
+  # Unregisters storage key from receiving notifications for IndexedDB.
+  command untrackIndexedDBForStorageKey
+    parameters
+      # Storage key.
+      string storageKey
 
   # Returns the number of stored Trust Tokens per issuer for the
   # current browsing context.
@@ -9113,6 +9167,8 @@ experimental domain Storage
     parameters
       # Origin to update.
       string origin
+      # Storage key to update.
+      string storageKey
       # Database to update.
       string databaseName
       # ObjectStore to update.
@@ -9123,6 +9179,8 @@ experimental domain Storage
     parameters
       # Origin to update.
       string origin
+      # Storage key to update.
+      string storageKey
 
   # One of the interest groups was accessed by the associated page.
   event interestGroupAccessed
@@ -9289,6 +9347,22 @@ domain Target
       experimental optional Page.FrameId openerFrameId
       experimental optional Browser.BrowserContextID browserContextId
 
+  # A filter used by target query/discovery/auto-attach operations.
+  experimental type FilterEntry extends object
+    properties
+      # If set, causes exclusion of mathcing targets from the list.
+      optional boolean exclude
+      # If not present, matches any type.
+      optional string type
+
+  # The entries in TargetFilter are matched sequentially against targets and
+  # the first entry that matches determines if the target is included or not,
+  # depending on the value of `exclude` field in the entry.
+  # If filter is not specified, the one assumed is
+  # [{type: "browser", exclude: true}, {type: "tab", exclude: true}, {}]
+  # (i.e. include everything but `browser` and `tab`).
+  experimental type TargetFilter extends array of FilterEntry
+
   experimental type RemoteLocation extends object
     properties
       string host
@@ -9352,7 +9426,6 @@ domain Target
       # An optional list of origins to grant unlimited cross-origin access to.
       # Parts of the URL other than those constituting origin are ignored.
       optional array of string originsWithUniversalNetworkAccess
-
     returns
       # The id of the context created.
       Browser.BrowserContextID browserContextId
@@ -9409,6 +9482,11 @@ domain Target
 
   # Retrieves a list of available targets.
   command getTargets
+    parameters
+      # Only targets matching filter will be reported. If filter is not specified
+      # and target discovery is currently enabled, a filter used for target discovery
+      # is used for consistency.
+      experimental optional TargetFilter filter
     returns
       # The list of targets.
       array of TargetInfo targetInfos
@@ -9440,6 +9518,8 @@ domain Target
       # We plan to make this the default, deprecate non-flattened mode,
       # and eventually retire it. See crbug.com/991325.
       optional boolean flatten
+      # Only targets matching filter will be attached.
+      experimental optional TargetFilter filter
 
   # Adds the specified target to the list of targets that will be monitored for any related target
   # creation (such as child frames, child workers and new versions of service worker) and reported
@@ -9452,6 +9532,8 @@ domain Target
       # Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
       # to run paused targets.
       boolean waitForDebuggerOnStart
+      # Only targets matching filter will be attached.
+      experimental optional TargetFilter filter
 
   # Controls whether to discover available targets and notify via
   # `targetCreated/targetInfoChanged/targetDestroyed` events.
@@ -9459,6 +9541,9 @@ domain Target
     parameters
       # Whether to discover available targets.
       boolean discover
+      # Only targets matching filter will be attached. If `discover` is false,
+      # `filter` must be omitted or empty.
+      experimental optional TargetFilter filter
 
   # Enables target discovery for the specified locations, when `setDiscoverTargets` was set to
   # `true`.
