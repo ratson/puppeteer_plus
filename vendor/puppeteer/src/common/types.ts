@@ -25,6 +25,7 @@ export type Awaitable<T> = T | PromiseLike<T>;
 /**
  * @public
  */
+// @ts-expect-error TS2304
 export type HandleFor<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
 
 /**
@@ -54,8 +55,13 @@ export type EvaluateFunc<T extends unknown[]> = (
  * @public
  */
 export type NodeFor<Selector extends string> =
+  // @ts-expect-error TS2304
   Selector extends keyof HTMLElementTagNameMap
+    // @ts-expect-error TS2304
     ? HTMLElementTagNameMap[Selector]
+    // @ts-expect-error TS2304
     : Selector extends keyof SVGElementTagNameMap
+    // @ts-expect-error TS2304
     ? SVGElementTagNameMap[Selector]
+    // @ts-expect-error TS2304
     : Element;

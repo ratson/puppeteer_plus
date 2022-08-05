@@ -23,6 +23,7 @@ import {MouseButton} from './Input.ts';
 import {releaseObject, valueFromRemoteObject, createJSHandle} from './util.ts';
 import type {ElementHandle} from './ElementHandle.ts';
 
+// @ts-expect-error TS2322
 const __JSHandleSymbol: unique symbol = typeof globalThis.__JSHandleSymbol === 'undefined' ? Symbol('__JSHandleSymbol') : __JSHandleSymbol;
 
 /**
@@ -192,6 +193,7 @@ export class JSHandle<T = unknown> {
   async getProperty<K extends keyof T>(
     propertyName: HandleOr<K>
   ): Promise<HandleFor<T[K]>>;
+  // @ts-expect-error TS2394
   async getProperty(propertyName: string): Promise<JSHandle<unknown>>;
   async getProperty<K extends keyof T>(
     propertyName: HandleOr<K>
@@ -260,6 +262,7 @@ export class JSHandle<T = unknown> {
    * @returns Either `null` or the object handle itself, if the object
    * handle is an instance of {@link ElementHandle}.
    */
+  // @ts-expect-error TS2304
   asElement(): ElementHandle<Node> | null {
     /*  This always returns null, but subclasses can override this and return an
          ElementHandle.

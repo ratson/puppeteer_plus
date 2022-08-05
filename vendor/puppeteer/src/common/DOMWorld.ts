@@ -39,13 +39,17 @@ import {
 // predicateQueryHandler and checkWaitForOptions are declared here so that
 // TypeScript knows about them when used in the predicate function below.
 declare const predicateQueryHandler: (
+  // @ts-expect-error TS2304
   element: Element | Document,
   selector: string
+// @ts-expect-error TS2304
 ) => Promise<Element | Element[] | NodeListOf<Element>>;
 declare const checkWaitForOptions: (
+  // @ts-expect-error TS2304
   node: Node | null,
   waitForVisible: boolean,
   waitForHidden: boolean
+// @ts-expect-error TS2304
 ) => Element | null | boolean;
 
 /**
@@ -55,6 +59,7 @@ export interface WaitForSelectorOptions {
   visible?: boolean;
   hidden?: boolean;
   timeout?: number;
+  // @ts-expect-error TS2304
   root?: ElementHandle<Node>;
 }
 
@@ -74,6 +79,7 @@ export class DOMWorld {
   #client: CDPSession;
   #frame: Frame;
   #timeoutSettings: TimeoutSettings;
+  // @ts-expect-error TS2304
   #documentPromise: Promise<ElementHandle<Document>> | null = null;
   #contextPromise: Promise<ExecutionContext> | null = null;
   #contextResolveCallback: ((x: ExecutionContext) => void) | null = null;
@@ -201,18 +207,21 @@ export class DOMWorld {
     return document.$$(selector);
   }
 
+  // @ts-expect-error TS2304
   async _document(): Promise<ElementHandle<Document>> {
     if (this.#documentPromise) {
       return this.#documentPromise;
     }
     this.#documentPromise = this.executionContext().then(async context => {
       return await context.evaluateHandle(() => {
+        // @ts-expect-error TS2584
         return document;
       });
     });
     return this.#documentPromise;
   }
 
+  // @ts-expect-error TS2304
   async $x(expression: string): Promise<Array<ElementHandle<Node>>> {
     const document = await this._document();
     const value = await document.$x(expression);
@@ -253,10 +262,14 @@ export class DOMWorld {
   async content(): Promise<string> {
     return await this.evaluate(() => {
       let retVal = '';
+      // @ts-expect-error TS2584
       if (document.doctype) {
+        // @ts-expect-error TS2304
         retVal = new XMLSerializer().serializeToString(document.doctype);
       }
+      // @ts-expect-error TS2584
       if (document.documentElement) {
+        // @ts-expect-error TS2584
         retVal += document.documentElement.outerHTML;
       }
       return retVal;
@@ -277,8 +290,11 @@ export class DOMWorld {
     // We rely upon the fact that document.open() will reset frame lifecycle with "init"
     // lifecycle event. @see https://crrev.com/608658
     await this.evaluate(html => {
+      // @ts-expect-error TS2584
       document.open();
+      // @ts-expect-error TS2584
       document.write(html);
+      // @ts-expect-error TS2584
       document.close();
     }, html);
     const watcher = new LifecycleWatcher(
@@ -312,6 +328,7 @@ export class DOMWorld {
     content?: string;
     id?: string;
     type?: string;
+  // @ts-expect-error TS2304
   }): Promise<ElementHandle<HTMLScriptElement>> {
     const {
       url = null,
@@ -357,6 +374,7 @@ export class DOMWorld {
     );
 
     async function addScriptUrl(url: string, id: string, type: string) {
+      // @ts-expect-error TS2584
       const script = document.createElement('script');
       script.src = url;
       if (id) {
@@ -369,6 +387,7 @@ export class DOMWorld {
         script.onload = res;
         script.onerror = rej;
       });
+      // @ts-expect-error TS2584
       document.head.appendChild(script);
       await promise;
       return script;
@@ -379,6 +398,7 @@ export class DOMWorld {
       id: string,
       type = 'text/javascript'
     ) {
+      // @ts-expect-error TS2584
       const script = document.createElement('script');
       script.type = type;
       script.text = content;
@@ -386,9 +406,11 @@ export class DOMWorld {
         script.id = id;
       }
       let error = null;
+      // @ts-expect-error TS7006
       script.onerror = e => {
         return (error = e);
       };
+      // @ts-expect-error TS2584
       document.head.appendChild(script);
       if (error) {
         throw error;
@@ -411,6 +433,7 @@ export class DOMWorld {
     url?: string;
     path?: string;
     content?: string;
+  // @ts-expect-error TS2304
   }): Promise<ElementHandle<Node>> {
     const {url = null, path = null, content = null} = options;
     if (url !== null) {
@@ -465,7 +488,9 @@ export class DOMWorld {
       'Provide an object with a `url`, `path` or `content` property'
     );
 
+    // @ts-expect-error TS2304
     async function addStyleUrl(url: string): Promise<HTMLElement> {
+      // @ts-expect-error TS2584
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = url;
@@ -473,18 +498,23 @@ export class DOMWorld {
         link.onload = res;
         link.onerror = rej;
       });
+      // @ts-expect-error TS2584
       document.head.appendChild(link);
       await promise;
       return link;
     }
 
+    // @ts-expect-error TS2304
     async function addStyleContent(content: string): Promise<HTMLElement> {
+      // @ts-expect-error TS2584
       const style = document.createElement('style');
+      // @ts-expect-error TS2584
       style.appendChild(document.createTextNode(content));
       const promise = new Promise((res, rej) => {
         style.onload = res;
         style.onerror = rej;
       });
+      // @ts-expect-error TS2584
       document.head.appendChild(style);
       await promise;
       return style;
@@ -675,6 +705,7 @@ export class DOMWorld {
     selector: string,
     options: WaitForSelectorOptions,
     binding?: PageBinding
+  // @ts-expect-error TS2304
   ): Promise<ElementHandle<Node> | null> {
     const {
       visible: waitForVisible = false,
@@ -686,12 +717,15 @@ export class DOMWorld {
       waitForHidden ? ' to be hidden' : ''
     }`;
     async function predicate(
+      // @ts-expect-error TS2304
       root: Element | Document,
       selector: string,
       waitForVisible: boolean,
       waitForHidden: boolean
+    // @ts-expect-error TS2304
     ): Promise<Node | null | boolean> {
       const node = predicateQueryHandler
+        // @ts-expect-error TS2304
         ? ((await predicateQueryHandler(root, selector)) as Element)
         : root.querySelector(selector);
       return checkWaitForOptions(node, waitForVisible, waitForHidden);
@@ -739,6 +773,7 @@ export class DOMWorld {
 
   async title(): Promise<string> {
     return this.evaluate(() => {
+      // @ts-expect-error TS2584
       return document.title;
     });
   }
@@ -756,6 +791,7 @@ export interface WaitTaskOptions {
   timeout: number;
   binding?: PageBinding;
   args: unknown[];
+  // @ts-expect-error TS2304
   root?: ElementHandle<Node>;
 }
 
@@ -777,6 +813,7 @@ export class WaitTask {
   #reject: (x: Error) => void = noop;
   #timeoutTimer?: number;
   #terminated = false;
+  // @ts-expect-error TS2304
   #root: ElementHandle<Node> | null = null;
 
   promise: Promise<JSHandle>;
@@ -944,6 +981,7 @@ export class WaitTask {
 }
 
 async function waitForPredicatePageFunction(
+  // @ts-expect-error TS2304
   root: Node | null,
   predicateBody: string,
   predicateAcceptsContextElement: boolean,
@@ -951,6 +989,7 @@ async function waitForPredicatePageFunction(
   timeout: number,
   ...args: unknown[]
 ): Promise<unknown> {
+  // @ts-expect-error TS2584
   root = root || document;
   const predicate = new Function('...args', predicateBody);
   let timedOut = false;
@@ -980,6 +1019,7 @@ async function waitForPredicatePageFunction(
     const result = new Promise(x => {
       return (fulfill = x);
     });
+    // @ts-expect-error TS2304
     const observer = new MutationObserver(async () => {
       if (timedOut) {
         observer.disconnect();
@@ -1023,6 +1063,7 @@ async function waitForPredicatePageFunction(
       if (success) {
         fulfill(success);
       } else {
+        // @ts-expect-error TS2304
         requestAnimationFrame(onRaf);
       }
     }

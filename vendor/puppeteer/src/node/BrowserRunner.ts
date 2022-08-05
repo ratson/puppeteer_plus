@@ -112,6 +112,7 @@ export class BrowserRunner {
         // process tree with `.kill(-pid)` command. @see
         // https://nodejs.org/api/child_process.html#child_process_options_detached
         detached: process.platform !== 'win32',
+        // @ts-expect-error TS2322
         env,
         stdio,
       }
@@ -207,7 +208,7 @@ export class BrowserRunner {
       const proc = this.proc;
       try {
         if (process.platform === 'win32') {
-          Deno.run({cmd: ['taskkill', '/pid', this.proc.pid.toString(), '/T', '/F']}).status().cactch(() => proc.kill())
+          Deno.run({cmd: ['taskkill', '/pid', this.proc.pid.toString(), '/T', '/F']}).status().catch(() => proc.kill())
         } else {
           // on linux the process group can be killed with the group id prefixed with
           // a minus sign. The process group id is the group leader's pid.
@@ -263,10 +264,11 @@ export class BrowserRunner {
     } else {
       // stdio was assigned during start(), and the 'pipe' option there adds the
       // 4th and 5th items to stdio array
+      // @ts-expect-error TS2493
       const {3: pipeWrite, 4: pipeRead} = this.proc.stdio;
       const transport = new PipeTransport(
-        pipeWrite as NodeJS.WritableStream,
-        pipeRead as NodeJS.ReadableStream
+        pipeWrite,
+        pipeRead
       );
       this.connection = new Connection('', transport, slowMo);
     }

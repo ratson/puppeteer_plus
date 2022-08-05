@@ -415,17 +415,20 @@ export class ExecutionContext {
    */
   async _adoptBackendNodeId(
     backendNodeId?: Protocol.DOM.BackendNodeId
+  // @ts-expect-error TS2304
   ): Promise<ElementHandle<Node>> {
     const {object} = await this._client.send('DOM.resolveNode', {
       backendNodeId: backendNodeId,
       executionContextId: this._contextId,
     });
+    // @ts-expect-error TS2304
     return createJSHandle(this, object) as ElementHandle<Node>;
   }
 
   /**
    * @internal
    */
+  // @ts-expect-error TS2304
   async _adoptElementHandle<T extends ElementHandle<Node>>(
     elementHandle: T
   ): Promise<T> {

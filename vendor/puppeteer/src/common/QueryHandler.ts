@@ -26,10 +26,12 @@ export interface CustomQueryHandler {
   /**
    * @returns A {@link Node} matching the given {@link selector} from {@link node}.
    */
+  // @ts-expect-error TS2304
   queryOne?: (node: Node, selector: string) => Node | null;
   /**
    * @returns Some {@link Node}s matching the given {@link selector} from {@link node}.
    */
+  // @ts-expect-error TS2304
   queryAll?: (node: Node, selector: string) => Node[];
 }
 
@@ -43,8 +45,10 @@ export interface InternalQueryHandler {
    * Akin to {@link Window.prototype.querySelector}.
    */
   queryOne?: (
+    // @ts-expect-error TS2304
     element: ElementHandle<Node>,
     selector: string
+  // @ts-expect-error TS2304
   ) => Promise<ElementHandle<Node> | null>;
   /**
    * Queries for multiple nodes given a selector and {@link ElementHandle}.
@@ -52,8 +56,10 @@ export interface InternalQueryHandler {
    * Akin to {@link Window.prototype.querySelectorAll}.
    */
   queryAll?: (
+    // @ts-expect-error TS2304
     element: ElementHandle<Node>,
     selector: string
+  // @ts-expect-error TS2304
   ) => Promise<Array<ElementHandle<Node>>>;
   /**
    * Queries for multiple nodes given a selector and {@link ElementHandle}.
@@ -62,8 +68,10 @@ export interface InternalQueryHandler {
    * Akin to {@link Window.prototype.querySelectorAll}.
    */
   queryAllArray?: (
+    // @ts-expect-error TS2304
     element: ElementHandle<Node>,
     selector: string
+  // @ts-expect-error TS2304
   ) => Promise<JSHandle<Node[]>>;
   /**
    * Waits until a single node appears for a given selector and
@@ -75,6 +83,7 @@ export interface InternalQueryHandler {
     domWorld: DOMWorld,
     selector: string,
     options: WaitForSelectorOptions
+  // @ts-expect-error TS2304
   ) => Promise<ElementHandle<Node> | null>;
 }
 
@@ -122,6 +131,7 @@ function internalizeCustomQueryHandler(
       const resultHandle = (await element.evaluateHandle(
         queryAll,
         selector
+      // @ts-expect-error TS2304
       )) as JSHandle<Element[] | NodeListOf<Element>>;
       const arrayHandle = await resultHandle.evaluateHandle(res => {
         return Array.from(res);
@@ -141,6 +151,7 @@ const defaultHandler = internalizeCustomQueryHandler({
       );
     }
     return (
+      // @ts-expect-error TS2304
       element as unknown as {querySelector(selector: string): Element}
     ).querySelector(selector);
   },
@@ -153,6 +164,7 @@ const defaultHandler = internalizeCustomQueryHandler({
     return [
       ...(
         element as unknown as {
+          // @ts-expect-error TS2304
           querySelectorAll(selector: string): NodeList;
         }
       ).querySelectorAll(selector),
@@ -162,14 +174,19 @@ const defaultHandler = internalizeCustomQueryHandler({
 
 const pierceHandler = internalizeCustomQueryHandler({
   queryOne: (element, selector) => {
+    // @ts-expect-error TS2304
     let found: Node | null = null;
+    // @ts-expect-error TS2304
     const search = (root: Node) => {
+      // @ts-expect-error TS2584
       const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
       do {
+        // @ts-expect-error TS2304
         const currentNode = iter.currentNode as HTMLElement;
         if (currentNode.shadowRoot) {
           search(currentNode.shadowRoot);
         }
+        // @ts-expect-error TS2304
         if (currentNode instanceof ShadowRoot) {
           continue;
         }
@@ -178,6 +195,7 @@ const pierceHandler = internalizeCustomQueryHandler({
         }
       } while (!found && iter.nextNode());
     };
+    // @ts-expect-error TS2304
     if (element instanceof Document) {
       element = element.documentElement;
     }
@@ -186,14 +204,19 @@ const pierceHandler = internalizeCustomQueryHandler({
   },
 
   queryAll: (element, selector) => {
+    // @ts-expect-error TS2304
     const result: Node[] = [];
+    // @ts-expect-error TS2304
     const collect = (root: Node) => {
+      // @ts-expect-error TS2584
       const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
       do {
+        // @ts-expect-error TS2304
         const currentNode = iter.currentNode as HTMLElement;
         if (currentNode.shadowRoot) {
           collect(currentNode.shadowRoot);
         }
+        // @ts-expect-error TS2304
         if (currentNode instanceof ShadowRoot) {
           continue;
         }
@@ -202,6 +225,7 @@ const pierceHandler = internalizeCustomQueryHandler({
         }
       } while (iter.nextNode());
     };
+    // @ts-expect-error TS2304
     if (element instanceof Document) {
       element = element.documentElement;
     }
@@ -212,24 +236,29 @@ const pierceHandler = internalizeCustomQueryHandler({
 
 const xpathHandler = internalizeCustomQueryHandler({
   queryOne: (element, selector) => {
+    // @ts-expect-error TS2584
     const doc = element.ownerDocument || document;
     const result = doc.evaluate(
       selector,
       element,
       null,
+      // @ts-expect-error TS2304
       XPathResult.FIRST_ORDERED_NODE_TYPE
     );
     return result.singleNodeValue;
   },
 
   queryAll: (element, selector) => {
+    // @ts-expect-error TS2584
     const doc = element.ownerDocument || document;
     const iterator = doc.evaluate(
       selector,
       element,
       null,
+      // @ts-expect-error TS2304
       XPathResult.ORDERED_NODE_ITERATOR_TYPE
     );
+    // @ts-expect-error TS2304
     const array: Node[] = [];
     let item;
     while ((item = iterator.iterateNext())) {

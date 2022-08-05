@@ -650,6 +650,7 @@ export class Page extends EventEmitter {
     this.#fileChooserInterceptors.clear();
     const fileChooser = new FileChooser(
       // This is guaranteed by the event.
+      // @ts-expect-error TS2304
       element as ElementHandle<HTMLInputElement>,
       event
     );
@@ -1299,6 +1300,7 @@ export class Page extends EventEmitter {
    * Shortcut for {@link Frame.$x | Page.mainFrame().$x(expression) }.
    * @param expression - Expression to evaluate
    */
+  // @ts-expect-error TS2304
   async $x(expression: string): Promise<Array<ElementHandle<Node>>> {
     return this.mainFrame().$x(expression);
   }
@@ -1382,6 +1384,7 @@ export class Page extends EventEmitter {
     content?: string;
     type?: string;
     id?: string;
+  // @ts-expect-error TS2304
   }): Promise<ElementHandle<HTMLScriptElement>> {
     return this.mainFrame().addScriptTag(options);
   }
@@ -1396,6 +1399,7 @@ export class Page extends EventEmitter {
     url?: string;
     path?: string;
     content?: string;
+  // @ts-expect-error TS2304
   }): Promise<ElementHandle<Node>> {
     return this.mainFrame().addStyleTag(options);
   }
@@ -2761,6 +2765,7 @@ export class Page extends EventEmitter {
    * the value of `encoding`) with captured screenshot.
    */
   async screenshot(options: ScreenshotOptions = {}): Promise<Buffer | string> {
+    // @ts-expect-error TS2322
     let screenshotType: Protocol.Page.CaptureScreenshotRequestFormat = 'png';
     // options.type takes precedence over inferring the type from options.path
     // because it may be a 0-length file with no extension created beforehand
@@ -2775,13 +2780,16 @@ export class Page extends EventEmitter {
         .toLowerCase();
       switch (extension) {
         case 'png':
+          // @ts-expect-error TS2322
           screenshotType = 'png';
           break;
         case 'jpeg':
         case 'jpg':
+          // @ts-expect-error TS2322
           screenshotType = 'jepg';
           break;
         case 'webp':
+          // @ts-expect-error TS2322
           screenshotType = 'webp';
           break;
         default:
@@ -2793,6 +2801,7 @@ export class Page extends EventEmitter {
 
     if (options.quality) {
       assert(
+        // @ts-expect-error TS2367
         screenshotType === 'jepg' ||
           screenshotType === 'webp',
         'options.quality is unsupported for the ' +
@@ -3362,6 +3371,7 @@ export class Page extends EventEmitter {
       hidden?: boolean;
       timeout?: number;
     } = {}
+  // @ts-expect-error TS2304
   ): Promise<ElementHandle<Node> | null> {
     return this.mainFrame().waitForXPath(xpath, options);
   }

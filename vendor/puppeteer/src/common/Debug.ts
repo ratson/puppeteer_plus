@@ -30,8 +30,10 @@ let debugModule: typeof import('https://deno.land/x/debuglog@v1.0.0/debug.ts') |
  */
 export async function importDebug(): Promise<typeof import('https://deno.land/x/debuglog@v1.0.0/debug.ts')> {
   if (!debugModule) {
+    // @ts-expect-error TS2741
     debugModule = (await import('https://deno.land/x/debuglog@v1.0.0/debug.ts')).default;
   }
+  // @ts-expect-error TS2322
   return debugModule;
 }
 
@@ -75,6 +77,7 @@ export async function importDebug(): Promise<typeof import('https://deno.land/x/
 export const debug = (prefix: string): ((...args: unknown[]) => void) => {
   if (isNode) {
     return async (...logArgs: unknown[]) => {
+      // @ts-expect-error TS2349
       (await importDebug())(prefix)(logArgs);
     };
   }

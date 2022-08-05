@@ -10,5 +10,6 @@ import * as os from 'https://deno.land/std@0.151.0/node/os.ts';
  * @internal
  */
 export const tmpdir = (): string => {
+  // @ts-expect-error TS2322
   return process.env['PUPPETEER_TMP_DIR'] || os.tmpdir();
 };

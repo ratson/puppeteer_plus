@@ -64,6 +64,7 @@ const applyOffsetsToQuad = (
  */
 
 export class ElementHandle<
+  // @ts-expect-error TS2304
   ElementType extends Node = Element
 > extends JSHandle<ElementType> {
   #frame: Frame;
@@ -198,6 +199,7 @@ export class ElementHandle<
       hidden?: boolean;
       timeout?: number;
     } = {}
+  // @ts-expect-error TS2304
   ): Promise<ElementHandle<Node> | null> {
     if (xpath.startsWith('//')) {
       xpath = `.${xpath}`;
@@ -223,12 +225,14 @@ export class ElementHandle<
     return this.#frameManager.frame(nodeInfo.node.frameId);
   }
 
+  // @ts-expect-error TS2304
   async #scrollIntoViewIfNeeded(this: ElementHandle<Element>): Promise<void> {
     const error = await this.evaluate(
       async (element): Promise<string | undefined> => {
         if (!element.isConnected) {
           return 'Node is detached from document';
         }
+        // @ts-expect-error TS2304
         if (element.nodeType !== Node.ELEMENT_NODE) {
           return 'Node is not of type HTMLElement';
         }
@@ -250,6 +254,7 @@ export class ElementHandle<
         async (element, pageJavascriptEnabled): Promise<void> => {
           const visibleRatio = async () => {
             return await new Promise(resolve => {
+              // @ts-expect-error TS2304
               const observer = new IntersectionObserver(entries => {
                 resolve(entries[0]!.intersectionRatio);
                 observer.disconnect();
@@ -261,7 +266,7 @@ export class ElementHandle<
             element.scrollIntoView({
               block: 'center',
               inline: 'center',
-              // @ts-expect-error Chrome still supports behavior: instant but
+              // @ts-ignore Chrome still supports behavior: instant but
               // it's not in the spec so TS shouts We don't want to make this
               // breaking change in Puppeteer yet so we'll ignore the line.
               behavior: 'instant',
@@ -411,6 +416,7 @@ export class ElementHandle<
    * uses {@link Page.mouse} to hover over the center of the element.
    * If the element is detached from DOM, the method throws an error.
    */
+  // @ts-expect-error TS2304
   async hover(this: ElementHandle<Element>): Promise<void> {
     await this.#scrollIntoViewIfNeeded();
     const {x, y} = await this.clickablePoint();
@@ -423,6 +429,7 @@ export class ElementHandle<
    * If the element is detached from DOM, the method throws an error.
    */
   async click(
+    // @ts-expect-error TS2304
     this: ElementHandle<Element>,
     options: ClickOptions = {}
   ): Promise<void> {
@@ -435,6 +442,7 @@ export class ElementHandle<
    * This method creates and captures a dragevent from the element.
    */
   async drag(
+    // @ts-expect-error TS2304
     this: ElementHandle<Element>,
     target: Point
   ): Promise<Protocol.Input.DragData> {
@@ -451,6 +459,7 @@ export class ElementHandle<
    * This method creates a `dragenter` event on the element.
    */
   async dragEnter(
+    // @ts-expect-error TS2304
     this: ElementHandle<Element>,
     data: Protocol.Input.DragData = {items: [], dragOperationsMask: 1}
   ): Promise<void> {
@@ -463,6 +472,7 @@ export class ElementHandle<
    * This method creates a `dragover` event on the element.
    */
   async dragOver(
+    // @ts-expect-error TS2304
     this: ElementHandle<Element>,
     data: Protocol.Input.DragData = {items: [], dragOperationsMask: 1}
   ): Promise<void> {
@@ -475,6 +485,7 @@ export class ElementHandle<
    * This method triggers a drop on the element.
    */
   async drop(
+    // @ts-expect-error TS2304
     this: ElementHandle<Element>,
     data: Protocol.Input.DragData = {items: [], dragOperationsMask: 1}
   ): Promise<void> {
@@ -487,7 +498,9 @@ export class ElementHandle<
    * This method triggers a dragenter, dragover, and drop on the element.
    */
   async dragAndDrop(
+    // @ts-expect-error TS2304
     this: ElementHandle<Element>,
+    // @ts-expect-error TS2304
     target: ElementHandle<Node>,
     options?: {delay: number}
   ): Promise<void> {
@@ -525,6 +538,7 @@ export class ElementHandle<
 
     return this.evaluate((element, vals): string[] => {
       const values = new Set(vals);
+      // @ts-expect-error TS2358
       if (!(element instanceof HTMLSelectElement)) {
         throw new Error('Element is not a <select> element.');
       }
@@ -566,6 +580,7 @@ export class ElementHandle<
    *    paths must be absolute.
    */
   async uploadFile(
+    // @ts-expect-error TS2304
     this: ElementHandle<HTMLInputElement>,
     ...filePaths: string[]
   ): Promise<void> {
@@ -606,6 +621,7 @@ export class ElementHandle<
      */
     if (files.length === 0) {
       await this.evaluate(element => {
+        // @ts-expect-error TS2304
         element.files = new DataTransfer().files;
 
         // Dispatch events for this case because it should behave akin to a user action.
@@ -626,6 +642,7 @@ export class ElementHandle<
    * {@link Touchscreen.tap} to tap in the center of the element.
    * If the element is detached from DOM, the method throws an error.
    */
+  // @ts-expect-error TS2304
   async tap(this: ElementHandle<Element>): Promise<void> {
     await this.#scrollIntoViewIfNeeded();
     const {x, y} = await this.clickablePoint();
@@ -637,6 +654,7 @@ export class ElementHandle<
    */
   async focus(): Promise<void> {
     await this.evaluate(element => {
+      // @ts-expect-error TS2358
       if (!(element instanceof HTMLElement)) {
         throw new Error('Cannot focus non-HTMLElement');
       }
@@ -761,6 +779,7 @@ export class ElementHandle<
    * If the element is detached from DOM, the method throws an error.
    */
   async screenshot(
+    // @ts-expect-error TS2304
     this: ElementHandle<Element>,
     options: ScreenshotOptions = {}
   ): Promise<string | Buffer> {
@@ -955,6 +974,7 @@ export class ElementHandle<
    * If there are no such elements, the method will resolve to an empty array.
    * @param expression - Expression to {@link https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate | evaluate}
    */
+  // @ts-expect-error TS2304
   async $x(expression: string): Promise<Array<ElementHandle<Node>>> {
     if (expression.startsWith('//')) {
       expression = `.${expression}`;
@@ -966,6 +986,7 @@ export class ElementHandle<
    * Resolves to true if the element is visible in the current viewport.
    */
   async isIntersectingViewport(
+    // @ts-expect-error TS2304
     this: ElementHandle<Element>,
     options?: {
       threshold?: number;
@@ -974,6 +995,7 @@ export class ElementHandle<
     const {threshold = 0} = options ?? {};
     return await this.evaluate(async (element, threshold) => {
       const visibleRatio = await new Promise<number>(resolve => {
+        // @ts-expect-error TS2304
         const observer = new IntersectionObserver(entries => {
           resolve(entries[0]!.intersectionRatio);
           observer.disconnect();

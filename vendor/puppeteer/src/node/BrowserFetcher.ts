@@ -282,14 +282,17 @@ export class BrowserFetcher {
       revision
     );
     return new Promise(resolve => {
+      // @ts-expect-error TS2304
       const request = httpRequest(
         url,
         'HEAD',
+        // @ts-expect-error TS7006
         response => {
           resolve(response.statusCode === 200);
         },
         false
       );
+      // @ts-expect-error TS7006
       request.on('error', error => {
         console.error(error);
         resolve(false);
@@ -360,16 +363,19 @@ export class BrowserFetcher {
     }
     const fileNames = await readdirAsync(this.#downloadsFolder);
     return fileNames
+      // @ts-expect-error TS7006
       .map(fileName => {
         return parseFolderPath(this.#product, fileName);
       })
       .filter(
         (
+          // @ts-expect-error TS7006
           entry
         ): entry is {product: string; platform: string; revision: string} => {
           return (entry && entry.platform === this.#platform) ?? false;
         }
       )
+      // @ts-expect-error TS7006
       .map(entry => {
         return entry.revision;
       });
@@ -543,6 +549,7 @@ function install(archivePath: string, folderPath: string): Promise<unknown> {
 /**
  * @internal
  */
+// @ts-expect-error TS2355
 async function _extractTar(tarPath: string, folderPath: string): Promise<unknown> {
   await Deno.mkdir(folderPath, { recursive: true });
 

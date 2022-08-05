@@ -996,6 +996,7 @@ export class Frame {
    *
    * @param expression - the XPath expression to evaluate.
    */
+  // @ts-expect-error TS2304
   async $x(expression: string): Promise<Array<ElementHandle<Node>>> {
     return this._mainWorld.$x(expression);
   }
@@ -1143,6 +1144,7 @@ export class Frame {
    */
   async addScriptTag(
     options: FrameAddScriptTagOptions
+  // @ts-expect-error TS2304
   ): Promise<ElementHandle<HTMLScriptElement>> {
     return this._mainWorld.addScriptTag(options);
   }
@@ -1159,6 +1161,7 @@ export class Frame {
    */
   async addStyleTag(
     options: FrameAddStyleTagOptions
+  // @ts-expect-error TS2304
   ): Promise<ElementHandle<Node>> {
     return this._mainWorld.addStyleTag(options);
   }
@@ -1392,6 +1395,7 @@ export class Frame {
   async waitForXPath(
     xpath: string,
     options: WaitForSelectorOptions = {}
+  // @ts-expect-error TS2304
   ): Promise<ElementHandle<Node> | null> {
     if (xpath.startsWith('//')) {
       xpath = `.${xpath}`;

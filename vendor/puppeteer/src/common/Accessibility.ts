@@ -104,6 +104,7 @@ export interface SnapshotOptions {
    * Root node to get the accessibility tree for
    * @defaultValue The root node of the entire page.
    */
+  // @ts-expect-error TS2304
   root?: ElementHandle<Node>;
 }
 

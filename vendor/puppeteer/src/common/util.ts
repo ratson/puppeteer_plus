@@ -215,6 +215,7 @@ export async function waitForEvent<T>(
 export function createJSHandle(
   context: ExecutionContext,
   remoteObject: Protocol.Runtime.RemoteObject
+// @ts-expect-error TS2304
 ): JSHandle | ElementHandle<Node> {
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
@@ -344,9 +345,11 @@ export function makePredicateString(
   predicateQueryHandler?: Function
 ): string {
   function checkWaitForOptions(
+    // @ts-expect-error TS2304
     node: Node | null,
     waitForVisible: boolean,
     waitForHidden: boolean
+  // @ts-expect-error TS2304
   ): Node | null | boolean {
     if (!node) {
       return waitForHidden;
@@ -355,10 +358,14 @@ export function makePredicateString(
       return node;
     }
     const element =
+      // @ts-expect-error TS2304
       node.nodeType === Node.TEXT_NODE
+        // @ts-expect-error TS2304
         ? (node.parentElement as Element)
+        // @ts-expect-error TS2304
         : (node as Element);
 
+    // @ts-expect-error TS2339
     const style = window.getComputedStyle(element);
     const isVisible =
       style && style.visibility !== 'hidden' && hasVisibleBoundingBox();
@@ -517,6 +524,7 @@ export function isErrorLike(obj: unknown): obj is ErrorLike {
 /**
  * @internal
  */
+// @ts-expect-error TS2503
 export function isErrnoException(obj: unknown): obj is NodeJS.ErrnoException {
   return (
     isErrorLike(obj) &&

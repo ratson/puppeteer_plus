@@ -24,6 +24,7 @@ import {InternalQueryHandler} from './QueryHandler.ts';
 
 async function queryAXTree(
   client: CDPSession,
+  // @ts-expect-error TS2304
   element: ElementHandle<Node>,
   accessibleName?: string,
   role?: string
@@ -86,8 +87,10 @@ function parseAriaSelector(selector: string): ARIAQueryOption {
 }
 
 const queryOne = async (
+  // @ts-expect-error TS2304
   element: ElementHandle<Node>,
   selector: string
+// @ts-expect-error TS2304
 ): Promise<ElementHandle<Node> | null> => {
   const exeCtx = element.executionContext();
   const {name, role} = parseAriaSelector(selector);
@@ -102,6 +105,7 @@ const waitFor = async (
   domWorld: DOMWorld,
   selector: string,
   options: WaitForSelectorOptions
+// @ts-expect-error TS2304
 ): Promise<ElementHandle<Element> | null> => {
   const binding: PageBinding = {
     name: 'ariaQuerySelector',
@@ -112,6 +116,7 @@ const waitFor = async (
     },
   };
   return (await domWorld._waitForSelectorInPage(
+    // @ts-expect-error TS2304
     (_: Element, selector: string) => {
       return (
         globalThis as unknown as {
@@ -122,12 +127,15 @@ const waitFor = async (
     selector,
     options,
     binding
+  // @ts-expect-error TS2304
   )) as ElementHandle<Element> | null;
 };
 
 const queryAll = async (
+  // @ts-expect-error TS2304
   element: ElementHandle<Node>,
   selector: string
+// @ts-expect-error TS2304
 ): Promise<Array<ElementHandle<Node>>> => {
   const exeCtx = element.executionContext();
   const {name, role} = parseAriaSelector(selector);
@@ -140,8 +148,10 @@ const queryAll = async (
 };
 
 const queryAllArray = async (
+  // @ts-expect-error TS2304
   element: ElementHandle<Node>,
   selector: string
+// @ts-expect-error TS2304
 ): Promise<JSHandle<Node[]>> => {
   const elementHandles = await queryAll(element, selector);
   const exeCtx = element.executionContext();

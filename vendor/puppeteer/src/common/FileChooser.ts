@@ -37,6 +37,7 @@ import {ElementHandle} from './ElementHandle.ts';
  * @public
  */
 export class FileChooser {
+  // @ts-expect-error TS2304
   #element: ElementHandle<HTMLInputElement>;
   #multiple: boolean;
   #handled = false;
@@ -45,6 +46,7 @@ export class FileChooser {
    * @internal
    */
   constructor(
+    // @ts-expect-error TS2304
     element: ElementHandle<HTMLInputElement>,
     event: Protocol.Page.FileChooserOpenedEvent
   ) {
