@@ -69,6 +69,8 @@ export async function downloadBrowser(puppeteer: PuppeteerDeno) {
     },
   );
   console.log(
-    `Downloaded ${newRevisionInfo.product} ${newRevisionInfo.revision} to ${newRevisionInfo.executablePath} from ${newRevisionInfo.url}`,
+    newRevisionInfo
+      ? `Downloaded ${newRevisionInfo.product} ${newRevisionInfo.revision} to ${newRevisionInfo.executablePath} from ${newRevisionInfo.url}`
+      : "Missing revision info",
   );
 }
