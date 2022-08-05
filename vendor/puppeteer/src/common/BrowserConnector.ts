@@ -26,7 +26,6 @@ import {Connection} from './Connection.ts';
 import {ConnectionTransport} from './ConnectionTransport.ts';
 import {getFetch} from './fetch.ts';
 import {Viewport} from './PuppeteerViewport.ts';
-
 /**
  * Generic browser options that can be passed when launching any browser or when
  * connecting to an existing browser instance.
@@ -107,11 +106,17 @@ export async function _connectToBrowser(
       await WebSocketClass.create(connectionURL);
     connection = new Connection(connectionURL, connectionTransport, slowMo);
   }
+  const version = await connection.send('Browser.getVersion');
+
+  const product = version.product.toLowerCase().includes('firefox')
+    ? 'firefox'
+    : 'chrome';
 
   const {browserContextIds} = await connection.send(
     'Target.getBrowserContexts'
   );
-  return Browser._create(
+  const browser = await Browser._create(
+    product || 'chrome',
     connection,
     browserContextIds,
     ignoreHTTPSErrors,
@@ -123,6 +128,8 @@ export async function _connectToBrowser(
     targetFilter,
     isPageTarget
   );
+  await browser.pages();
+  return browser;
 }
 
 async function getWSEndpoint(browserURL: string): Promise<string> {

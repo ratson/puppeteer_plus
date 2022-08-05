@@ -1,6 +1,6 @@
 {
   "name": "puppeteer",
-  "version": "15.5.0",
+  "version": "16.0.0",
   "description": "A high-level API to control headless Chrome over the DevTools Protocol",
   "keywords": [
     "puppeteer",
@@ -27,7 +27,7 @@
     "node": ">=14.1.0"
   },
   "scripts": {
-    "test": "c8 --check-coverage --lines 94 run-s test:chrome test:chrome:* test:firefox",
+    "test": "c8 --check-coverage --lines 93 run-s test:chrome test:chrome:* test:firefox",
     "test:types": "tsd",
     "test:install": "scripts/test-install.sh",
     "test:firefox": "cross-env PUPPETEER_PRODUCT=firefox MOZ_WEBRENDER=0 mocha",
@@ -79,7 +79,7 @@
     "rimraf": "3.0.2",
     "tar-fs": "2.1.1",
     "unbzip2-stream": "1.4.3",
-    "ws": "8.8.0"
+    "ws": "8.8.1"
   },
   "devDependencies": {
     "@commitlint/cli": "17.0.1",

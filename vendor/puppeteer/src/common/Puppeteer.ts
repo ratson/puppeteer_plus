@@ -19,7 +19,6 @@ import {ConnectionTransport} from './ConnectionTransport.ts';
 import {devices} from './DeviceDescriptors.ts';
 import {errors} from './Errors.ts';
 import {networkConditions} from './NetworkConditions.ts';
-import {Product} from './Product.ts';
 import {
   clearCustomQueryHandlers,
   CustomQueryHandler,
@@ -43,7 +42,6 @@ export interface ConnectOptions extends BrowserConnectOptions {
   browserWSEndpoint?: string;
   browserURL?: string;
   transport?: ConnectionTransport;
-  product?: Product;
 }
 
 /**
