@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3.3.0
+        uses: actions/setup-node@v3.4.1
         with:
           node-version: ${{ matrix.node }}
 
@@ -66,7 +66,7 @@ jobs:
           fetch-depth: 2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3.3.0
+        uses: actions/setup-node@v3.4.1
         with:
           node-version: ${{ matrix.node }}
 
@@ -104,7 +104,7 @@ jobs:
           fetch-depth: 2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3.3.0
+        uses: actions/setup-node@v3.4.1
         with:
           node-version: ${{ matrix.node }}
 
@@ -125,6 +125,6 @@ jobs:
       - name: Run unit tests in chrome headless
         uses: nick-invision/retry@v2
         with:
-          command: xvfb-run --auto-servernum npm run test:chrome-headless
+          command: xvfb-run --auto-servernum npm run test:chrome:headless
           timeout_minutes: 10
           max_attempts: 3
