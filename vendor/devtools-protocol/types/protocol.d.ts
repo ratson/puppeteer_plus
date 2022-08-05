@@ -433,8 +433,8 @@ export namespace Protocol {
              */
             totalNumberOfLines: integer;
             /**
-             * The offsets of all function bodies plus one additional entry pointing
-             * one by past the end of the last function.
+             * The offsets of all function bodies, in the format [start1, end1,
+             * start2, end2, ...] where all ends are exclusive.
              */
             functionBodyOffsets: integer[];
             /**
@@ -2778,6 +2778,10 @@ export namespace Protocol {
              */
             role?: AXValue;
             /**
+             * This `Node`'s Chrome raw role.
+             */
+            chromeRole?: AXValue;
+            /**
              * The accessible name for this `Node`.
              */
             name?: AXValue;
@@ -3233,9 +3237,9 @@ export namespace Protocol {
             frameId: Page.FrameId;
         }
 
-        export type CookieExclusionReason = ('ExcludeSameSiteUnspecifiedTreatedAsLax' | 'ExcludeSameSiteNoneInsecure' | 'ExcludeSameSiteLax' | 'ExcludeSameSiteStrict' | 'ExcludeInvalidSameParty' | 'ExcludeSamePartyCrossPartyContext');
+        export type CookieExclusionReason = ('ExcludeSameSiteUnspecifiedTreatedAsLax' | 'ExcludeSameSiteNoneInsecure' | 'ExcludeSameSiteLax' | 'ExcludeSameSiteStrict' | 'ExcludeInvalidSameParty' | 'ExcludeSamePartyCrossPartyContext' | 'ExcludeDomainNonASCII');
 
-        export type CookieWarningReason = ('WarnSameSiteUnspecifiedCrossSiteContext' | 'WarnSameSiteNoneInsecure' | 'WarnSameSiteUnspecifiedLaxAllowUnsafe' | 'WarnSameSiteStrictLaxDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeLax' | 'WarnSameSiteLaxCrossDowngradeStrict' | 'WarnSameSiteLaxCrossDowngradeLax' | 'WarnAttributeValueExceedsMaxSize');
+        export type CookieWarningReason = ('WarnSameSiteUnspecifiedCrossSiteContext' | 'WarnSameSiteNoneInsecure' | 'WarnSameSiteUnspecifiedLaxAllowUnsafe' | 'WarnSameSiteStrictLaxDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeLax' | 'WarnSameSiteLaxCrossDowngradeStrict' | 'WarnSameSiteLaxCrossDowngradeLax' | 'WarnAttributeValueExceedsMaxSize' | 'WarnDomainNonASCII');
 
         export type CookieOperation = ('SetCookie' | 'ReadCookie');
 
@@ -3419,7 +3423,7 @@ export namespace Protocol {
             clientSecurityState?: Network.ClientSecurityState;
         }
 
-        export type AttributionReportingIssueType = ('PermissionPolicyDisabled' | 'AttributionSourceUntrustworthyOrigin' | 'AttributionUntrustworthyOrigin' | 'InvalidHeader');
+        export type AttributionReportingIssueType = ('PermissionPolicyDisabled' | 'UntrustworthyReportingOrigin' | 'InsecureContext' | 'InvalidHeader' | 'InvalidRegisterTriggerHeader' | 'InvalidEligibleHeader' | 'TooManyConcurrentRequests');
 
         /**
          * Details for issues around "Attribution Reporting API" usage.
@@ -3427,7 +3431,6 @@ export namespace Protocol {
          */
         export interface AttributionReportingIssueDetails {
             violationType: AttributionReportingIssueType;
-            frame?: AffectedFrame;
             request?: AffectedRequest;
             violatingNodeId?: DOM.BackendNodeId;
             invalidParameter?: string;
@@ -3467,7 +3470,7 @@ export namespace Protocol {
             frameId?: Page.FrameId;
         }
 
-        export type DeprecationIssueType = ('AuthorizationCoveredByWildcard' | 'CanRequestURLHTTPContainingNewline' | 'ChromeLoadTimesConnectionInfo' | 'ChromeLoadTimesFirstPaintAfterLoadTime' | 'ChromeLoadTimesWasAlternateProtocolAvailable' | 'CookieWithTruncatingChar' | 'CrossOriginAccessBasedOnDocumentDomain' | 'CrossOriginWindowAlert' | 'CrossOriginWindowConfirm' | 'CSSSelectorInternalMediaControlsOverlayCastButton' | 'DeprecationExample' | 'DocumentDomainSettingWithoutOriginAgentClusterHeader' | 'EventPath' | 'ExpectCTHeader' | 'GeolocationInsecureOrigin' | 'GeolocationInsecureOriginDeprecatedNotRemoved' | 'GetUserMediaInsecureOrigin' | 'HostCandidateAttributeGetter' | 'IdentityInCanMakePaymentEvent' | 'InsecurePrivateNetworkSubresourceRequest' | 'LegacyConstraintGoogIPv6' | 'LocalCSSFileExtensionRejected' | 'MediaSourceAbortRemove' | 'MediaSourceDurationTruncatingBuffered' | 'NavigateEventRestoreScroll' | 'NavigateEventTransitionWhile' | 'NoSysexWebMIDIWithoutPermission' | 'NotificationInsecureOrigin' | 'NotificationPermissionRequestedIframe' | 'ObsoleteWebRtcCipherSuite' | 'OpenWebDatabaseInsecureContext' | 'PictureSourceSrc' | 'PrefixedCancelAnimationFrame' | 'PrefixedRequestAnimationFrame' | 'PrefixedStorageInfo' | 'PrefixedVideoDisplayingFullscreen' | 'PrefixedVideoEnterFullscreen' | 'PrefixedVideoEnterFullScreen' | 'PrefixedVideoExitFullscreen' | 'PrefixedVideoExitFullScreen' | 'PrefixedVideoSupportsFullscreen' | 'RangeExpand' | 'RequestedSubresourceWithEmbeddedCredentials' | 'RTCConstraintEnableDtlsSrtpFalse' | 'RTCConstraintEnableDtlsSrtpTrue' | 'RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics' | 'RTCPeerConnectionSdpSemanticsPlanB' | 'RtcpMuxPolicyNegotiate' | 'SharedArrayBufferConstructedWithoutIsolation' | 'TextToSpeech_DisallowedByAutoplay' | 'V8SharedArrayBufferConstructedInExtensionWithoutIsolation' | 'XHRJSONEncodingDetection' | 'XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload' | 'XRSupportsSession');
+        export type DeprecationIssueType = ('AuthorizationCoveredByWildcard' | 'CanRequestURLHTTPContainingNewline' | 'ChromeLoadTimesConnectionInfo' | 'ChromeLoadTimesFirstPaintAfterLoadTime' | 'ChromeLoadTimesWasAlternateProtocolAvailable' | 'CookieWithTruncatingChar' | 'CrossOriginAccessBasedOnDocumentDomain' | 'CrossOriginWindowAlert' | 'CrossOriginWindowConfirm' | 'CSSSelectorInternalMediaControlsOverlayCastButton' | 'DeprecationExample' | 'DocumentDomainSettingWithoutOriginAgentClusterHeader' | 'EventPath' | 'ExpectCTHeader' | 'GeolocationInsecureOrigin' | 'GeolocationInsecureOriginDeprecatedNotRemoved' | 'GetUserMediaInsecureOrigin' | 'HostCandidateAttributeGetter' | 'IdentityInCanMakePaymentEvent' | 'InsecurePrivateNetworkSubresourceRequest' | 'LegacyConstraintGoogIPv6' | 'LocalCSSFileExtensionRejected' | 'MediaSourceAbortRemove' | 'MediaSourceDurationTruncatingBuffered' | 'NavigateEventRestoreScroll' | 'NavigateEventTransitionWhile' | 'NoSysexWebMIDIWithoutPermission' | 'NotificationInsecureOrigin' | 'NotificationPermissionRequestedIframe' | 'ObsoleteWebRtcCipherSuite' | 'OpenWebDatabaseInsecureContext' | 'OverflowVisibleOnReplacedElement' | 'PersistentQuotaType' | 'PictureSourceSrc' | 'PrefixedCancelAnimationFrame' | 'PrefixedRequestAnimationFrame' | 'PrefixedStorageInfo' | 'PrefixedVideoDisplayingFullscreen' | 'PrefixedVideoEnterFullscreen' | 'PrefixedVideoEnterFullScreen' | 'PrefixedVideoExitFullscreen' | 'PrefixedVideoExitFullScreen' | 'PrefixedVideoSupportsFullscreen' | 'RangeExpand' | 'RequestedSubresourceWithEmbeddedCredentials' | 'RTCConstraintEnableDtlsSrtpFalse' | 'RTCConstraintEnableDtlsSrtpTrue' | 'RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics' | 'RTCPeerConnectionSdpSemanticsPlanB' | 'RtcpMuxPolicyNegotiate' | 'SharedArrayBufferConstructedWithoutIsolation' | 'TextToSpeech_DisallowedByAutoplay' | 'V8SharedArrayBufferConstructedInExtensionWithoutIsolation' | 'XHRJSONEncodingDetection' | 'XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload' | 'XRSupportsSession');
 
         /**
          * This issue tracks information needed to print a deprecation message.
@@ -3491,7 +3494,7 @@ export namespace Protocol {
          * third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
          * all cases except for success.
          */
-        export type FederatedAuthRequestIssueReason = ('ApprovalDeclined' | 'TooManyRequests' | 'ManifestListHttpNotFound' | 'ManifestListNoResponse' | 'ManifestListInvalidResponse' | 'ManifestNotInManifestList' | 'ManifestListTooBig' | 'ManifestHttpNotFound' | 'ManifestNoResponse' | 'ManifestInvalidResponse' | 'ClientMetadataHttpNotFound' | 'ClientMetadataNoResponse' | 'ClientMetadataInvalidResponse' | 'ClientMetadataMissingPrivacyPolicyUrl' | 'DisabledInSettings' | 'ErrorFetchingSignin' | 'InvalidSigninResponse' | 'AccountsHttpNotFound' | 'AccountsNoResponse' | 'AccountsInvalidResponse' | 'IdTokenHttpNotFound' | 'IdTokenNoResponse' | 'IdTokenInvalidResponse' | 'IdTokenInvalidRequest' | 'ErrorIdToken' | 'Canceled');
+        export type FederatedAuthRequestIssueReason = ('ApprovalDeclined' | 'TooManyRequests' | 'ManifestListHttpNotFound' | 'ManifestListNoResponse' | 'ManifestListInvalidResponse' | 'ManifestNotInManifestList' | 'ManifestListTooBig' | 'ManifestHttpNotFound' | 'ManifestNoResponse' | 'ManifestInvalidResponse' | 'ClientMetadataHttpNotFound' | 'ClientMetadataNoResponse' | 'ClientMetadataInvalidResponse' | 'DisabledInSettings' | 'ErrorFetchingSignin' | 'InvalidSigninResponse' | 'AccountsHttpNotFound' | 'AccountsNoResponse' | 'AccountsInvalidResponse' | 'IdTokenHttpNotFound' | 'IdTokenNoResponse' | 'IdTokenInvalidResponse' | 'IdTokenInvalidRequest' | 'ErrorIdToken' | 'Canceled');
 
         /**
          * This issue tracks client hints related issues. It's used to deprecate old
@@ -8102,9 +8105,14 @@ export namespace Protocol {
 
         export interface ClearObjectStoreRequest {
             /**
+             * At least and at most one of securityOrigin, storageKey must be specified.
              * Security origin.
              */
-            securityOrigin: string;
+            securityOrigin?: string;
+            /**
+             * Storage key.
+             */
+            storageKey?: string;
             /**
              * Database name.
              */
@@ -8117,9 +8125,14 @@ export namespace Protocol {
 
         export interface DeleteDatabaseRequest {
             /**
+             * At least and at most one of securityOrigin, storageKey must be specified.
              * Security origin.
              */
-            securityOrigin: string;
+            securityOrigin?: string;
+            /**
+             * Storage key.
+             */
+            storageKey?: string;
             /**
              * Database name.
              */
@@ -8127,7 +8140,15 @@ export namespace Protocol {
         }
 
         export interface DeleteObjectStoreEntriesRequest {
-            securityOrigin: string;
+            /**
+             * At least and at most one of securityOrigin, storageKey must be specified.
+             * Security origin.
+             */
+            securityOrigin?: string;
+            /**
+             * Storage key.
+             */
+            storageKey?: string;
             databaseName: string;
             objectStoreName: string;
             /**
@@ -8138,9 +8159,14 @@ export namespace Protocol {
 
         export interface RequestDataRequest {
             /**
+             * At least and at most one of securityOrigin, storageKey must be specified.
              * Security origin.
              */
-            securityOrigin: string;
+            securityOrigin?: string;
+            /**
+             * Storage key.
+             */
+            storageKey?: string;
             /**
              * Database name.
              */
@@ -8180,9 +8206,14 @@ export namespace Protocol {
 
         export interface GetMetadataRequest {
             /**
+             * At least and at most one of securityOrigin, storageKey must be specified.
              * Security origin.
              */
-            securityOrigin: string;
+            securityOrigin?: string;
+            /**
+             * Storage key.
+             */
+            storageKey?: string;
             /**
              * Database name.
              */
@@ -8208,9 +8239,14 @@ export namespace Protocol {
 
         export interface RequestDatabaseRequest {
             /**
+             * At least and at most one of securityOrigin, storageKey must be specified.
              * Security origin.
              */
-            securityOrigin: string;
+            securityOrigin?: string;
+            /**
+             * Storage key.
+             */
+            storageKey?: string;
             /**
              * Database name.
              */
@@ -8226,9 +8262,14 @@ export namespace Protocol {
 
         export interface RequestDatabaseNamesRequest {
             /**
+             * At least and at most one of securityOrigin, storageKey must be specified.
              * Security origin.
              */
-            securityOrigin: string;
+            securityOrigin?: string;
+            /**
+             * Storage key.
+             */
+            storageKey?: string;
         }
 
         export interface RequestDatabaseNamesResponse {
@@ -12808,7 +12849,7 @@ export namespace Protocol {
         /**
          * List of FinalStatus reasons for Prerender2.
          */
-        export type PrerenderFinalStatus = ('Activated' | 'Destroyed' | 'LowEndDevice' | 'CrossOriginRedirect' | 'CrossOriginNavigation' | 'InvalidSchemeRedirect' | 'InvalidSchemeNavigation' | 'InProgressNavigation' | 'NavigationRequestBlockedByCsp' | 'MainFrameNavigation' | 'MojoBinderPolicy' | 'RendererProcessCrashed' | 'RendererProcessKilled' | 'Download' | 'TriggerDestroyed' | 'NavigationNotCommitted' | 'NavigationBadHttpStatus' | 'ClientCertRequested' | 'NavigationRequestNetworkError' | 'MaxNumOfRunningPrerendersExceeded' | 'CancelAllHostsForTesting' | 'DidFailLoad' | 'Stop' | 'SslCertificateError' | 'LoginAuthRequested' | 'UaChangeRequiresReload' | 'BlockedByClient' | 'AudioOutputDeviceRequested' | 'MixedContent' | 'TriggerBackgrounded' | 'EmbedderTriggeredAndSameOriginRedirected' | 'EmbedderTriggeredAndCrossOriginRedirected' | 'EmbedderTriggeredAndDestroyed');
+        export type PrerenderFinalStatus = ('Activated' | 'Destroyed' | 'LowEndDevice' | 'CrossOriginRedirect' | 'CrossOriginNavigation' | 'InvalidSchemeRedirect' | 'InvalidSchemeNavigation' | 'InProgressNavigation' | 'NavigationRequestBlockedByCsp' | 'MainFrameNavigation' | 'MojoBinderPolicy' | 'RendererProcessCrashed' | 'RendererProcessKilled' | 'Download' | 'TriggerDestroyed' | 'NavigationNotCommitted' | 'NavigationBadHttpStatus' | 'ClientCertRequested' | 'NavigationRequestNetworkError' | 'MaxNumOfRunningPrerendersExceeded' | 'CancelAllHostsForTesting' | 'DidFailLoad' | 'Stop' | 'SslCertificateError' | 'LoginAuthRequested' | 'UaChangeRequiresReload' | 'BlockedByClient' | 'AudioOutputDeviceRequested' | 'MixedContent' | 'TriggerBackgrounded' | 'EmbedderTriggeredAndSameOriginRedirected' | 'EmbedderTriggeredAndCrossOriginRedirected' | 'EmbedderTriggeredAndDestroyed' | 'MemoryLimitExceeded' | 'FailToGetMemoryUsage');
 
         export interface AddScriptToEvaluateOnLoadRequest {
             scriptSource: string;
@@ -14554,6 +14595,17 @@ export namespace Protocol {
             storageTypes: string;
         }
 
+        export interface ClearDataForStorageKeyRequest {
+            /**
+             * Storage key.
+             */
+            storageKey: string;
+            /**
+             * Comma separated list of StorageType to clear.
+             */
+            storageTypes: string;
+        }
+
         export interface GetCookiesRequest {
             /**
              * Browser context to use when called on the browser endpoint.
@@ -14643,6 +14695,13 @@ export namespace Protocol {
             origin: string;
         }
 
+        export interface TrackIndexedDBForStorageKeyRequest {
+            /**
+             * Storage key.
+             */
+            storageKey: string;
+        }
+
         export interface UntrackCacheStorageForOriginRequest {
             /**
              * Security origin.
@@ -14655,6 +14714,13 @@ export namespace Protocol {
              * Security origin.
              */
             origin: string;
+        }
+
+        export interface UntrackIndexedDBForStorageKeyRequest {
+            /**
+             * Storage key.
+             */
+            storageKey: string;
         }
 
         export interface GetTrustTokensResponse {
@@ -14718,6 +14784,10 @@ export namespace Protocol {
              */
             origin: string;
             /**
+             * Storage key to update.
+             */
+            storageKey: string;
+            /**
              * Database to update.
              */
             databaseName: string;
@@ -14735,6 +14805,10 @@ export namespace Protocol {
              * Origin to update.
              */
             origin: string;
+            /**
+             * Storage key to update.
+             */
+            storageKey: string;
         }
 
         /**
@@ -14998,6 +15072,30 @@ export namespace Protocol {
             browserContextId?: Browser.BrowserContextID;
         }
 
+        /**
+         * A filter used by target query/discovery/auto-attach operations.
+         */
+        export interface FilterEntry {
+            /**
+             * If set, causes exclusion of mathcing targets from the list.
+             */
+            exclude?: boolean;
+            /**
+             * If not present, matches any type.
+             */
+            type?: string;
+        }
+
+        /**
+         * The entries in TargetFilter are matched sequentially against targets and
+         * the first entry that matches determines if the target is included or not,
+         * depending on the value of `exclude` field in the entry.
+         * If filter is not specified, the one assumed is
+         * [{type: "browser", exclude: true}, {type: "tab", exclude: true}, {}]
+         * (i.e. include everything but `browser` and `tab`).
+         */
+        export type TargetFilter = FilterEntry[];
+
         export interface RemoteLocation {
             host: string;
             port: integer;
@@ -15147,6 +15245,15 @@ export namespace Protocol {
             targetInfo: TargetInfo;
         }
 
+        export interface GetTargetsRequest {
+            /**
+             * Only targets matching filter will be reported. If filter is not specified
+             * and target discovery is currently enabled, a filter used for target discovery
+             * is used for consistency.
+             */
+            filter?: TargetFilter;
+        }
+
         export interface GetTargetsResponse {
             /**
              * The list of targets.
@@ -15182,6 +15289,10 @@ export namespace Protocol {
              * and eventually retire it. See crbug.com/991325.
              */
             flatten?: boolean;
+            /**
+             * Only targets matching filter will be attached.
+             */
+            filter?: TargetFilter;
         }
 
         export interface AutoAttachRelatedRequest {
@@ -15191,6 +15302,10 @@ export namespace Protocol {
              * to run paused targets.
              */
             waitForDebuggerOnStart: boolean;
+            /**
+             * Only targets matching filter will be attached.
+             */
+            filter?: TargetFilter;
         }
 
         export interface SetDiscoverTargetsRequest {
@@ -15198,6 +15313,11 @@ export namespace Protocol {
              * Whether to discover available targets.
              */
             discover: boolean;
+            /**
+             * Only targets matching filter will be attached. If `discover` is false,
+             * `filter` must be omitted or empty.
+             */
+            filter?: TargetFilter;
         }
 
         export interface SetRemoteLocationsRequest {
