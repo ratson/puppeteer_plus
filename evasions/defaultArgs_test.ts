@@ -7,7 +7,8 @@ import { argsToIgnore } from "./defaultArgs.ts";
 
 browserTest("default", async (browser) => {
   const page = await browser.newPage();
-  const { arguments: launchArgs } = await page.client().send(
+  page._client
+  const { arguments: launchArgs } = await page._client().send(
     "Browser.getBrowserCommandLine",
   );
   assertArrayIncludes(launchArgs, argsToIgnore);
@@ -15,7 +16,7 @@ browserTest("default", async (browser) => {
 
 browserTest("applied", async (browser) => {
   const page = await browser.newPage();
-  const { arguments: launchArgs } = await page.client().send(
+  const { arguments: launchArgs } = await page._client().send(
     "Browser.getBrowserCommandLine",
   );
   for (const arg of argsToIgnore) {
