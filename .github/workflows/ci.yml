@@ -29,17 +29,17 @@ jobs:
 
     steps:
       - name: Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ${{ matrix.deno_dir }}
           key: ${{ runner.os }}-${{ matrix.deno }}-${{ hashFiles('**/*.ts') }}
 
       - name: Clone repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
 
       - name: Set up Deno
-        uses: denoland/setup-deno@v1.1.0
+        uses: denoland/setup-deno@v1
         with:
           deno-version: ${{ matrix.deno }}
 
