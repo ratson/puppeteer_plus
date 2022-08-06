@@ -33,7 +33,7 @@ import * as URL from 'https://deno.land/std@0.151.0/node/url.ts';
 import {assert} from '../common/assert.ts';
 
 
-const {PUPPETEER_EXPERIMENTAL_CHROMIUM_MAC_ARM} = process.env;
+
 
 const debugFetcher = debug('puppeteer:fetcher');
 
@@ -217,7 +217,7 @@ export class BrowserFetcher {
           switch (this.#product) {
             case 'chrome':
               this.#platform =
-                os.arch() === 'arm64' && PUPPETEER_EXPERIMENTAL_CHROMIUM_MAC_ARM
+                os.arch() === 'arm64' && process.env.PUPPETEER_EXPERIMENTAL_CHROMIUM_MAC_ARM
                   ? 'mac_arm'
                   : 'mac';
               break;
