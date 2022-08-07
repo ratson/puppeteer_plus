@@ -22,16 +22,16 @@ import {
   RequestListener,
   Server as HttpServer,
   ServerResponse,
-} from 'https://deno.land/std@0.149.0/node/http.ts';
+} from 'https://deno.land/std@0.151.0/node/http.ts';
 import {
   createServer as createHttpsServer,
   Server as HttpsServer,
   ServerOptions as HttpsServerOptions,
-} from 'https://deno.land/std@0.149.0/node/https.ts';
+} from 'https://deno.land/std@0.151.0/node/https.ts';
 import {getType as getMimeType} from 'mime';
 import {AddressInfo} from 'net';
-import {join} from 'https://deno.land/std@0.135.0/node/path.ts';
-import {Duplex} from 'https://deno.land/std@0.149.0/node/stream.ts';
+import {join} from 'https://deno.land/std@0.151.0/node/path.ts';
+import {Duplex} from 'https://deno.land/std@0.151.0/node/stream.ts';
 import {Server as WebSocketServer, WebSocket} from 'ws';
 import {gzip} from 'zlib';
 

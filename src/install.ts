@@ -1,4 +1,4 @@
-import ProgressBar from "https://deno.land/x/progress@v1.2.5/mod.ts";
+import { ProgressBar } from "https://deno.land/x/yxz@0.18.0/fmt/progress_bar.ts";
 import { PUPPETEER_REVISIONS } from "./deps.ts";
 import { PuppeteerDeno } from "./Puppeteer.ts";
 import { getProduct } from "./initialize-deno.ts";
