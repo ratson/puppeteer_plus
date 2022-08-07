@@ -1,4 +1,5 @@
 import { Browser, puppeteer, PuppeteerNodeLaunchOptions } from "./mod.ts";
+import { delay } from "https://deno.land/std@0.151.0/async/delay.ts";
 
 export {
   assert,
@@ -24,5 +25,7 @@ export function browserTest(
     } finally {
       await browser?.close();
     }
+    // TODO ensure close() not leak async ops
+    await delay(500);
   });
 }

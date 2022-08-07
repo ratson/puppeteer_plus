@@ -5,8 +5,7 @@ browserTest("puppeteer", async (browser) => {
   await page.goto("https://deno.land", { waitUntil: "domcontentloaded" });
   const h1 = await page.$("h1");
   assert(h1);
-  // deno-lint-ignore no-explicit-any
-  assertEquals(await h1.evaluate((e: any) => e.innerText), "Deno");
+  assertEquals(await h1.evaluate((e) => e.innerText), "Deno");
 });
 
 Deno.test("core", async () => {
@@ -14,7 +13,8 @@ Deno.test("core", async () => {
     Deno.execPath(),
     "run",
     "--unstable",
-    "--allow-env=NODE_DEBUG",
+    "--allow-env=NODE_DEBUG", // https://deno.land/std/node/internal/util/debuglog.ts?code#L108
+    "--no-prompt",
     "--check",
     "core.ts",
   ], {
