@@ -17,7 +17,7 @@
 import process from 'https://deno.land/std@0.151.0/node/process.ts';
 import { copy } from 'https://deno.land/std@0.151.0/fs/copy.ts';
 import { copy as copyIO, writeAll } from 'https://deno.land/std@0.151.0/streams/conversion.ts';
-import { extractZip } from '../../../../src/deps.ts';
+import { unzip } from 'https://deno.land/x/yxz@0.18.0/archive/zip.ts';
 import * as os from 'https://deno.land/std@0.151.0/node/os.ts';
 import * as fs from 'https://deno.land/std@0.151.0/node/fs.ts';
 import * as path from 'https://deno.land/std@0.151.0/node/path.ts';
@@ -534,7 +534,7 @@ async function _downloadFile(
 function install(archivePath: string, folderPath: string): Promise<unknown> {
   debugFetcher(`Installing ${archivePath} to ${folderPath}`);
   if (archivePath.endsWith('.zip')) {
-    return extractZip(archivePath, {dir: folderPath});
+    return unzip(archivePath, folderPath);
   } else if (archivePath.endsWith('.tar.bz2')) {
     return _extractTar(archivePath, folderPath);
   } else if (archivePath.endsWith('.dmg')) {
