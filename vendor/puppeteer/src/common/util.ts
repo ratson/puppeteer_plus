@@ -484,7 +484,7 @@ export async function getReadableFromProtocolStream(
     throw new Error('Cannot create a stream outside of Node.js environment.');
   }
 
-  const {Readable} = await import('stream');
+  const {Readable} = await import('https://deno.land/std@0.151.0/node/stream.ts');
 
   let eof = false;
   return new Readable({
