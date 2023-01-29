@@ -1,4 +1,4 @@
-import { Page } from "../src/mod.ts";
+import type { Page } from "../mod.ts";
 
 export const args = ["--disable-blink-features=AutomationControlled"];
 

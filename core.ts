@@ -1,6 +1,4 @@
-import { initializePuppeteerDeno } from "./src/initialize-deno.ts";
+import "./src/patch.ts"
 
-export * from "./src/mod.ts";
-
-export const puppeteer = await initializePuppeteerDeno("puppeteer-core");
-export default puppeteer;
+export * from "npm:puppeteer-core";
+export { default } from "npm:puppeteer-core";

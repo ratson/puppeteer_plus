@@ -3,9 +3,9 @@ import { assert, assertEquals, browserTest, subprocess } from "./deps_dev.ts";
 browserTest("puppeteer", async (browser) => {
   const page = await browser.newPage();
   await page.goto("https://deno.land", { waitUntil: "domcontentloaded" });
-  const h1 = await page.$("h1");
-  assert(h1);
-  assertEquals(await h1.evaluate((e) => e.innerText), "Deno");
+  const title = await page.$("title");
+  assert(title);
+  assertEquals(await title.evaluate((e) => e.innerText.split(" ")[0]), "Deno");
 });
 
 Deno.test("core", async () => {
@@ -13,7 +13,7 @@ Deno.test("core", async () => {
     Deno.execPath(),
     "run",
     "--unstable",
-    "--allow-env=NODE_DEBUG", // https://deno.land/std/node/internal/util/debuglog.ts?code#L108
+    "--allow-env",
     "--no-prompt",
     "--check",
     "core.ts",

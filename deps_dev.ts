@@ -1,4 +1,4 @@
-import { Browser, puppeteer, PuppeteerNodeLaunchOptions } from "./mod.ts";
+import { Browser, default as puppeteer, PuppeteerNodeLaunchOptions } from "./mod.ts";
 import { delay } from "https://deno.land/std@0.175.0/async/delay.ts";
 
 export {

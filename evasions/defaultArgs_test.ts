@@ -7,7 +7,9 @@ import { argsToIgnore } from "./defaultArgs.ts";
 
 browserTest("default", async (browser) => {
   const page = await browser.newPage();
+  // @ts-ignore
   page._client
+  // @ts-ignore
   const { arguments: launchArgs } = await page._client().send(
     "Browser.getBrowserCommandLine",
   );
@@ -16,6 +18,7 @@ browserTest("default", async (browser) => {
 
 browserTest("applied", async (browser) => {
   const page = await browser.newPage();
+  // @ts-ignore
   const { arguments: launchArgs } = await page._client().send(
     "Browser.getBrowserCommandLine",
   );
