@@ -1,8 +1,5 @@
-import "./src/patch.ts"
-import { downloadBrowser } from 'npm:puppeteer/internal/node/install.js';
+import "./src/patch.ts";
+import "./src/install.ts";
 
 export * from "npm:puppeteer";
 export { default } from "npm:puppeteer";
-
-
-downloadBrowser();
