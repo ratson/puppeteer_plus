@@ -24,16 +24,14 @@ declare global {
 /**
  * @internal
  */
-let debugModule: typeof import('https://deno.land/x/yxz@0.18.0/log/debug.ts') | null = null;
+let debugModule: typeof import('npm:debug') | null = null;
 /**
  * @internal
  */
-export async function importDebug(): Promise<typeof import('https://deno.land/x/yxz@0.18.0/log/debug.ts')> {
+export async function importDebug(): Promise<typeof import('npm:debug')> {
   if (!debugModule) {
-    // @ts-expect-error TS2741
-    debugModule = (await import('https://deno.land/x/yxz@0.18.0/log/debug.ts')).default;
+    debugModule = (await import('npm:debug')).default;
   }
-  // @ts-expect-error TS2322
   return debugModule;
 }
 
@@ -77,7 +75,6 @@ export async function importDebug(): Promise<typeof import('https://deno.land/x/
 export const debug = (prefix: string): ((...args: unknown[]) => void) => {
   if (isNode) {
     return async (...logArgs: unknown[]) => {
-      // @ts-expect-error TS2349
       (await importDebug())(prefix)(logArgs);
     };
   }

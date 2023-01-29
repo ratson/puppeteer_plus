@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import process from 'https://deno.land/std@0.151.0/node/process.ts';
-import os from 'https://deno.land/std@0.151.0/node/os.ts';
+import process from 'node:process';
+import os from 'node:os';
 
 import {Browser} from '../common/Browser.ts';
 import {BrowserFetcher} from './BrowserFetcher.ts';
@@ -28,7 +28,7 @@ import {
 import {Product} from '../common/Product.ts';
 import {ChromeLauncher} from './ChromeLauncher.ts';
 import {FirefoxLauncher} from './FirefoxLauncher.ts';
-import {accessSync, existsSync} from 'https://deno.land/std@0.151.0/node/fs.ts';
+import {accessSync, existsSync} from 'node:fs';
 
 /**
  * Describes a launcher - a class that is able to create and launch a browser instance.

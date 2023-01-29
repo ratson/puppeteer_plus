@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import process from 'https://deno.land/std@0.151.0/node/process.ts';
-import { copy } from 'https://deno.land/std@0.151.0/fs/copy.ts';
-import { copy as copyIO, writeAll } from 'https://deno.land/std@0.151.0/streams/conversion.ts';
-import { unzip } from 'https://deno.land/x/yxz@0.18.0/archive/zip.ts';
-import * as os from 'https://deno.land/std@0.151.0/node/os.ts';
-import * as fs from 'https://deno.land/std@0.151.0/node/fs.ts';
-import * as path from 'https://deno.land/std@0.151.0/node/path.ts';
-import * as util from 'https://deno.land/std@0.151.0/node/util.ts';
-import * as childProcess from 'https://deno.land/std@0.151.0/node/child_process.ts';
-import * as https from 'https://deno.land/std@0.151.0/node/https.ts';
-import * as http from 'https://deno.land/std@0.151.0/node/http.ts';
+import process from 'node:process';
+import { copy } from 'https://deno.land/std@0.175.0/fs/copy.ts';
+import { copy as copyIO, writeAll } from 'https://deno.land/std@0.175.0/streams/mod.ts';
+import { unzip } from 'https://deno.land/x/yxz@0.18.1/archive/zip.ts';
+import * as os from 'node:os';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as util from 'node:util';
+import * as childProcess from 'node:child_process';
+import * as https from 'node:https';
+import * as http from 'node:http';
 
 import {Product} from '../common/Product.ts';
 import {debug} from '../common/Debug.ts';
-import {promisify} from 'https://deno.land/std@0.151.0/node/util.ts';
-import * as URL from 'https://deno.land/std@0.151.0/node/url.ts';
+import {promisify} from 'node:util';
+import * as URL from 'node:url';
 import {assert} from '../common/assert.ts';
 
 
@@ -363,19 +363,16 @@ export class BrowserFetcher {
     }
     const fileNames = await readdirAsync(this.#downloadsFolder);
     return fileNames
-      // @ts-expect-error TS7006
       .map(fileName => {
         return parseFolderPath(this.#product, fileName);
       })
       .filter(
         (
-          // @ts-expect-error TS7006
           entry
         ): entry is {product: string; platform: string; revision: string} => {
           return (entry && entry.platform === this.#platform) ?? false;
         }
       )
-      // @ts-expect-error TS7006
       .map(entry => {
         return entry.revision;
       });

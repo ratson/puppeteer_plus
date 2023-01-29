@@ -17,7 +17,7 @@ import NodeWebSocket from 'ws';
 import {ConnectionTransport} from '../common/ConnectionTransport.ts';
 import {packageVersion} from '../generated/version.ts';
 import {promises as dns} from 'dns';
-import {URL} from 'https://deno.land/std@0.151.0/node/url.ts';
+import {URL} from 'node:url';
 
 /**
  * @internal

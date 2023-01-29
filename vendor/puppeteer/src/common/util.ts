@@ -15,7 +15,7 @@
  */
 
 import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
-import type {Readable} from 'https://deno.land/std@0.151.0/node/stream.ts';
+import type {Readable} from 'node:stream';
 import {isNode} from '../environment.ts';
 import {assert} from './assert.ts';
 import {CDPSession} from './Connection.ts';
@@ -422,13 +422,13 @@ export async function waitWithTimeout<T>(
 /**
  * @internal
  */
-let fs: typeof import('https://deno.land/std@0.151.0/node/fs.ts') | null = null;
+let fs: typeof import('node:fs') | null = null;
 /**
  * @internal
  */
-export async function importFS(): Promise<typeof import('https://deno.land/std@0.151.0/node/fs.ts')> {
+export async function importFS(): Promise<typeof import('node:fs')> {
   if (!fs) {
-    fs = await import('https://deno.land/std@0.151.0/node/fs.ts');
+    fs = await import('node:fs');
   }
   return fs;
 }
@@ -442,7 +442,7 @@ export async function getReadableAsBuffer(
 ): Promise<Buffer | null> {
   const buffers = [];
   if (path) {
-    let fs: typeof import('https://deno.land/std@0.151.0/node/fs.ts').promises;
+    let fs: typeof import('node:fs').promises;
     try {
       fs = (await importFS()).promises;
     } catch (error) {
@@ -524,7 +524,6 @@ export function isErrorLike(obj: unknown): obj is ErrorLike {
 /**
  * @internal
  */
-// @ts-expect-error TS2503
 export function isErrnoException(obj: unknown): obj is NodeJS.ErrnoException {
   return (
     isErrorLike(obj) &&

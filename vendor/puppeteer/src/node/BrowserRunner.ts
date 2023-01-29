@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import process from 'https://deno.land/std@0.151.0/node/process.ts';
-          import 'https://deno.land/std@0.151.0/node/global.ts';
-import {copy} from 'https://deno.land/std@0.151.0/streams/conversion.ts';
-import {deadline, DeadlineError} from 'https://deno.land/std@0.151.0/async/deadline.ts';
-import {readLines} from 'https://deno.land/std@0.151.0/io/mod.ts';
-import * as childProcess from 'https://deno.land/std@0.151.0/node/child_process.ts';
-import * as fs from 'https://deno.land/std@0.151.0/node/fs.ts';
-import * as path from 'https://deno.land/std@0.151.0/node/path.ts';
-import * as readline from 'https://deno.land/std@0.151.0/node/readline.ts';
-import {promisify} from 'https://deno.land/std@0.151.0/node/util.ts';
+import process from 'node:process';
+          import 'https://deno.land/std@0.175.0/node/global.ts';
+import {copy} from 'https://deno.land/std@0.175.0/streams/copy.ts';
+import {deadline, DeadlineError} from 'https://deno.land/std@0.175.0/async/deadline.ts';
+import {readLines} from 'https://deno.land/std@0.175.0/io/mod.ts';
+import * as childProcess from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as readline from 'node:readline';
+import {promisify} from 'node:util';
 import {assert} from '../common/assert.ts';
 import {Connection} from '../common/Connection.ts';
 import {debug} from '../common/Debug.ts';
@@ -112,7 +112,6 @@ export class BrowserRunner {
         // process tree with `.kill(-pid)` command. @see
         // https://nodejs.org/api/child_process.html#child_process_options_detached
         detached: process.platform !== 'win32',
-        // @ts-expect-error TS2322
         env,
         stdio,
       }
@@ -264,7 +263,6 @@ export class BrowserRunner {
     } else {
       // stdio was assigned during start(), and the 'pipe' option there adds the
       // 4th and 5th items to stdio array
-      // @ts-expect-error TS2493
       const {3: pipeWrite, 4: pipeRead} = this.proc.stdio;
       const transport = new PipeTransport(
         pipeWrite,

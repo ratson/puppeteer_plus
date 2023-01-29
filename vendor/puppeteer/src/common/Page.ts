@@ -15,7 +15,7 @@
  */
 
 import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
-import type {Readable} from 'https://deno.land/std@0.151.0/node/stream.ts';
+import type {Readable} from 'node:stream';
 import {Accessibility} from './Accessibility.ts';
 import {assert} from './assert.ts';
 import {Browser, BrowserContext} from './Browser.ts';

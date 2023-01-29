@@ -198,7 +198,9 @@ export class JSHandle<T = unknown> {
   async getProperty<K extends keyof T>(
     propertyName: HandleOr<K>
   ): Promise<HandleFor<T[K]>> {
+    // @ts-expect-error TS2322
     return await this.evaluateHandle((object, propertyName) => {
+      // @ts-expect-error TS2536
       return object[propertyName];
     }, propertyName);
   }

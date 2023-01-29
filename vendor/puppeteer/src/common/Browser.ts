@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {ChildProcess} from 'https://deno.land/std@0.151.0/node/child_process.ts';
+import {ChildProcess} from 'node:child_process';
 import {Protocol} from '../../../devtools-protocol/types/protocol.d.ts';
 import {assert} from './assert.ts';
 import {CDPSession, Connection, ConnectionEmittedEvents} from './Connection.ts';

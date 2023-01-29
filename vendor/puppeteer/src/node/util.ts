@@ -1,5 +1,5 @@
-import process from 'https://deno.land/std@0.151.0/node/process.ts';
-import * as os from 'https://deno.land/std@0.151.0/node/os.ts';
+import process from 'node:process';
+import * as os from 'node:os';
 
 /**
  * Gets the temporary directory, either from the environmental variable
@@ -10,6 +10,5 @@ import * as os from 'https://deno.land/std@0.151.0/node/os.ts';
  * @internal
  */
 export const tmpdir = (): string => {
-  // @ts-expect-error TS2322
   return process.env['PUPPETEER_TMP_DIR'] || os.tmpdir();
 };

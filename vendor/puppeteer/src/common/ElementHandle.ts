@@ -593,9 +593,9 @@ export class ElementHandle<
     );
 
     // Locate all files and confirm that they exist.
-    let path: typeof import('https://deno.land/std@0.151.0/node/path.ts');
+    let path: typeof import('node:path');
     try {
-      path = await import('https://deno.land/std@0.151.0/node/path.ts');
+      path = await import('node:path');
     } catch (error) {
       if (error instanceof TypeError) {
         throw new Error(

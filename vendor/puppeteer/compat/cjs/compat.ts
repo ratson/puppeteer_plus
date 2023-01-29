@@ -1,4 +1,4 @@
-import {dirname} from 'https://deno.land/std@0.151.0/node/path.ts';
+import {dirname} from 'node:path';
 
 /**
  * @internal

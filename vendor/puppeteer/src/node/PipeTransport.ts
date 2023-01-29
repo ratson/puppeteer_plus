@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Buffer } from 'https://deno.land/std@0.151.0/node/buffer.ts';
+import { Buffer } from 'node:buffer';
 import {assert} from '../common/assert.ts';
 import {ConnectionTransport} from '../common/ConnectionTransport.ts';
 import {
