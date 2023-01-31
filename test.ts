@@ -1,4 +1,4 @@
-import { assert, assertEquals, browserTest, subprocess } from "./deps_dev.ts";
+import { assert, assertEquals, browserTest } from "./deps_dev.ts";
 
 browserTest("puppeteer", async (browser) => {
   const page = await browser.newPage();
@@ -9,15 +9,18 @@ browserTest("puppeteer", async (browser) => {
 });
 
 Deno.test("core", async () => {
-  await subprocess.run([
-    Deno.execPath(),
-    "run",
-    "--unstable",
-    "--allow-env",
-    "--no-prompt",
-    "--check",
-    "core.ts",
-  ], {
-    check: true,
+  const command = new Deno.Command(Deno.execPath(), {
+    args: [
+      "run",
+      "--unstable",
+      "--allow-env",
+      "--no-prompt",
+      "--check",
+      "core.ts",
+    ],
   });
+  const { code, stdout, stderr } = await command.output();
+  assertEquals(code, 0);
+  assertEquals(new TextDecoder().decode(stdout), "")
+  assertEquals(new TextDecoder().decode(stderr), "")
 });
