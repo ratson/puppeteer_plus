@@ -1,12 +1,12 @@
 import { Browser, default as puppeteer, PuppeteerNodeLaunchOptions } from "./mod.ts";
-import { delay } from "https://deno.land/std@0.175.0/async/delay.ts";
+import { delay } from "https://deno.land/std@0.177.0/async/delay.ts";
 
 export {
   assert,
   assertArrayIncludes,
   assertEquals,
   assertStrictEquals,
-} from "https://deno.land/std@0.175.0/testing/asserts.ts";
+} from "https://deno.land/std@0.177.0/testing/asserts.ts";
 
 export function browserTest(
   name: string,
