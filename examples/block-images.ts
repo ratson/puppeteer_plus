@@ -8,6 +8,10 @@ page.on("request", (request) => {
   else request.continue();
 });
 await page.goto("https://news.google.com/news/");
-await page.screenshot({ path: "news.png", fullPage: true });
+
+const tempFilePath = await Deno.makeTempFile({ suffix: ".png" });
+await page.screenshot({ path: tempFilePath, fullPage: true });
 
 await browser.close();
+
+console.log(tempFilePath);

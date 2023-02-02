@@ -5,6 +5,10 @@ const page = await browser.newPage();
 await page.goto("https://news.ycombinator.com", {
   waitUntil: "networkidle2",
 });
-await page.pdf({ path: "hn.pdf", format: "a4" });
+
+const tempFilePath = await Deno.makeTempFile({ suffix: ".pdf" });
+await page.pdf({ path: tempFilePath, format: "a4" });
 
 await browser.close();
+
+console.log(tempFilePath);
