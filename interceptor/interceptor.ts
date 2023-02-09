@@ -1,4 +1,4 @@
-import { Protocol } from "./deps.ts";
+import type { Protocol } from "./deps.ts";
 
 export interface OnResponseReceivedEvent {
   request: Protocol.Network.Request;

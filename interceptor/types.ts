@@ -2,7 +2,7 @@
 export enum ERROR_REASON {
   FAILED = 'Failed',
   ABORTED = 'Aborted',
-  TIMEDOUT = 'TimedOut',
+  TIMED_OUT = 'TimedOut',
   ACCESS_DENIED = 'AccessDenied',
   CONNECTION_CLOSED = 'ConnectionClosed',
   CONNECTION_RESET = 'ConnectionReset',

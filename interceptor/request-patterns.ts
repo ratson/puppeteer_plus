@@ -1,4 +1,4 @@
-import { Protocol } from "./deps.ts";
+import type { Protocol } from "./deps.ts";
 
 export type PatternGenerator = {
   [key in Protocol.Network.ResourceType | "All"]: (
@@ -24,6 +24,7 @@ export const patterns: PatternGenerator = {
   TextTrack: patternGenerator("TextTrack"),
   WebSocket: patternGenerator("WebSocket"),
   XHR: patternGenerator("XHR"),
+  Prefetch: patternGenerator("Prefetch"),
   All: (patterns: string | string[]) =>
     toArray(patterns).map((pattern) => ({
       urlPattern: pattern,
