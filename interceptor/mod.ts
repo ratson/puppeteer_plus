@@ -6,7 +6,7 @@ const debug = Debug("puppeteer-interceptor");
 export * from "./types.ts";
 export * from "./request-patterns.ts";
 
-export { Interceptor }
+export { Interceptor };
 
 export class InterceptionHandler {
   page: Page;
@@ -14,6 +14,7 @@ export class InterceptionHandler {
   eventHandlers: Interceptor.EventHandlers = {};
   client?: CDPSession;
   disabled = false;
+
   constructor(
     page: Page,
     patterns: Protocol.Fetch.RequestPattern[] = [],
@@ -23,12 +24,15 @@ export class InterceptionHandler {
     this.patterns = patterns;
     this.eventHandlers = eventHandlers;
   }
+
   disable() {
     this.disabled = true;
   }
+
   enable() {
     this.disabled = false;
   }
+
   async initialize() {
     const client = await this.page.target().createCDPSession();
     await client.send("Fetch.enable", { patterns: this.patterns });
@@ -142,7 +146,11 @@ export class InterceptionHandler {
             responsePhrase: newResponse.statusMessage,
           });
         } else {
-          await client.send("Fetch.continueRequest", { requestId });
+          try {
+            await client.send("Fetch.continueRequest", { requestId });
+          } catch (err) {
+            debug(`Error on continuing request: ${err}`);
+          }
         }
       },
     );
