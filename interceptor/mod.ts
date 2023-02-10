@@ -6,6 +6,8 @@ const debug = Debug("puppeteer-interceptor");
 export * from "./types.ts";
 export * from "./request-patterns.ts";
 
+export { Interceptor }
+
 export class InterceptionHandler {
   page: Page;
   patterns: Protocol.Fetch.RequestPattern[] = [];
