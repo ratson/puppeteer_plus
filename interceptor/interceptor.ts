@@ -1,4 +1,4 @@
-import type { Protocol } from "./deps.ts";
+import type { Protocol } from "npm:puppeteer-core";
 
 export interface OnResponseReceivedEvent {
   request: Protocol.Network.Request;

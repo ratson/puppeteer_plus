@@ -1,4 +1,4 @@
-import type { Protocol } from "./deps.ts";
+import type { Protocol } from "npm:puppeteer-core";
 
 export type PatternGenerator = {
   [key in Protocol.Network.ResourceType | "All"]: (
