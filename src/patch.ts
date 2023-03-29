@@ -1,12 +1,12 @@
 import { BrowserWebSocketTransport } from "npm:puppeteer-core/internal/common/BrowserWebSocketTransport.js";
 import { NodeWebSocketTransport } from "npm:puppeteer-core/internal/common/NodeWebSocketTransport.js";
-import { importFS } from "npm:puppeteer-core/internal/common/util.js";
+import { importFSPromises } from "npm:puppeteer-core/internal/common/util.js";
 
 // @ts-expect-error patch
 NodeWebSocketTransport.create = BrowserWebSocketTransport.create;
 
 try {
-  const fs = await importFS();
+  const fs = await importFSPromises();
   const _open = fs.promises.open;
   fs.promises.open = async (...args: Parameters<typeof _open>) => {
     const f = await _open(...args);
