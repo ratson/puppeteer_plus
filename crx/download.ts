@@ -1,4 +1,4 @@
-import { basename } from "https://deno.land/std@0.181.0/path/mod.ts";
+import { basename } from "https://deno.land/std@0.182.0/path/mod.ts";
 import { download, type DownloadOptions as _DownloadOptions } from "https://deno.land/x/yxz@0.19.0/network/download.ts";
 import unzip from './unzip.ts'
 

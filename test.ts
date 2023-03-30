@@ -1,4 +1,5 @@
 import { assert, assertEquals, browserTest } from "./deps_dev.ts";
+import * as fs from "node:fs/promises";
 
 browserTest("puppeteer", async (browser) => {
   const page = await browser.newPage();
@@ -21,6 +22,13 @@ Deno.test("core", async () => {
   });
   const { code, stdout, stderr } = await command.output();
   assertEquals(code, 0);
-  assertEquals(new TextDecoder().decode(stdout), "")
-  assertEquals(new TextDecoder().decode(stderr), "")
+  assertEquals(new TextDecoder().decode(stdout), "");
+  assertEquals(new TextDecoder().decode(stderr), "");
+});
+
+Deno.test("fs", async () => {
+  const fileHandle = await fs.open(await Deno.makeTempFile(), "w+");
+  assert(!fileHandle.writeFile);
+  assert(!fileHandle.close);
+  Deno.close(Number(fileHandle));
 });
