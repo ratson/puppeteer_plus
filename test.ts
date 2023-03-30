@@ -15,6 +15,7 @@ Deno.test("core", async () => {
       "run",
       "--unstable",
       "--allow-env",
+      "--allow-read",
       "--no-prompt",
       "--check",
       "core.ts",
@@ -26,7 +27,7 @@ Deno.test("core", async () => {
   assertEquals(new TextDecoder().decode(stderr), "");
 });
 
-Deno.test("fs", async () => {
+Deno.test("fs.open does not return FileHandle", async () => {
   const fileHandle = await fs.open(await Deno.makeTempFile(), "w+");
   assert(!fileHandle.writeFile);
   assert(!fileHandle.close);
