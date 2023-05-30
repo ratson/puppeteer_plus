@@ -1,4 +1,4 @@
-import { pick } from "https://deno.land/x/yxz@0.19.0/collections/pick.ts";
+import { pick } from "https://deno.land/x/yxz@0.20.0/collections/pick.ts";
 import { debug as Debug } from "npm:puppeteer-core/internal/common/Debug.js";
 import type { CDPSession, Page, Protocol } from "npm:puppeteer-core";
 import * as Interceptor from "./interceptor.ts";
