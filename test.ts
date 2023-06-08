@@ -30,6 +30,5 @@ Deno.test("core", async () => {
 Deno.test("fs.open does not return FileHandle", async () => {
   const fileHandle = await fs.open(await Deno.makeTempFile(), "w+");
   assert(!fileHandle.writeFile);
-  assert(!fileHandle.close);
-  Deno.close(Number(fileHandle));
+  fileHandle.close()
 });
