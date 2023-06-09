@@ -1,6 +1,6 @@
-import { BrowserWebSocketTransport } from "npm:puppeteer-core/internal/common/BrowserWebSocketTransport.js";
-import { NodeWebSocketTransport } from "npm:puppeteer-core/internal/common/NodeWebSocketTransport.js";
-import { importFSPromises } from "npm:puppeteer-core/internal/common/util.js";
+import { BrowserWebSocketTransport } from "npm:puppeteer-core@20.5.0/internal/common/BrowserWebSocketTransport.js";
+import { NodeWebSocketTransport } from "npm:puppeteer-core@20.5.0/internal/common/NodeWebSocketTransport.js";
+import { importFSPromises } from "npm:puppeteer-core@20.5.0/internal/common/util.js";
 
 Object.assign(NodeWebSocketTransport, {
   create: BrowserWebSocketTransport.create,

@@ -1,5 +1,5 @@
-import { getConfiguration } from "npm:puppeteer/internal/getConfiguration.js";
-import { downloadBrowser } from "npm:puppeteer/internal/node/install.js";
+import { getConfiguration } from "npm:puppeteer@20.5.0/internal/getConfiguration.js";
+import { downloadBrowser } from "npm:puppeteer@20.5.0/internal/node/install.js";
 
 const configuration = getConfiguration();
 if (typeof configuration.downloadBaseUrl === "undefined") {
