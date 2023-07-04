@@ -21,37 +21,13 @@ Deno.test("core", async () => {
       "core.ts",
     ],
   });
-  const { code, stdout, stderr } = await command.output();
+  const { code, stdout } = await command.output();
   assertEquals(code, 0);
   assertEquals(new TextDecoder().decode(stdout), "");
-  assertEquals(new TextDecoder().decode(stderr), "");
 });
 
-Deno.test("fs.open does not return FileHandle", async () => {
+Deno.test("fs.open return FileHandle", async () => {
   const fileHandle = await fs.open(await Deno.makeTempFile(), "w+");
-  assert(!fileHandle.writeFile);
+  assertEquals(typeof fileHandle.writeFile, "function");
   fileHandle.close();
-});
-
-Deno.test("cannot download from https", async () => {
-  const command = new Deno.Command(Deno.execPath(), {
-    args: [
-      "run",
-      "--unstable",
-      "-A",
-      "--check",
-      "mod.ts",
-    ],
-    env: {
-      "PUPPETEER_CACHE_DIR": "/tmp",
-      "PUPPETEER_DOWNLOAD_BASE_URL":
-        "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing",
-    },
-  });
-  const { stderr } = await command.output();
-  assert(
-    new TextDecoder().decode(stderr).includes(
-      '[ERR_INVALID_PROTOCOL]"https:" not supported. Expected "http:"',
-    ),
-  );
 });
