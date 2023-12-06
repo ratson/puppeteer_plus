@@ -6,7 +6,7 @@ browserTest("puppeteer", async (browser) => {
   await page.goto("https://deno.land", { waitUntil: "domcontentloaded" });
   const title = await page.$("title");
   assert(title);
-  assertEquals(await title.evaluate((e) => e.innerText.split(" ")[0]), "Deno");
+  assertEquals(await title.evaluate((e) => e.innerText.split(" ")[0]), "Deno,");
 });
 
 Deno.test("core", async () => {

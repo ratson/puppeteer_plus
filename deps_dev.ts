@@ -3,7 +3,7 @@ import {
   default as puppeteer,
   PuppeteerNodeLaunchOptions,
 } from "./mod.ts";
-import { delay } from "https://deno.land/std@0.193.0/async/delay.ts";
+import { delay } from "https://deno.land/std@0.208.0/async/delay.ts";
 
 export {
   assert,
@@ -11,7 +11,7 @@ export {
   assertEquals,
   assertMatch,
   assertStrictEquals,
-} from "https://deno.land/std@0.193.0/testing/asserts.ts";
+} from "https://deno.land/std@0.208.0/assert/mod.ts";
 
 export function browserTest(
   name: string,
@@ -20,10 +20,14 @@ export function browserTest(
     & { launch?: PuppeteerNodeLaunchOptions }
     & Omit<Deno.TestDefinition, "name" | "fn"> = {},
 ) {
-  Deno.test(name, opts, async () => {
+  Deno.test(name, {
+    sanitizeOps: false,
+    sanitizeResources: false,
+    ...opts,
+  }, async () => {
     let browser: Browser | undefined = undefined;
     try {
-      browser = await puppeteer.launch(launch);
+      browser = await puppeteer.launch({ headless: "new", ...launch });
       await fn(browser);
     } finally {
       await browser?.close();
