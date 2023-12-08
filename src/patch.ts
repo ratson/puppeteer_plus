@@ -2,12 +2,13 @@ import { importFSPromises } from "npm:puppeteer-core@21.6.0/internal/common/util
 
 try {
   const fs = await importFSPromises();
-  const fileHandle = await fs.open(await Deno.makeTempFile(), "r+");
+  const fileHandle = await fs.open(Deno.execPath());
   if (typeof fileHandle.writeFile === "undefined") {
     Object.getPrototypeOf(fileHandle).writeFile = function (s: string) {
       return fs.writeFile(this.rid, s);
     };
   }
-} catch (_err) {
-  // ignore error
+  await fileHandle.close()
+} catch (err) {
+  console.error(err)
 }
