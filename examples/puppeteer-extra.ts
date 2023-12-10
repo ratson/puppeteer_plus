@@ -1,5 +1,5 @@
 import { addExtra } from "npm:puppeteer-extra";
-import "npm:puppeteer-extra-plugin-user-preferences"
+import "npm:puppeteer-extra-plugin-user-preferences";
 import plugin from "npm:puppeteer-extra-plugin-font-size";
 import vanillaPuppeteer from "../mod.ts";
 

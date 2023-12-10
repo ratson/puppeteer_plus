@@ -10,3 +10,4 @@ await page.screenshot({ path: tempFilePath });
 await browser.close();
 
 console.log(tempFilePath);
+Deno.exit();

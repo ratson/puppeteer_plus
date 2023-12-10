@@ -25,12 +25,12 @@ export function browserTest(
     sanitizeResources: false,
     ...opts,
   }, async () => {
-    let browser: Browser | undefined = undefined;
-    try {
-      browser = await puppeteer.launch({ headless: "new", ...launch });
+    {
+      await using browser = await puppeteer.launch({
+        headless: "new",
+        ...launch,
+      });
       await fn(browser);
-    } finally {
-      await browser?.close();
     }
     // TODO ensure close() not leak async ops
     await delay(500);

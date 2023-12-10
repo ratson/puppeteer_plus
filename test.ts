@@ -2,6 +2,9 @@ import * as fs from "node:fs/promises";
 import { assert, assertEquals, browserTest } from "./deps_dev.ts";
 
 browserTest("puppeteer", async (browser) => {
+  assert(Symbol.asyncDispose in browser);
+  assertEquals(typeof browser[Symbol.asyncDispose], "function");
+
   const page = await browser.newPage();
   await page.goto("https://deno.land", { waitUntil: "domcontentloaded" });
   const title = await page.$("title");
@@ -26,7 +29,7 @@ Deno.test("core", async () => {
   assertEquals(new TextDecoder().decode(stdout), "");
 });
 
-Deno.test("fs.open return FileHandle", async () => {
+Deno.test("fs.open return FileHandle with writeFile()", async () => {
   const fileHandle = await fs.open(await Deno.makeTempFile(), "w+");
   assertEquals(typeof fileHandle.writeFile, "function");
   fileHandle.close();

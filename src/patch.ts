@@ -1,3 +1,4 @@
+import { Browser, Page } from "npm:puppeteer-core@21.6.0";
 import { importFSPromises } from "npm:puppeteer-core@21.6.0/internal/common/util.js";
 
 try {
@@ -8,7 +9,25 @@ try {
       return fs.writeFile(this.rid, s);
     };
   }
-  await fileHandle.close()
+  await fileHandle.close();
 } catch (err) {
-  console.error(err)
+  console.error(err);
+}
+
+declare module "npm:puppeteer-core@21.6.0" {
+  interface Browser {
+    [Symbol.asyncDispose]: () => Promise<void>;
+  }
+  interface Page {
+    [Symbol.asyncDispose]: () => Promise<void>;
+  }
+}
+
+if (!(Symbol.asyncDispose in Browser)) {
+  Browser.prototype[Symbol.asyncDispose] = async function () {
+    await this.close();
+  };
+  Page.prototype[Symbol.asyncDispose] = async function () {
+    await this.close();
+  };
 }
