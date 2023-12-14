@@ -1,7 +1,7 @@
 import "./core.ts";
 import "./src/install.ts";
 
-declare module "npm:puppeteer@21.6.0" {
+declare module "npm:puppeteer@21.6.1" {
   interface Browser {
     [Symbol.asyncDispose]: () => Promise<void>;
   }
@@ -10,5 +10,5 @@ declare module "npm:puppeteer@21.6.0" {
   }
 }
 
-export * from "npm:puppeteer@21.6.0";
-export { default } from "npm:puppeteer@21.6.0";
+export * from "npm:puppeteer@21.6.1";
+export { default } from "npm:puppeteer@21.6.1";

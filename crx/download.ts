@@ -1,5 +1,5 @@
-import { basename } from "https://deno.land/std@0.208.0/path/mod.ts";
-import { download, type DownloadOptions as _DownloadOptions } from "https://deno.land/x/yxz@0.25.0/network/download.ts";
+import { basename } from "https://deno.land/std@0.209.0/path/basename.ts";
+import { download, type DownloadOptions as DownloadOptions_ } from "https://deno.land/x/yxz@0.26.0/net/download.ts";
 import unzip from './unzip.ts'
 
 const computeDownloadUrl = (id: string) =>
@@ -18,7 +18,7 @@ export function extractExtensionId(url: string) {
 export interface DownloadOptions {
     by?: "id" | "url";
     extract?: boolean;
-    onProgress?: _DownloadOptions["onProgress"];
+    onProgress?: DownloadOptions_["onProgress"];
 }
 
 export default async function downloadExtension(
