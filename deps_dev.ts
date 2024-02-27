@@ -3,7 +3,7 @@ import {
   default as puppeteer,
   PuppeteerNodeLaunchOptions,
 } from "./mod.ts";
-import { delay } from "https://deno.land/std@0.209.0/async/delay.ts";
+import { delay } from "https://deno.land/std@0.217.0/async/delay.ts";
 
 export {
   assert,
@@ -11,28 +11,35 @@ export {
   assertEquals,
   assertMatch,
   assertStrictEquals,
-} from "https://deno.land/std@0.209.0/assert/mod.ts";
+} from "https://deno.land/std@0.217.0/assert/mod.ts";
 
 export function browserTest(
   name: string,
   fn: (browser: Browser) => void | Promise<void>,
-  { launch, ...opts }:
+  {
+    launch,
+    ...opts
+  }:
     & { launch?: PuppeteerNodeLaunchOptions }
-    & Omit<Deno.TestDefinition, "name" | "fn"> = {},
+    & Omit<
+      Deno.TestDefinition,
+      "name" | "fn"
+    > = {},
 ) {
-  Deno.test(name, {
-    sanitizeOps: false,
-    sanitizeResources: false,
-    ...opts,
-  }, async () => {
+  Deno.test(
+    name,
     {
-      await using browser = await puppeteer.launch({
-        headless: "new",
-        ...launch,
-      });
-      await fn(browser);
-    }
-    // TODO ensure close() not leak async ops
-    await delay(500);
-  });
+      sanitizeOps: false,
+      sanitizeResources: false,
+      ...opts,
+    },
+    async () => {
+      {
+        await using browser = await puppeteer.launch(launch);
+        await fn(browser);
+      }
+      // TODO ensure close() not leak async ops
+      await delay(500);
+    },
+  );
 }
