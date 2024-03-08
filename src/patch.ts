@@ -1,5 +1,5 @@
-import { Browser, Page } from "npm:puppeteer-core@22.3.0";
-import { importFSPromises } from "npm:puppeteer-core@22.3.0/internal/common/util.js";
+import { Browser, Page } from "npm:puppeteer-core@22.4.1";
+import { importFSPromises } from "npm:puppeteer-core@22.4.1/internal/common/util.js";
 
 try {
   const fs = await importFSPromises();
@@ -14,7 +14,7 @@ try {
   console.error(err);
 }
 
-declare module "npm:puppeteer-core@22.3.0" {
+declare module "npm:puppeteer-core@22.4.1" {
   interface Browser {
     [Symbol.asyncDispose]: () => Promise<void>;
   }

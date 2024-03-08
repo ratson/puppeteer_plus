@@ -1,4 +1,4 @@
-import { pick } from "https://deno.land/x/yxz@0.25.0/collections/pick.ts";
+import { pick } from "https://deno.land/std@0.219.0/collections/pick.ts";
 import { debug as Debug } from "npm:puppeteer-core/internal/common/Debug.js";
 import type { CDPSession, Page, Protocol } from "npm:puppeteer-core";
 import * as Interceptor from "./interceptor.ts";
@@ -88,14 +88,9 @@ export class InterceptionHandler {
               "responseHeaders",
               "responsePhrase",
             ];
-            Object.assign(
-              fulfillOptions,
-              pick(responseOptions as never, keys),
-            );
+            Object.assign(fulfillOptions, pick(responseOptions as never, keys));
             if (fulfillOptions.body) {
-              fulfillOptions.body = btoa(
-                fulfillOptions.body,
-              );
+              fulfillOptions.body = btoa(fulfillOptions.body);
             }
             if (responseOptions.encodedBody) {
               fulfillOptions.body = responseOptions.encodedBody;

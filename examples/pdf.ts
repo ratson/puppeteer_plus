@@ -1,6 +1,6 @@
 import { launch } from "../mod.ts";
 
-await using browser = await launch({ headless: "new" });
+await using browser = await launch();
 await using page = await browser.newPage();
 await page.goto("https://news.ycombinator.com", {
   waitUntil: "networkidle2",
