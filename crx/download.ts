@@ -1,5 +1,5 @@
-import { basename } from "https://deno.land/std@0.222.1/path/basename.ts";
-import { download, type DownloadOptions as DownloadOptions_ } from "https://deno.land/x/yxz@0.31.0/net/download.ts";
+import { basename } from "https://deno.land/std@0.224.0/path/basename.ts";
+import { download, type DownloadOptions as DownloadOptions_ } from "https://deno.land/x/yxz@0.32.0/net/download.ts";
 import unzip from './unzip.ts'
 
 const computeDownloadUrl = (id: string) =>

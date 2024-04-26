@@ -1,3 +1,3 @@
-import { downloadBrowser } from "npm:puppeteer@22.6.4/internal/node/install.js";
+import { downloadBrowser } from "npm:puppeteer@22.7.1/internal/node/install.js";
 
 await downloadBrowser();

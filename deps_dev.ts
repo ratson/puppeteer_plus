@@ -3,7 +3,7 @@ import {
   default as puppeteer,
   PuppeteerNodeLaunchOptions,
 } from "./mod.ts";
-import { delay } from "https://deno.land/std@0.222.1/async/delay.ts";
+import { delay } from "https://deno.land/std@0.224.0/async/delay.ts";
 
 export {
   assert,
@@ -11,7 +11,7 @@ export {
   assertEquals,
   assertMatch,
   assertStrictEquals,
-} from "https://deno.land/std@0.222.1/assert/mod.ts";
+} from "https://deno.land/std@0.224.0/assert/mod.ts";
 
 export function browserTest(
   name: string,
